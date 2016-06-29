@@ -1,6 +1,6 @@
-requires 'perl', '5.008005';
+requires 'perl', '5.012000';
 
-# requires 'Some::Module', 'VERSION';
+requires 'CPAN::Meta';
 
 on test => sub {
     requires 'Test::More', '0.96';

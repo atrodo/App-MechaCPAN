@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use 5.008005;
+use 5.010000;
 
 use ExtUtils::MakeMaker;
 
@@ -13,8 +13,11 @@ my %WriteMakefileArgs = (
     "ExtUtils::MakeMaker" => 0
   },
   "DISTNAME" => "App-MechaCPAN",
+  "EXE_FILES" => [
+    "script/zhuli"
+  ],
   "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.008005",
+  "MIN_PERL_VERSION" => "5.010000",
   "NAME" => "App::MechaCPAN",
   "PREREQ_PM" => {},
   "TEST_REQUIRES" => {
