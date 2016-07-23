@@ -31,6 +31,8 @@ my @args = uniq(
   'dry-run|n!',
   'diag-run!',
   @App::MechaCPAN::Perl::args,
+  'debug|d!',
+  'verbose|v!',
 );
 
 sub main
@@ -62,9 +64,15 @@ sub main
   use Data::Dumper;
   warn Data::Dumper::Dumper( $cmd, $action, \@argv );
 
-  $pkg->$action( $options, @argv );
+  my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
 
-  return 0;
+  if (!defined $ret)
+  {
+    warn $@;
+    return -1;
+  }
+
+  return $ret;
 }
 
 sub info
@@ -75,7 +83,7 @@ sub info
 sub inflate_archive
 {
   my $src = shift;
-  my $dir = tempdir( TEMPLATE => 'mechacpan_XXXXXXXX', CLEANUP => 1 );
+  my $dir = tempdir( TEMPLATE => 'mechacpan_XXXXXXXX', CLEANUP => 0 );
   my $orig = cwd;
 
   my $error_free = eval
@@ -103,19 +111,15 @@ sub run
   my $cmd  = shift;
   my @args = @_;
 
-  my $VERBOSE = 1;
+  my $VERBOSE = 0;
   my $DEBUG   = 0;
   my $out     = "";
   my $err     = "";
 
   my $print_output = $VERBOSE || ( $DEBUG && !defined wantarray );
 
-  # Turn off autodie because it's got issues with the open syntax we use
-  no autodie;
-  open STDIN_DUP, "<&STDIN";
   my $output = geniosym;
   my $error  = geniosym;
-  use autodie;
 
   $output->blocking(0);
   $error->blocking(0);
@@ -139,7 +143,6 @@ sub run
       #warn $ret;
       if ( !defined $line)
       {
-        warn "removing $fh";
         $select->remove($fh);
         next;
       }
@@ -156,13 +159,8 @@ sub run
         #$err .= $line;
       }
 
-#      warn "redo"
-#        if $ret == 2048;
-#      redo
-#        if $ret == 2048;
     }
   }
-  warn "waiting $pid";
 
   waitpid( $pid, 0 );
 
