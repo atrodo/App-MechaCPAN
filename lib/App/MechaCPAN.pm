@@ -61,8 +61,6 @@ sub main
     return 0;
   }
 
-  use Data::Dumper;
-  warn Data::Dumper::Dumper( $cmd, $action, \@argv );
 
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
 
