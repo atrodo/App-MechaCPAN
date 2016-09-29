@@ -1,3 +1,6 @@
+*~
+*.sw[pon]
+*.bak
 /tmp/
 /App-MechaCPAN*
 /.build
@@ -7,3 +10,6 @@ MYMETA.*
 !META.json
 /.prove
 /local*
+/blib/
+mechacpan_t_*
+local_t/
