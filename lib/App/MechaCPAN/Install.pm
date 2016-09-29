@@ -69,7 +69,8 @@ sub go
     \&_configure,
     \&_mymeta,
     \&_prereq,
-    \&_install
+    \&_install,
+    \&_write_meta,
   );
 
   while ( my $target = shift @targets )
@@ -248,6 +249,32 @@ sub _install
   }
 
   die 'Unable to determine how to install ' . $dep->{meta}->name;
+
+sub _write_meta
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  state $arch_dir = "$Config{archname}/.meta/";
+
+  if ( $target->{is_cpan} )
+  {
+    my $dir = "$dest_dir/$arch_dir/" . $target->{distvname};
+    File::Path::mkpath( $dir, 0, 0777 );
+    $target->{meta}->save("$dir/MYMETA.json");
+
+    my $install = {
+      name    => $target->{meta}->name,
+      version => $target->{meta}->version,
+      dist     => $target->{distvname},
+      pathname => $target->{pathname},
+      provides => $target->{meta}->provides,
+    };
+
+    open my $fh, ">", "$dir/install.json";
+    print $fh JSON::PP::encode_json($install);
+  }
+  return;
 }
 
 my $url_re = qr[
@@ -308,6 +335,8 @@ sub _get_targz
       $author,
       $package,
     );
+
+    $target->{is_cpan} = 1;
   }
 
   # Module Name
@@ -325,6 +354,8 @@ sub _get_targz
         if !defined $where;
 
     $url = JSON::PP::decode_json($json_info)->{download_url};
+
+    $target->{is_cpan} = 1;
   }
 
   if ( defined $url )
@@ -419,10 +450,6 @@ sub _installed_file_for_module
     return $tmp
         if -r $tmp;
   }
-}
-
-sub _write_meta
-{
 }
 
 1;
