@@ -17,7 +17,7 @@ use Exporter qw/import/;
 
 BEGIN
 {
-  our @EXPORT_OK = qw/run info inflate_archive/;
+  our @EXPORT_OK = qw/run info inflate_archive url_re/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -72,6 +72,16 @@ sub main
   }
 
   return $ret;
+}
+
+sub url_re
+{
+  state $url_re = qr[
+    ^
+    (?: ftp | http | https | file )
+    :
+  ]xmsi;
+  return $url_re;
 }
 
 sub info
@@ -192,8 +202,6 @@ sub run
 
   return $out;
 }
-
-1;
 
 1;
 __END__
