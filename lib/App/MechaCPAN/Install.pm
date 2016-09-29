@@ -6,6 +6,7 @@ use Config;
 use Cwd qw/cwd/;
 use JSON::PP qw//;
 use File::Spec qw//;
+use File::Path qw//;
 use CPAN::Meta qw//;
 use File::Fetch qw//;
 use ExtUtils::MakeMaker qw//;
@@ -24,13 +25,13 @@ sub go
   my $class = shift;
   my $opts  = shift;
   my $src   = shift // '.';
-  my @argv  = shift;
+  my @srcs  = @_;
 
   my $orig_dir = cwd;
 
-  local $dest_dir = "$orig_dir/local_t/";
+  local $dest_dir = "$orig_dir/local/";
 
-  my @srcs = ($src);
+  my @targets = ($src, @srcs);
   my %src_names;
   my @deps;
 
@@ -60,7 +61,6 @@ sub go
   #  $ENV{PERL_MB_OPT} .= " --pureperl-only";
   #}
 
-  my @targets = ($src);
   my $cache   = {};
   my @states  = (
     \&_resolve,
@@ -75,11 +75,7 @@ sub go
 
   while ( my $target = shift @targets )
   {
-    if ( ref $target eq '' )
-    {
-      $target = { state => 0, src_name => $target, };
-    }
-
+    $target = _create_target($target);
     chdir $orig_dir;
     chdir $target->{dir}
         if exists $target->{dir};
@@ -107,7 +103,7 @@ sub _resolve
   $cache->{src_names}->{$src_name} = 1;
 
   # fetch
-  my $src_tgz = _get_targz($src_name);
+  my $src_tgz = _get_targz($target);
   my $src_dir = inflate_archive($src_tgz);
 
   my @files = glob( $src_dir . '/*' );
@@ -216,12 +212,11 @@ sub _prereq
 
 sub _install
 {
-  my $dep = shift;
+  my $target = shift;
+  my $cache = shift;
 
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
-
-  chdir $dep->{dir};
 
   state $make;
 
@@ -230,25 +225,24 @@ sub _install
     $make = $Config{make};
   }
 
-  if ( $dep->{maker} eq 'mb' )
+  if ( $target->{maker} eq 'mb' )
   {
     run( $^X, './Build' );
     run( $^X, './Build', 'test' );
     run( $^X, './Build', 'install' );
-    _write_meta($dep);
-    return;
+    return $target;
   }
 
-  if ( $dep->{maker} eq 'mm' )
+  if ( $target->{maker} eq 'mm' )
   {
     run($make);
     run( $make, 'test' );
     run( $make, 'install' );
-    _write_meta($dep);
-    return;
+    return $target;
   }
 
-  die 'Unable to determine how to install ' . $dep->{meta}->name;
+  die 'Unable to determine how to install ' . $target->{meta}->name;
+}
 
 sub _write_meta
 {
@@ -283,14 +277,23 @@ my $url_re = qr[
   :
 ]xmsi;
 
+my $full_pause_re = qr[
+  (?: authors/id/ )
+  (   \w / \w\w /)
+
+  ( \w{2,} )
+  /
+  ( [^/]+ )
+]xms;
 my $pause_re = qr[
   ^
+
   (?: authors/id/ )?
   (?: \w / \w\w /)?
 
   ( \w{2,} )
   /
-  ( .* )
+  ( [^/]+ )
 
   $
 ]xms;
@@ -302,9 +305,40 @@ sub _escape
   return $str;
 }
 
+sub _create_target
+{
+  my $target = shift;
+
+  if ( ref $target eq '' )
+  {
+    # $target = { state => 0, src_name => $target, };
+    if ( $target =~ m{^ ([^/]+) @ (.*) $}xms )
+    {
+      $target = [ $1, "==$2" ];
+    }
+    else
+    {
+      $target = [ split /[~]/xms, $target, 2 ];
+    }
+  }
+
+  if ( ref $target eq 'ARRAY' )
+  {
+    $target = {
+      state      => 0,
+      src_name   => $target->[0],
+      constraint => $target->[1],
+    };
+  }
+
+  return $target;
+}
+
 sub _get_targz
 {
-  my $src = shift;
+  my $target = _create_target(shift);
+
+  my $src = $target->{src_name};
 
   if ( -e -f $src )
   {
@@ -344,6 +378,11 @@ sub _get_targz
   {
     # TODO mirrors
     my $dnld = 'https://api-v1.metacpan.org/download_url/' . _escape($src);
+    if (defined $target->{constraint})
+    {
+      $dnld .= '?version=' . _escape($target->{constraint});
+    }
+
     my $ff = File::Fetch->new( uri => $dnld );
     $ff->scheme('http')
         if $ff->scheme eq 'https';
@@ -360,6 +399,15 @@ sub _get_targz
 
   if ( defined $url )
   {
+    # if it's pause like, parse out the distibution's version name
+    if ($url =~ $full_pause_re)
+    {
+      my $package = $3;
+      $target->{pathname} = "$1/$2/$3";
+      $package =~ s/ (.*) [.] ( tar[.](gz|z|bz2) | zip | tgz) $/$1/xmsi;
+      $target->{distvname} = $package;
+    }
+
     my $ff = File::Fetch->new( uri => $url );
     $ff->scheme('http')
         if $ff->scheme eq 'https';

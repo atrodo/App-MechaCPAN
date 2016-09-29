@@ -1,6 +1,7 @@
 use strict;
 use FindBin;
 use Test::More;
+use Config;
 use Cwd qw/cwd/;
 use File::Temp qw/tempdir/;
 
