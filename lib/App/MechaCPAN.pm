@@ -8,6 +8,7 @@ use autodie;
 use IPC::Open3;
 use IO::Select;
 use File::Temp qw/tempdir tempfile/;
+use File::Spec qw//;
 use Archive::Tar;
 use List::Util qw/uniq/;
 use Getopt::Long qw//;
@@ -81,7 +82,22 @@ sub info
 sub inflate_archive
 {
   my $src = shift;
-  my $dir = tempdir( TEMPLATE => 'mechacpan_XXXXXXXX', CLEANUP => 0 );
+
+  # $src can be a file path or a URL.
+  if ( !-e $src )
+  {
+    local $File::Fetch::WARN;
+    my $ff = File::Fetch->new( uri => $src );
+    $ff->scheme('http')
+        if $ff->scheme eq 'https';
+    my $content = '';
+    my $where = $ff->fetch( to => \$content );
+    die $ff->error || "Could not download $src"
+        if !defined $where;
+    $src = $where;
+  }
+
+  my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX', CLEANUP => 0 );
   my $orig = cwd;
 
   my $error_free = eval
