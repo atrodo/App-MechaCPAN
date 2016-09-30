@@ -106,6 +106,53 @@ sub parse_cpanfile
 
   delete $result->{current};
   use Data::Dumper;
+
+my $snapshot_re = qr/^\# carton snapshot format: version 1\.0/;
+sub parse_snapshot
+{
+  my $file = shift;
+
+  my $result = {};
+
+  open my $snap_fh, '<', $file;
+
+  if (my $line = <$snap_fh> !~ $snapshot_re)
+  {
+    die "File doesn't looks like a carton snapshot: $file";
+  }
+
+  my @stack = ($result);
+  my $prefix = '';
+  while (my $line = <$snap_fh>)
+  {
+    chomp $line;
+
+    if ($line =~ m/^ \Q$prefix\E (\S+?) :? $/xms)
+    {
+      my $new_depth = {};
+      $stack[0]->{$1} = $new_depth;
+      unshift @stack, $new_depth;
+      $prefix = '  ' x $#stack;
+      next;
+    }
+
+    if ($line =~ m/^ \Q$prefix\E (\S+?) (?: :? \s (.*) )? $/xms)
+    {
+      $stack[0]->{$1} = $2;
+      next;
+    }
+
+    if ($line !~ m/^ \Q$prefix\E /xms)
+    {
+      shift @stack;
+      $prefix = '  ' x $#stack;
+      redo;
+    }
+
+    die "Unable to parse snapshot (line $.)\n";
+  }
+
+  return $result->{DISTRIBUTIONS};
 }
 
 1;
