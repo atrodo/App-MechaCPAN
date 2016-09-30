@@ -16,6 +16,7 @@ our @args = (
   'jobs=i',
   'skip-tests!',
   'install-man!',
+  'source=s%',
 );
 
 our $dest_dir;
@@ -34,6 +35,11 @@ sub go
   my @targets = ($src, @srcs);
   my %src_names;
   my @deps;
+
+  if (ref $opts->{source} eq 'HASH')
+  {
+    @targets = map { _source_translate($opts->{source}, $_) } @targets;
+  }
 
   # trick AutoInstall
   local $ENV{PERL5_CPAN_IS_RUNNING}     = $$;
@@ -498,6 +504,16 @@ sub _installed_file_for_module
     return $tmp
         if -r $tmp;
   }
+}
+
+sub _source_translate
+{
+  my $sources = shift;
+  my $src = shift;
+
+  my $new_src = $sources->{$src};
+
+  return defined $new_src ? $new_src : $src;
 }
 
 1;
