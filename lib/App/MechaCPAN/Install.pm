@@ -15,7 +15,7 @@ use App::MechaCPAN qw/:go/;
 our @args = (
   'jobs=i',
   'skip-tests!',
-  'instal-man!'
+  'install-man!',
 );
 
 our $dest_dir;
