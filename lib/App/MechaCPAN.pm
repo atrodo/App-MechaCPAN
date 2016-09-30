@@ -32,6 +32,8 @@ my @args = uniq(
   'dry-run|n!',
   'diag-run!',
   @App::MechaCPAN::Perl::args,
+  @App::MechaCPAN::Install::args,
+  @App::MechaCPAN::Deploy::args,
   'debug|d!',
   'verbose|v!',
 );
