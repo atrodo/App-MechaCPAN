@@ -13,9 +13,9 @@ my $snapshot      = "$cpanfile.snapshot";
 my $cpanfile_info = App::MechaCPAN::Deploy::parse_snapshot($snapshot);
 
 my $output = {
-    'Try-Tiny-0.27' => {
-      'provides' => { 'Try::Tiny' => '0.27' },
-      'pathname' => 'E/ET/ETHER/Try-Tiny-0.27.tar.gz',
+    'Try-Tiny-0.24' => {
+      'pathname' => 'E/ET/ETHER/Try-Tiny-0.24.tar.gz',
+      'provides' => { 'Try::Tiny' => '0.24' },
       'requirements' => {
         'Carp'                => '0',
         'warnings'            => '0',

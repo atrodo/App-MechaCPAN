@@ -41,6 +41,30 @@ sub go
     push @reqs, [ splice( @acc, 0, 2 ) ];
   }
 
+  if ( -f "$file.snapshot")
+  {
+    my $snapshot_info = parse_snapshot("$file.snapshot");
+    my %srcs;
+    foreach my $dist ( values %$snapshot_info )
+    {
+      my $src = $dist->{pathname};
+      foreach my $provide ( keys %{ $dist->{provides} })
+      {
+        if (exists $srcs{$provide})
+        {
+          die "Found dumplicate distributions ($src and $srcs{$provide}) that provides the same module ($provide)\n";
+        }
+        $srcs{$provide} = $src;
+      }
+    }
+
+    if (ref  $opts->{source} eq 'HASH')
+    {
+      %srcs = ( %srcs, %{ $opts->{source} } );
+    }
+    $opts->{source} = \%srcs;
+  }
+
   return App::MechaCPAN::Install->go( $opts, @reqs );
 }
 
@@ -106,6 +130,9 @@ sub parse_cpanfile
 
   delete $result->{current};
   use Data::Dumper;
+
+  return $result;
+}
 
 my $snapshot_re = qr/^\# carton snapshot format: version 1\.0/;
 sub parse_snapshot
