@@ -511,7 +511,23 @@ sub _source_translate
   my $sources = shift;
   my $src = shift;
 
-  my $new_src = $sources->{$src};
+  if (ref $src eq 'HASH' && exists $src->{state})
+  {
+    return $src;
+  }
+
+  my $src_name = $src;
+  if (ref $src eq 'ARRAY')
+  {
+    $src_name = $src->[0];
+  }
+
+  if (ref $src eq 'HASH')
+  {
+    $src_name = $src->{src_name};
+  }
+
+  my $new_src = $sources->{$src_name};
 
   return defined $new_src ? $new_src : $src;
 }
