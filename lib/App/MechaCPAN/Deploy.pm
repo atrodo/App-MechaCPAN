@@ -106,6 +106,7 @@ sub parse_cpanfile
   my $code = do { local $/; <$code_fh> };
 
   my $pkg = __PACKAGE__ . "::Sandbox$sandbox_num";
+  $sandbox_num++;
 
   foreach my $method ( keys %$methods )
   {
