@@ -130,7 +130,6 @@ sub parse_cpanfile
       unless $no_error;
 
   delete $result->{current};
-  use Data::Dumper;
 
   return $result;
 }
