@@ -36,9 +36,9 @@ sub go
   my %src_names;
   my @deps;
 
-  if (ref $opts->{source} eq 'HASH')
+  if (ref $opts->{source} ne 'HASH')
   {
-    @targets = map { _source_translate($opts->{source}, $_) } @targets;
+    $opts->{source} = {};
   }
 
   # trick AutoInstall
@@ -81,6 +81,7 @@ sub go
 
   while ( my $target = shift @targets )
   {
+    $target = _source_translate($opts->{source}, $target);
     $target = _create_target($target);
     chdir $orig_dir;
     chdir $target->{dir}
@@ -120,11 +121,6 @@ sub _resolve
 
   @{$target}{qw/src_tgz dir/} = ( $src_tgz, $src_dir );
   return $target;
-  return {
-    src_name => $src_name,
-    src_tgz  => $src_tgz,
-    dir      => $src_dir,
-  };
 }
 
 sub _meta
