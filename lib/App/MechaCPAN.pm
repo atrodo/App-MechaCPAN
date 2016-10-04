@@ -7,7 +7,7 @@ use Symbol qw/geniosym/;
 use autodie;
 use IPC::Open3;
 use IO::Select;
-use File::Temp qw/tempdir tempfile/;
+use File::Temp qw/tempdir/;
 use File::Spec qw//;
 use Archive::Tar;
 use List::Util qw/uniq/;
@@ -142,7 +142,19 @@ sub run
   my $out     = "";
   my $err     = "";
 
-  my $print_output = $VERBOSE || ( $DEBUG && !defined wantarray );
+  my $dest_fh = undef;
+  my $print_output = 0;
+
+  if (!defined wantarray)
+  {
+    my $print_output = $VERBOSE || $DEBUG;
+  }
+
+  if (ref $cmd eq 'GLOB')
+  {
+    $dest_fh = $cmd;
+    $cmd = shift @args;
+  }
 
   my $output = geniosym;
   my $error  = geniosym;
@@ -170,6 +182,11 @@ sub run
       if ( !defined $line)
       {
         $select->remove($fh);
+        next;
+      }
+      if ( $fh eq $output && defined $dest_fh)
+      {
+        print $dest_fh $line;
         next;
       }
 
