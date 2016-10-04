@@ -5,14 +5,15 @@ use File::Temp qw/tempdir/;
 
 use App::MechaCPAN;
 
+# Note: we don't test with git or ssh since those require some kind of login
 foreach my $src (qw[
   test_dists/NoDeps/NoDeps-1.0.tar.gz
   authors/id/E/ET/ETHER/Try-Tiny-0.24.tar.gz
   E/ET/ETHER/Try-Tiny-0.24.tar.gz
   ETHER/Try-Tiny-0.24.tar.gz
-  git://git@github.com:p5sagit/Try-Tiny.git
-  git://git@github.com:p5sagit/Try-Tiny.git@v0.24
-  https://github.com/p5sagit/Try-Tiny/archive/v0.26.zip
+  https://github.com/p5sagit/Try-Tiny.git
+  https://github.com/p5sagit/Try-Tiny.git@v0.24
+  https://github.com/p5sagit/Try-Tiny/archive/v0.24.zip
   Try::Tiny
   Try::Tiny@0.24
   Try::Tiny~0.24

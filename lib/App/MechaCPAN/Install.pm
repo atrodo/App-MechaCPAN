@@ -7,6 +7,7 @@ use Cwd qw/cwd/;
 use JSON::PP qw//;
 use File::Spec qw//;
 use File::Path qw//;
+use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
 use File::Fetch qw//;
 use ExtUtils::MakeMaker qw//;
@@ -273,6 +274,12 @@ sub _write_meta
   return;
 }
 
+my $git_re = qr[
+  ^ (?: git | ssh ) :
+  |
+  [.]git (?: @|$ )
+]xmsi;
+
 my $url_re = qr[
   ^
   (?: ftp | http | https | file )
@@ -350,15 +357,31 @@ sub _get_targz
   my $url;
 
   # git
-  # URL
+  if ( $src =~ $git_re )
+  {
+    my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
 
+    my $dir
+        = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
+    my ( $fh, $file )
+        = tempfile(
+      TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
+      CLEANUP  => 0 );
+
+    run( 'git', 'clone', '--bare', $git_url, $dir );
+    run( $fh, 'git', 'archive', '--format=tar.gz', "--remote=$dir",
+      $commit || 'master' );
+    close $fh;
+    return $file;
+  }
+
+  # URL
   if ( $src =~ $url_re )
   {
     $url = $src;
   }
 
   # PAUSE
-
   if ( $src =~ $pause_re )
   {
     my $author  = $1;
