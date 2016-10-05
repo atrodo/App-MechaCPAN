@@ -10,7 +10,6 @@ use IO::Select;
 use File::Temp qw/tempdir/;
 use File::Spec qw//;
 use Archive::Tar;
-use List::Util qw/uniq/;
 use Getopt::Long qw//;
 
 use Exporter qw/import/;
@@ -28,7 +27,7 @@ use App::MechaCPAN::Deploy;
 use 5.010_000;
 our $VERSION = '0.01';
 
-my @args = uniq(
+my @args = (
   'dry-run|n!',
   'diag-run!',
   @App::MechaCPAN::Perl::args,
