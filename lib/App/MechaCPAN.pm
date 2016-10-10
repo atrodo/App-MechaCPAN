@@ -87,8 +87,25 @@ sub url_re
 
 sub info
 {
-  warn(@_);
+  my $key = shift;
+  my $line = shift // $key;
+
+  state $last_key;
+
+  if ( $last_key eq $key )
+  {
+    print STDERR "\e[0E\e[K\e[1E";
+  }
+  else
+  {
+    print STDERR "\n"
+      if defined $last_key;
+    $last_key = $key;
+  }
+
+  print STDERR "$line";
 }
+END { print STDERR "\n"; }
 
 sub inflate_archive
 {
