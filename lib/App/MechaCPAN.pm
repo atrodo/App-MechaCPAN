@@ -218,6 +218,9 @@ sub run
     return split( /\r?\n/, $out );
   }
 
+  return
+    if !defined wantarray;
+
   return $out;
 }
 
