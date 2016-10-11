@@ -21,6 +21,7 @@ our @args = (
 );
 
 our $dest_dir;
+our $dest_lib;
 
 sub go
 {
@@ -31,7 +32,8 @@ sub go
 
   my $orig_dir = cwd;
 
-  local $dest_dir = "$orig_dir/local/";
+  local $dest_dir = "$orig_dir/local_t/";
+  local $dest_lib = "$dest_dir/lib/perl5";
 
   my @targets = ($src, @srcs);
   my %src_names;
@@ -51,7 +53,7 @@ sub go
   local $ENV{PERL_MM_OPT} = "INSTALL_BASE=$dest_dir";
   local $ENV{PERL_MB_OPT} = "--install_base $dest_dir";
 
-  local $ENV{PERL5LIB} = "$dest_dir";
+  local $ENV{PERL5LIB} = "$dest_lib";
 
   # skip man page generation
   $ENV{PERL_MM_OPT}
@@ -256,13 +258,13 @@ sub _write_meta
 
   if ( $target->{is_cpan} )
   {
-    my $dir = "$dest_dir/$arch_dir/" . $target->{distvname};
+    my $dir = "$dest_lib/$arch_dir/" . $target->{distvname};
     File::Path::mkpath( $dir, 0, 0777 );
     $target->{meta}->save("$dir/MYMETA.json");
 
     my $install = {
-      name    => $target->{meta}->name,
-      version => $target->{meta}->version,
+      name     => $target->{meta}->name,
+      version  => $target->{meta}->version,
       dist     => $target->{distvname},
       pathname => $target->{pathname},
       provides => $target->{meta}->provides,
@@ -517,7 +519,16 @@ sub _installed_file_for_module
   my $file   = "$prereq.pm";
   $file =~ s{::}{/}g;
 
-  for my $dir ( @Config{qw(privlibexp archlibexp)}, $dest_dir )
+  my $archname = $Config{archname};
+  my $perlver  = $Config{version};
+
+  for my $dir (
+    "$dest_lib/$perlver/$archname",
+    "$dest_lib/$perlver",
+    "$dest_lib/$archname",
+    "$dest_lib",
+    @Config{qw(archlibexp privlibexp)},
+      )
   {
     my $tmp = File::Spec->catfile( $dir, $file );
     return $tmp
