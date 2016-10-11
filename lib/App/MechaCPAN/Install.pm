@@ -142,6 +142,9 @@ sub _config_prereq
 
   my $meta = $target->{meta};
 
+  return $target
+      if !defined $meta;
+
   #printf "testing requirements for %s version %s\n", $meta->name,
   #    $meta->version;
 
@@ -161,9 +164,11 @@ sub _configure
   state $mb_deps = { map { $_ => 1 }
         qw/version ExtUtils-ParseXS ExtUtils-Install ExtUtilsManifest/ };
 
+  # meta may not be defined, so wrap it in an eval
+  my $is_mb_dep = eval { exists $mb_deps->{ $meta->name } };
   my $maker;
 
-  if ( -e 'Build.PL' && !exists $mb_deps->{ $meta->name } )
+  if ( -e 'Build.PL' && !$is_mb_dep )
   {
     run( $^X, 'Build.PL' );
     my $configured = -e -f 'Build';
@@ -470,12 +475,15 @@ sub _load_meta
 
   my $prefix = $my ? 'MYMETA' : 'META';
 
-  my ($meta)
-      = map { CPAN::Meta->load_file($_) }
-      grep {-r} ( "$prefix.json", "$prefix.yml" );
+  my $meta;
 
-  die "Cannot find $prefix file for " . $target->{src_name}
-      if !defined $meta;
+  foreach my $file ( "$prefix.json", "$prefix.yml" )
+  {
+    $meta = eval { CPAN::Meta->load_file($file) };
+    last
+        if defined $meta;
+  }
+
 
   return $meta;
 }
