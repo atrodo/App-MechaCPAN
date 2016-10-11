@@ -93,6 +93,12 @@ sub go
   {
     $target = _source_translate( $opts->{source}, $target );
     $target = _create_target($target);
+
+    if ( $target->{state} eq $COMPLETE )
+    {
+      next;
+    }
+
     chdir $orig_dir;
     chdir $target->{dir}
         if exists $target->{dir};
@@ -106,6 +112,11 @@ sub go
     my $method = $states[ $target->{state} ];
     unshift @targets, $method->( $target, $cache );
     $target->{state}++;
+
+    if ( $target->{state} eq scalar @states )
+    {
+      _complete($target);
+    }
   }
 
   chdir $orig_dir;
