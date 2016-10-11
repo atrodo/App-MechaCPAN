@@ -290,7 +290,7 @@ my $git_re = qr[
 my $url_re = qr[
   ^
   (?: ftp | http | https | file )
-  :
+  : //
 ]xmsi;
 
 my $full_pause_re = qr[
