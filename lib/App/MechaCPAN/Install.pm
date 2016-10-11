@@ -70,26 +70,35 @@ sub go
   #  $ENV{PERL_MB_OPT} .= " --pureperl-only";
   #}
 
-  my $cache   = {};
-  my @states  = (
-    \&_resolve,
-    \&_meta,
-    \&_config_prereq,
-    \&_configure,
-    \&_mymeta,
-    \&_prereq,
-    \&_install,
-    \&_write_meta,
+  my $cache       = {};
+  my @full_states = (
+    'Resolving'             => \&_resolve,
+    'Configuring'           => \&_meta,
+    'Configuring'           => \&_config_prereq,
+    'Configuring'           => \&_configure,
+    'Configuring'           => \&_mymeta,
+    'Finding Prerequisites' => \&_prereq,
+    'Installing'            => \&_install,
+    'Installed'             => \&_write_meta,
   );
+
+  my @states     = grep { ref $_ eq 'CODE' } @full_states;
+  my @state_desc = grep { ref $_ ne 'CODE' } @full_states;
 
   while ( my $target = shift @targets )
   {
-    $target = _source_translate($opts->{source}, $target);
+    $target = _source_translate( $opts->{source}, $target );
     $target = _create_target($target);
     chdir $orig_dir;
     chdir $target->{dir}
         if exists $target->{dir};
 
+    info(
+      $target->{src_name},
+      sprintf(
+        '%-21s %s', $state_desc[ $target->{state} ], $target->{src_name}
+      )
+    );
     my $method = $states[ $target->{state} ];
     unshift @targets, $method->( $target, $cache );
     $target->{state}++;
