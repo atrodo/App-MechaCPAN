@@ -9,6 +9,7 @@ use File::Spec qw//;
 use File::Path qw//;
 use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
+use CPAN::Meta::Prereqs qw//;
 use File::Fetch qw//;
 use ExtUtils::MakeMaker qw//;
 use App::MechaCPAN qw/:go/;
@@ -22,6 +23,9 @@ our @args = (
 
 our $dest_dir;
 our $dest_lib;
+
+# Constants
+my $COMPLETE = 'COMPLETE';
 
 sub go
 {
@@ -123,6 +127,30 @@ sub _resolve
 
   # fetch
   my $src_tgz = _get_targz($target);
+
+  # Verify we need to install it
+  if ( defined $target->{module} )
+  {
+    my $module = $target->{module};
+    my $ver    = _get_mod_ver($module);
+
+    if ( defined $ver )
+    {
+      my $constraint = $target->{constraint};
+      my $prereq     = CPAN::Meta::Prereqs->new(
+        { runtime => { requires => { $module => $constraint // 0 } } } );
+      my $req = $prereq->requirements_for( 'runtime', 'requires' );
+
+      if ( $req->accepts_module( $module, $ver ) )
+      {
+        info( $target->{src_name},
+          sprintf( '%-21s %s', 'Up to date', $target->{src_name} ) );
+        _complete($target);
+        return;
+      }
+    }
+  }
+
   my $src_dir = inflate_archive($src_tgz);
 
   my @files = glob( $src_dir . '/*' );
@@ -436,12 +464,13 @@ sub _get_targz
     $url = JSON::PP::decode_json($json_info)->{download_url};
 
     $target->{is_cpan} = 1;
+    $target->{module}  = "$src";
   }
 
   if ( defined $url )
   {
     # if it's pause like, parse out the distibution's version name
-    if ($url =~ $full_pause_re)
+    if ( $url =~ $full_pause_re )
     {
       my $package = $3;
       $target->{pathname} = "$1/$2/$3";
@@ -577,6 +606,13 @@ sub _source_translate
   my $new_src = $sources->{$src_name};
 
   return defined $new_src ? $new_src : $src;
+}
+
+sub _complete
+{
+  my $target = shift;
+  $target->{state} = $COMPLETE;
+  return;
 }
 
 1;
