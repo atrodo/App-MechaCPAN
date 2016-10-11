@@ -552,21 +552,18 @@ sub _phase_prereq
   my $reqs = $prereqs->requirements_for( $phase, "requires" );
   for my $module ( sort $reqs->required_modules )
   {
-    my $status  = 'missing';
+    my $status;
+
     my $version = _get_mod_ver($module);
     if ( defined $version )
     {
       $version = $module eq 'perl' ? $] : $version;
-      $status
-          = $reqs->accepts_module( $module, $version )
-          ? "$version ok"
-          : "$version not ok";
+      $status = $reqs->accepts_module( $module, $version );
     }
 
-    #say "    $module ($status)";
 
     push @result, $module
-        if !defined $version;
+        if !$status;
   }
 
   return @result;
