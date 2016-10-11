@@ -458,11 +458,12 @@ sub _get_targz
   {
     # TODO mirrors
     my $dnld = 'https://api-v1.metacpan.org/download_url/' . _escape($src);
-    if (defined $target->{constraint})
+    if ( defined $target->{constraint} )
     {
-      $dnld .= '?version=' . _escape($target->{constraint});
+      $dnld .= '?version=' . _escape( $target->{constraint} );
     }
 
+    local $File::Fetch::WARN;
     my $ff = File::Fetch->new( uri => $dnld );
     $ff->scheme('http')
         if $ff->scheme eq 'https';
@@ -489,6 +490,7 @@ sub _get_targz
       $target->{distvname} = $package;
     }
 
+    local $File::Fetch::WARN;
     my $ff = File::Fetch->new( uri => $url );
     $ff->scheme('http')
         if $ff->scheme eq 'https';
@@ -507,12 +509,12 @@ sub _get_mod_ver
   my $module = shift;
   return $]
       if $module eq 'perl';
+  local $@;
   my $ver = eval {
     my $file = _installed_file_for_module($module);
     MM->parse_version($file);
   };
 
-  undef $@;
   return $ver;
 }
 
