@@ -161,9 +161,10 @@ sub _get_targz
         else
         {
           # The version doesn't exit. That means higher versions don't either
-          @possible = @possible[ 0 .. $i-1 ];
+          @possible = @possible[ 0 .. $i - 1 ];
         }
       }
+      $minor = $possible[0];
     }
 
     return _dnld_url( $version, $minor );
