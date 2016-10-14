@@ -66,9 +66,20 @@ sub go
 
 my $perl5_re = qr/^ 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )? $/xms;
 
+sub _dnld_url
+{
+  my $version = shift;
+  my $minor   = shift;
+  my $mirror  = 'http://www.cpan.org/src/5.0';
+
+  return "$mirror/perl-5.$version.$minor.tar.bz2";
+}
+
 sub _get_targz
 {
   my $src = shift;
+
+  local $File::Fetch::WARN;
 
   # Attempt to find the perl version if none was given
   if ( !defined $src && -f '.perl-version' )
@@ -79,15 +90,41 @@ sub _get_targz
     #($src) = $pv =~ m[($perl5_re)]xms;
   }
 
+  # If there's no src, find the newest version.
+  if ( !defined $src )
+  {
+    # Do a terrible job of guessing what the current version is
+    use Time::localtime;
+    my $year = localtime->year() + 1900;
+
+    # 5.12 was released in 2010, and approximatly every May, a new even
+    # version was released
+    my $major = ( $year - 2010 ) * 2 + ( localtime->mon < 4 ? 10 : 12 );
+
+    # Verify our guess
+    {
+      my $dnld = _dnld_url( $major, 0 ) . ".md5.txt";
+      my $ff       = File::Fetch->new( uri => $dnld );
+      my $contents = '';
+      my $where    = $ff->fetch( to => \$contents );
+
+      if ( !defined $where && $major > 12 )
+      {
+        $major -= 2;
+        redo;
+      }
+    }
+    $src = "5.$major";
+  }
+
   # file
 
-  if (-e $src)
+  if ( -e $src )
   {
     return $src;
   }
 
   my $url;
-  local $File::Fetch::WARN;
 
   # URL
   if ( $src =~ url_re )
@@ -96,29 +133,27 @@ sub _get_targz
   }
 
   # CPAN
-  if ($src =~ $perl5_re)
+  if ( $src =~ $perl5_re )
   {
     my $version = $1;
     my $minor   = $2;
 
-    my $mirror = 'http://www.cpan.org/src/5.0';
-
     # They probably want the latest if minor wasn't given
-    if (!defined $minor)
+    if ( !defined $minor )
     {
       # 11 is the highest minor version seen as of this writing
       my @possible = ( 0 .. 15 );
 
-      while (@possible > 1)
+      while ( @possible > 1 )
       {
-        my $i = int(@possible / 2);
+        my $i = int( @possible / 2 );
         $minor = $possible[$i];
-        my $dnld = "$mirror/perl-5.$version.$minor.tar.bz2.md5.txt";
-        my $ff = File::Fetch->new( uri => $dnld );
+        my $dnld = _dnld_url( $version, $minor ) . ".md5.txt";
+        my $ff       = File::Fetch->new( uri => $dnld );
         my $contents = '';
-        my $where = $ff->fetch( to => \$contents );
+        my $where    = $ff->fetch( to => \$contents );
 
-        if (defined $where)
+        if ( defined $where )
         {
           # The version exists, which means it's higher still
           @possible = @possible[ $i .. $#possible ];
@@ -131,7 +166,7 @@ sub _get_targz
       }
     }
 
-    return "$mirror/perl-5.$version.$minor.tar.bz2";
+    return _dnld_url( $version, $minor );
   }
 
   die "Cannot find $src\n";
