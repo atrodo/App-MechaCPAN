@@ -1,6 +1,7 @@
 package App::MechaCPAN::Perl;
 
 use strict;
+use autodie;
 use Config;
 use Cwd qw/cwd/;
 use File::Fetch qw//;
@@ -69,6 +70,15 @@ sub _get_targz
 {
   my $src = shift;
 
+  # Attempt to find the perl version if none was given
+  if ( !defined $src && -f '.perl-version' )
+  {
+    open my $pvFH, '<', '.perl-version';
+    my $pv = do { local $/; <$pvFH> };
+
+    #($src) = $pv =~ m[($perl5_re)]xms;
+  }
+
   # file
 
   if (-e $src)
@@ -79,7 +89,6 @@ sub _get_targz
   my $url;
   local $File::Fetch::WARN;
 
-  # git
   # URL
   if ( $src =~ url_re )
   {
