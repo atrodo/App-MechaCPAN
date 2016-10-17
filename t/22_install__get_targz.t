@@ -4,6 +4,7 @@ use Test::More;
 use File::Temp qw/tempdir/;
 
 use App::MechaCPAN;
+require q[t/helper.pm];
 
 # Notes:
 #  * we don't test with git or ssh since those require some kind of login

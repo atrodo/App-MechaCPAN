@@ -1,7 +1,9 @@
 use strict;
 use FindBin;
 use Test::More;
+
 use App::MechaCPAN;
+require q[t/helper.pm];
 
 my %tests = (
   '5.12' => qr/perl-5[.]12[.]5[.]tar/,

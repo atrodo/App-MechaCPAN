@@ -1,6 +1,8 @@
 use strict;
 use Test::More;
+
 use App::MechaCPAN;
+require q[t/helper.pm];
 
 local $SIG{__WARN__} = sub {};
 

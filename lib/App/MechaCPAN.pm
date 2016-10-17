@@ -1,5 +1,6 @@
 package App::MechaCPAN;
 
+use v5.12;
 use strict;
 use Cwd qw/cwd/;
 use Carp;
@@ -33,9 +34,15 @@ my @args = (
   @App::MechaCPAN::Perl::args,
   @App::MechaCPAN::Install::args,
   @App::MechaCPAN::Deploy::args,
-  'debug|d!',
   'verbose|v!',
+  'quiet|q!',
+  'no-log!',
 );
+
+our $VERBOSE;    # Print output from sub commands to STDERR
+our $QUIET;      # Do not print any progress to STDERR
+our $LOGFH;      # File handle to send the logs to
+our $LOG_ON = 1; # Default if to log or not
 
 sub main
 {
@@ -90,6 +97,9 @@ sub info
   my $key = shift;
   my $line = shift // $key;
 
+  return
+    if $QUIET;
+
   state $last_key;
 
   if ( $last_key eq $key )
@@ -105,7 +115,7 @@ sub info
 
   print STDERR "$line";
 }
-END { print STDERR "\n"; }
+END { print STDERR "\n" unless $QUIET; }
 
 sub inflate_archive
 {
@@ -153,23 +163,25 @@ sub run
   my $cmd  = shift;
   my @args = @_;
 
-  my $VERBOSE = 0;
-  my $DEBUG   = 0;
   my $out     = "";
   my $err     = "";
 
-  my $dest_fh = undef;
-  my $print_output = 0;
-
-  if (!defined wantarray)
-  {
-    my $print_output = $VERBOSE || $DEBUG;
-  }
+  my $dest_out_fh = $LOGFH;
+  my $dest_err_fh = $LOGFH;
+  my $print_output = $VERBOSE;
 
   if (ref $cmd eq 'GLOB')
   {
-    $dest_fh = $cmd;
+    $dest_out_fh = $cmd;
     $cmd = shift @args;
+  }
+
+  # If the output is asked for (non-void context), don't show it anywhere
+  if (defined wantarray)
+  {
+    undef $print_output;
+    open $dest_out_fh, ">", \$out;
+    open $dest_err_fh, ">", \$err;
   }
 
   my $output = geniosym;
@@ -200,22 +212,17 @@ sub run
         $select->remove($fh);
         next;
       }
-      if ( $fh eq $output && defined $dest_fh)
-      {
-        print $dest_fh $line;
-        next;
-      }
 
       print STDERR $line if $print_output;
 
-      if ( $fh eq $output )
+      if ( $fh eq $output  && defined $dest_out_fh )
       {
-        #$out .= $line;
+        print $dest_out_fh $line;
       }
 
-      if ( $fh eq $error )
+      if ( $fh eq $error  && defined $dest_err_fh )
       {
-        #$err .= $line;
+        print $dest_err_fh $line;
       }
 
     }
@@ -230,13 +237,13 @@ sub run
         . qq/'.\e[0m\n/;
   }
 
+  return
+    if !defined wantarray;
+
   if (wantarray)
   {
     return split( /\r?\n/, $out );
   }
-
-  return
-    if !defined wantarray;
 
   return $out;
 }
