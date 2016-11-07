@@ -90,14 +90,14 @@ sub go
 
   foreach my $target ( @targets )
   {
-    $target = _source_translate( $opts->{source}, $target );
+    $target = _source_translate( $target, $opts);
     $target = _create_target($target);
     $target->{update} = 1;
   }
 
   while ( my $target = shift @targets )
   {
-    $target = _source_translate( $opts->{source}, $target );
+    $target = _source_translate( $target, $opts);
     $target = _create_target($target);
 
     if ( $target->{state} eq $COMPLETE )
@@ -611,23 +611,25 @@ sub _installed_file_for_module
 
 sub _source_translate
 {
-  my $sources = shift;
-  my $src = shift;
+  my $target = shift;
+  my $opts = shift;
 
-  if (ref $src eq 'HASH' && exists $src->{state})
+  my $sources = $opts->{source};
+
+  if ( ref $target eq 'HASH' && exists $target->{state} )
   {
-    return $src;
+    return $target;
   }
 
-  my $src_name = $src;
-  if (ref $src eq 'ARRAY')
+  my $src_name = $target;
+  if ( ref $target eq 'ARRAY' )
   {
-    $src_name = $src->[0];
+    $src_name = $target->[0];
   }
 
-  if (ref $src eq 'HASH')
+  if ( ref $target eq 'HASH' )
   {
-    $src_name = $src->{src_name};
+    $src_name = $target->{src_name};
   }
 
   my $new_src = $sources->{$src_name};
