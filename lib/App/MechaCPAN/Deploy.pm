@@ -27,7 +27,7 @@ sub go
 
   if ( !-e $file )
   {
-    croak "Could not find cpanfile";
+    croak "Could not find cpanfile ($file)";
   }
 
   if ( !-f $file )
