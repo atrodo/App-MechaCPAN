@@ -3,7 +3,6 @@ package App::MechaCPAN::Perl;
 use strict;
 use autodie;
 use Config;
-use Cwd qw/cwd/;
 use File::Fetch qw//;
 use App::MechaCPAN qw/:go/;
 
@@ -20,7 +19,7 @@ sub go
   my $src   = shift;
   my @argv  = shift;
 
-  my $orig_dir = cwd;
+  my $orig_dir = $dest_dir;
 
   my $src_tz  = _get_targz($src);
   my $src_dir = inflate_archive($src_tz);

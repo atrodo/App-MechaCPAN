@@ -21,7 +21,6 @@ our @args = (
   'source=s%',
 );
 
-our $dest_dir;
 our $dest_lib;
 
 # Constants

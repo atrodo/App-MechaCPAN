@@ -17,13 +17,16 @@ use Exporter qw/import/;
 
 BEGIN
 {
-  our @EXPORT_OK = qw/run info inflate_archive url_re/;
+  our @EXPORT_OK = qw/run info inflate_archive url_re $dest_dir/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
 use App::MechaCPAN::Perl;
 use App::MechaCPAN::Install;
 use App::MechaCPAN::Deploy;
+
+my $orig_dir = cwd;
+our $dest_dir = "$orig_dir/local_t/";
 
 use 5.010_000;
 our $VERSION = '0.01';
