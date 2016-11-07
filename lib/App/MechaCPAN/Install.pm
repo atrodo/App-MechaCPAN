@@ -89,6 +89,13 @@ sub go
   my @states     = grep { ref $_ eq 'CODE' } @full_states;
   my @state_desc = grep { ref $_ ne 'CODE' } @full_states;
 
+  foreach my $target ( @targets )
+  {
+    $target = _source_translate( $opts->{source}, $target );
+    $target = _create_target($target);
+    $target->{update} = 1;
+  }
+
   while ( my $target = shift @targets )
   {
     $target = _source_translate( $opts->{source}, $target );
@@ -145,7 +152,15 @@ sub _resolve
     my $module = $target->{module};
     my $ver    = _get_mod_ver($module);
 
-    if ( defined $ver )
+      if ($target->{version} eq $ver)
+      {
+        info( $target->{src_name},
+          sprintf( '%-21s %s', 'Up to date', $target->{src_name} ) );
+        _complete($target);
+        return;
+      }
+
+    if ( defined $ver && !$target->{update})
     {
       my $constraint = $target->{constraint};
       my $prereq     = CPAN::Meta::Prereqs->new(
@@ -473,10 +488,13 @@ sub _get_targz
     die "Could not find module $src on metacpan"
         if !defined $where;
 
-    $url = JSON::PP::decode_json($json_info)->{download_url};
+    my $json_data = JSON::PP::decode_json($json_info);
+
+    $url = $json_data->{download_url};
 
     $target->{is_cpan} = 1;
     $target->{module}  = "$src";
+    $target->{version} = version->parse($json_data->{version});
   }
 
   if ( defined $url )
