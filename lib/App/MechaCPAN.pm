@@ -135,7 +135,7 @@ sub inflate_archive
     $src = $where;
   }
 
-  my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX', CLEANUP => 0 );
+  my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX', CLEANUP => 1 );
   my $orig = cwd;
 
   my $error_free = eval

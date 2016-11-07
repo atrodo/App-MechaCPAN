@@ -433,10 +433,10 @@ sub _get_targz
 
     my $dir
         = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
-    my ( $fh, $file )
-        = tempfile(
+    my ( $fh, $file ) = tempfile(
       TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
-      CLEANUP  => 0 );
+      CLEANUP  => 1
+    );
 
     run( 'git', 'clone', '--bare', $git_url, $dir );
     run( $fh, 'git', 'archive', '--format=tar.gz', "--remote=$dir",

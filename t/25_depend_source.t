@@ -10,7 +10,7 @@ require q[t/helper.pm];
 
 my $pwd  = cwd;
 
-my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 0 );
+my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 chdir $dir;
 
 my $lib = 'ConfigDeps';

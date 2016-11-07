@@ -11,7 +11,7 @@ require q[t/helper.pm];
 my $pwd = cwd;
 my $cpanfile      = "$FindBin::Bin/../test_dists/DeployCpanfile/cpanfile";
 
-my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 0 );
+my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 chdir $dir;
 
 is(App::MechaCPAN::main('deploy', $cpanfile), 0, "Can run deploy");
