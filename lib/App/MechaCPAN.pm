@@ -21,15 +21,15 @@ BEGIN
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
-use App::MechaCPAN::Perl;
-use App::MechaCPAN::Install;
-use App::MechaCPAN::Deploy;
+require App::MechaCPAN::Perl;
+require App::MechaCPAN::Install;
+require App::MechaCPAN::Deploy;
+
+our $VERSION = '0.10';
 
 my $orig_dir = cwd;
 our $dest_dir = "$orig_dir/local_t/";
 
-use 5.010_000;
-our $VERSION = '0.01';
 
 my @args = (
   'dry-run|n!',
