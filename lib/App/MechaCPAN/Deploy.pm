@@ -70,13 +70,18 @@ sub go
     $opts->{'only-sources'} = 1;
   }
 
+  my $result;
+
   if (!$opts->{'skip-perl'})
   {
     $result = App::MechaCPAN::Perl->go( $opts );
     return $result if $result;
   }
 
-  return App::MechaCPAN::Install->go( $opts, @reqs );
+  $result = App::MechaCPAN::Install->go( $opts, @reqs );
+  return $result if $result;
+
+  return 0;
 }
 
 my $sandbox_num = 1;
