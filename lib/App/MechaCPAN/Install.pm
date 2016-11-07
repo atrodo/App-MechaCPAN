@@ -19,6 +19,7 @@ our @args = (
   'skip-tests!',
   'install-man!',
   'source=s%',
+  'only-sources!',
 );
 
 our $dest_lib;
@@ -634,7 +635,14 @@ sub _source_translate
 
   my $new_src = $sources->{$src_name};
 
-  return defined $new_src ? $new_src : $src;
+  if ($opts->{'only-sources'})
+  {
+    die "Unable to locate $src_name from the sources list\n"
+      if !$new_src;
+    return $new_src;
+  }
+
+  return defined $new_src ? $new_src : $target;
 }
 
 sub _complete

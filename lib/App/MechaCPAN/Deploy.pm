@@ -67,6 +67,8 @@ sub go
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
     $opts->{source} = \%srcs;
+    $opts->{'only-sources'} = 1;
+  }
 
   if (!$opts->{'skip-perl'})
   {
