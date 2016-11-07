@@ -8,6 +8,10 @@ use CPAN::Meta;
 use List::Util qw/reduce/;
 use App::MechaCPAN;
 
+our @args = (
+  'skip-perl!',
+);
+
 sub go
 {
   my $class = shift;
@@ -63,6 +67,11 @@ sub go
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
     $opts->{source} = \%srcs;
+
+  if (!$opts->{'skip-perl'})
+  {
+    $result = App::MechaCPAN::Perl->go( $opts );
+    return $result if $result;
   }
 
   return App::MechaCPAN::Install->go( $opts, @reqs );
