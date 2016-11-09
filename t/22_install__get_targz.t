@@ -9,7 +9,8 @@ require q[t/helper.pm];
 # Notes:
 #  * we don't test with git or ssh since those require some kind of login
 #  * File::Remove is included to make sure that it's not confused with file://
-foreach my $src (qw[
+foreach my $src (
+  qw[
   test_dists/NoDeps/NoDeps-1.0.tar.gz
   authors/id/E/ET/ETHER/Try-Tiny-0.24.tar.gz
   E/ET/ETHER/Try-Tiny-0.24.tar.gz
@@ -22,17 +23,18 @@ foreach my $src (qw[
   Try::Tiny~0.24
   Try::Tiny~<0.24
   File::Remove
- ],
- [qw/Try::Tiny 0.24/],
- [qw/Try::Tiny <0.24/],
- )
+  ],
+  [qw/Try::Tiny 0.24/],
+  [qw/Try::Tiny <0.24/],
+  )
 {
-  local $App::MechaCPAN::Install::dest_dir = tempdir( TEMPLATE => 't_mechacpan_XXXXXXXX', CLEANUP => 1 );
+  local $App::MechaCPAN::Install::dest_dir
+    = tempdir( TEMPLATE => 't_mechacpan_XXXXXXXX', CLEANUP => 1 );
   local $@;
   my $tgz = eval { App::MechaCPAN::Install::_get_targz($src) };
   diag("Error: '$@'")
     if $@;
-  ok(-s $tgz, "Got '$src'");
+  ok( -s $tgz, "Got '$src'" );
 }
 
 done_testing;

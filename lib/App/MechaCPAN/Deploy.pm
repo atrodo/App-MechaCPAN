@@ -45,24 +45,25 @@ sub go
     push @reqs, [ splice( @acc, 0, 2 ) ];
   }
 
-  if ( -f "$file.snapshot")
+  if ( -f "$file.snapshot" )
   {
     my $snapshot_info = parse_snapshot("$file.snapshot");
     my %srcs;
     foreach my $dist ( values %$snapshot_info )
     {
       my $src = $dist->{pathname};
-      foreach my $provide ( keys %{ $dist->{provides} })
+      foreach my $provide ( keys %{ $dist->{provides} } )
       {
-        if (exists $srcs{$provide})
+        if ( exists $srcs{$provide} )
         {
-          die "Found dumplicate distributions ($src and $srcs{$provide}) that provides the same module ($provide)\n";
+          die
+              "Found dumplicate distributions ($src and $srcs{$provide}) that provides the same module ($provide)\n";
         }
         $srcs{$provide} = $src;
       }
     }
 
-    if (ref  $opts->{source} eq 'HASH')
+    if ( ref $opts->{source} eq 'HASH' )
     {
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
@@ -72,9 +73,9 @@ sub go
 
   my $result;
 
-  if (!$opts->{'skip-perl'})
+  if ( !$opts->{'skip-perl'} )
   {
-    $result = App::MechaCPAN::Perl->go( $opts );
+    $result = App::MechaCPAN::Perl->go($opts);
     return $result if $result;
   }
 
@@ -159,18 +160,18 @@ sub parse_snapshot
 
   open my $snap_fh, '<', $file;
 
-  if (my $line = <$snap_fh> !~ $snapshot_re)
+  if ( my $line = <$snap_fh> !~ $snapshot_re )
   {
     die "File doesn't looks like a carton snapshot: $file";
   }
 
-  my @stack = ($result);
+  my @stack  = ($result);
   my $prefix = '';
-  while (my $line = <$snap_fh>)
+  while ( my $line = <$snap_fh> )
   {
     chomp $line;
 
-    if ($line =~ m/^ \Q$prefix\E (\S+?) :? $/xms)
+    if ( $line =~ m/^ \Q$prefix\E (\S+?) :? $/xms )
     {
       my $new_depth = {};
       $stack[0]->{$1} = $new_depth;
@@ -179,13 +180,13 @@ sub parse_snapshot
       next;
     }
 
-    if ($line =~ m/^ \Q$prefix\E (\S+?) (?: :? \s (.*) )? $/xms)
+    if ( $line =~ m/^ \Q$prefix\E (\S+?) (?: :? \s (.*) )? $/xms )
     {
       $stack[0]->{$1} = $2;
       next;
     }
 
-    if ($line !~ m/^ \Q$prefix\E /xms)
+    if ( $line !~ m/^ \Q$prefix\E /xms )
     {
       shift @stack;
       $prefix = '  ' x $#stack;

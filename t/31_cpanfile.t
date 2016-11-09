@@ -20,10 +20,12 @@ my $output = {
     },
   },
   'configure' => { 'requires' => { 'Test::More' => undef } },
-  'perl'      => '5.012000',
+  'perl' => '5.012000',
 };
 
-is_deeply( $cpanfile_info, $output,
-  "parse_cpan produces the expected requirements" );
+is_deeply(
+  $cpanfile_info, $output,
+  "parse_cpan produces the expected requirements"
+);
 
 done_testing;

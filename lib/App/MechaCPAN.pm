@@ -30,7 +30,6 @@ our $VERSION = '0.10';
 my $orig_dir = cwd;
 our $dest_dir = "$orig_dir/local_t/";
 
-
 my @args = (
   'dry-run|n!',
   'diag-run!',
@@ -53,9 +52,9 @@ sub main
 
   my $options = {};
   my $getopt_ret
-      = Getopt::Long::GetOptionsFromArray( \@argv, $options, @args );
+    = Getopt::Long::GetOptionsFromArray( \@argv, $options, @args );
   return -1
-      if !$getopt_ret;
+    if !$getopt_ret;
 
   my $cmd    = ucfirst lc shift @argv;
   my $pkg    = join( '::', __PACKAGE__, $cmd );
@@ -81,7 +80,7 @@ sub main
 
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
 
-  if (!defined $ret)
+  if ( !defined $ret )
   {
     warn $@;
     return -1;
@@ -135,23 +134,25 @@ sub inflate_archive
     local $File::Fetch::WARN;
     my $ff = File::Fetch->new( uri => $src );
     $ff->scheme('http')
-        if $ff->scheme eq 'https';
+      if $ff->scheme eq 'https';
     my $content = '';
     my $where = $ff->fetch( to => \$content );
     die $ff->error || "Could not download $src"
-        if !defined $where;
+      if !defined $where;
     $src = $where;
   }
 
-  my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX', CLEANUP => 1 );
+  my $dir = tempdir(
+    TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
+    CLEANUP  => 1
+  );
   my $orig = cwd;
 
-  my $error_free = eval
-  {
+  my $error_free = eval {
     chdir $dir;
     my $tar = Archive::Tar->new;
     $tar->error(1);
-    my $ret = $tar->read("$src", 1, {extract => 1});
+    my $ret = $tar->read( "$src", 1, { extract => 1 } );
     die $tar->error
       unless $ret;
     1;
@@ -171,21 +172,21 @@ sub run
   my $cmd  = shift;
   my @args = @_;
 
-  my $out     = "";
-  my $err     = "";
+  my $out = "";
+  my $err = "";
 
-  my $dest_out_fh = $LOGFH;
-  my $dest_err_fh = $LOGFH;
+  my $dest_out_fh  = $LOGFH;
+  my $dest_err_fh  = $LOGFH;
   my $print_output = $VERBOSE;
 
-  if (ref $cmd eq 'GLOB')
+  if ( ref $cmd eq 'GLOB' )
   {
     $dest_out_fh = $cmd;
-    $cmd = shift @args;
+    $cmd         = shift @args;
   }
 
   # If the output is asked for (non-void context), don't show it anywhere
-  if (defined wantarray)
+  if ( defined wantarray )
   {
     undef $print_output;
     open $dest_out_fh, ">", \$out;
@@ -199,7 +200,7 @@ sub run
   $error->blocking(0);
 
   warn( join( "\t", $cmd, @args ) . "\n" )
-      if $VERBOSE;
+    if $VERBOSE;
 
   my $pid = open3( undef, $output, $error, $cmd, @args );
 
@@ -212,10 +213,11 @@ sub run
     foreach my $fh (@ready)
     {
       my $line = <$fh>;
+
       #warn "reading $fh";
       #my $ret = $fh->read($line, 2048) ;
       #warn $ret;
-      if ( !defined $line)
+      if ( !defined $line )
       {
         $select->remove($fh);
         next;
@@ -223,12 +225,12 @@ sub run
 
       print STDERR $line if $print_output;
 
-      if ( $fh eq $output  && defined $dest_out_fh )
+      if ( $fh eq $output && defined $dest_out_fh )
       {
         print $dest_out_fh $line;
       }
 
-      if ( $fh eq $error  && defined $dest_err_fh )
+      if ( $fh eq $error && defined $dest_err_fh )
       {
         print $dest_err_fh $line;
       }
@@ -241,8 +243,8 @@ sub run
   if ( $? >> 8 )
   {
     croak qq/\e[32m$out\e[31m$err\nCould not execute '/
-        . join( ' ', $cmd, @args )
-        . qq/'.\e[0m\n/;
+      . join( ' ', $cmd, @args )
+      . qq/'.\e[0m\n/;
   }
 
   return

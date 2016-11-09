@@ -39,11 +39,11 @@ sub go
   local $dest_dir = "$orig_dir/local_t/";
   local $dest_lib = "$dest_dir/lib/perl5";
 
-  my @targets = ($src, @srcs);
+  my @targets = ( $src, @srcs );
   my %src_names;
   my @deps;
 
-  if (ref $opts->{source} ne 'HASH')
+  if ( ref $opts->{source} ne 'HASH' )
   {
     $opts->{source} = {};
   }
@@ -89,16 +89,16 @@ sub go
   my @states     = grep { ref $_ eq 'CODE' } @full_states;
   my @state_desc = grep { ref $_ ne 'CODE' } @full_states;
 
-  foreach my $target ( @targets )
+  foreach my $target (@targets)
   {
-    $target = _source_translate( $target, $opts);
-    $target = _create_target($target);
+    $target           = _source_translate( $target, $opts );
+    $target           = _create_target($target);
     $target->{update} = 1;
   }
 
   while ( my $target = shift @targets )
   {
-    $target = _source_translate( $target, $opts);
+    $target = _source_translate( $target, $opts );
     $target = _create_target($target);
 
     if ( $target->{state} eq $COMPLETE )
@@ -152,15 +152,17 @@ sub _resolve
     my $module = $target->{module};
     my $ver    = _get_mod_ver($module);
 
-      if ($target->{version} eq $ver)
-      {
-        info( $target->{src_name},
-          sprintf( '%-21s %s', 'Up to date', $target->{src_name} ) );
-        _complete($target);
-        return;
-      }
+    if ( $target->{version} eq $ver )
+    {
+      info(
+        $target->{src_name},
+        sprintf( '%-21s %s', 'Up to date', $target->{src_name} )
+      );
+      _complete($target);
+      return;
+    }
 
-    if ( defined $ver && !$target->{update})
+    if ( defined $ver && !$target->{update} )
     {
       my $constraint = $target->{constraint};
       my $prereq     = CPAN::Meta::Prereqs->new(
@@ -169,8 +171,10 @@ sub _resolve
 
       if ( $req->accepts_module( $module, $ver ) )
       {
-        info( $target->{src_name},
-          sprintf( '%-21s %s', 'Up to date', $target->{src_name} ) );
+        info(
+          $target->{src_name},
+          sprintf( '%-21s %s', 'Up to date', $target->{src_name} )
+        );
         _complete($target);
         return;
       }
@@ -286,7 +290,7 @@ sub _prereq
 sub _install
 {
   my $target = shift;
-  my $cache = shift;
+  my $cache  = shift;
 
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
@@ -390,7 +394,6 @@ sub _create_target
 
   if ( ref $target eq '' )
   {
-    # $target = { state => 0, src_name => $target, };
     if ( $target =~ m{^ ([^/]+) @ (.*) $}xms )
     {
       $target = [ $1, "==$2" ];
@@ -439,8 +442,10 @@ sub _get_targz
     );
 
     run( 'git', 'clone', '--bare', $git_url, $dir );
-    run( $fh, 'git', 'archive', '--format=tar.gz', "--remote=$dir",
-      $commit || 'master' );
+    run(
+      $fh, 'git', 'archive', '--format=tar.gz', "--remote=$dir",
+      $commit || 'master'
+    );
     close $fh;
     return $file;
   }
@@ -494,7 +499,7 @@ sub _get_targz
 
     $target->{is_cpan} = 1;
     $target->{module}  = "$src";
-    $target->{version} = version->parse($json_data->{version});
+    $target->{version} = version->parse( $json_data->{version} );
   }
 
   if ( defined $url )
@@ -613,7 +618,7 @@ sub _installed_file_for_module
 sub _source_translate
 {
   my $target = shift;
-  my $opts = shift;
+  my $opts   = shift;
 
   my $sources = $opts->{source};
 
@@ -635,10 +640,10 @@ sub _source_translate
 
   my $new_src = $sources->{$src_name};
 
-  if ($opts->{'only-sources'})
+  if ( $opts->{'only-sources'} )
   {
     die "Unable to locate $src_name from the sources list\n"
-      if !$new_src;
+        if !$new_src;
     return $new_src;
   }
 

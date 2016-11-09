@@ -8,12 +8,12 @@ use File::Temp qw/tempdir/;
 use App::MechaCPAN;
 require q[t/helper.pm];
 
-my $pwd  = cwd;
+my $pwd = cwd;
 
 my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 chdir $dir;
 
-my $lib = 'NoDeps';
+my $lib     = 'NoDeps';
 my $options = {
   source => {
     $lib => "$pwd/test_dists/$lib/$lib-1.0.tar.gz",

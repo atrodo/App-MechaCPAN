@@ -21,23 +21,24 @@ sub go
 
   my $orig_dir = $dest_dir;
 
-  my $src_tz  = _get_targz($src);
-  my $src_dir = inflate_archive($src_tz);
-  my $dest_dir = "$orig_dir/local/perl";
+  my $src_tz   = _get_targz($src);
+  my $src_dir  = inflate_archive($src_tz);
+  my $dest_dir = "$orig_dir/local_t/perl";
 
   chdir $src_dir;
 
-  if (!-e 'Configure')
+  if ( !-e 'Configure' )
   {
     my @files = glob('*');
-    if (@files > 1)
+    if ( @files > 1 )
     {
       die 'Could not find perl to configure';
     }
     chdir $files[0];
   }
 
-  my @config = ('-des', "-Dprefix=$dest_dir", "-A'eval:scriptdir=$dest_dir'", );
+  my @config
+      = ( '-des', "-Dprefix=$dest_dir", "-A'eval:scriptdir=$dest_dir'", );
   my @make = "make", "-j" . $opts->{jobs} // 2;
 
   delete @ENV{qw(PERL5LIB PERL5OPT)};
@@ -55,7 +56,7 @@ sub go
   run qw[sh Configure], @config;
   run @make;
   run @make, 'test_harness'
-    unless $opts->{'skip-tests'};
+      unless $opts->{'skip-tests'};
   run @make, 'install';
 
   chdir $orig_dir;
