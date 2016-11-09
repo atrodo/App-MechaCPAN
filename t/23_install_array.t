@@ -15,7 +15,7 @@ my %pkgs = (
 );
 
 chdir $pwd;
-my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 0 );
+my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 chdir $dir;
 
 is(
