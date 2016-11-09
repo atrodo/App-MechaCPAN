@@ -67,6 +67,11 @@ sub main
     return -1;
   }
 
+  if ( ref $argv[0] eq 'HASH' )
+  {
+    $options = shift @argv;
+  }
+
   if ( $options->{'diag-run'} )
   {
     warn "Would run '$cmd'\n";
