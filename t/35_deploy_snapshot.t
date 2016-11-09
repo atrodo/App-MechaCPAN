@@ -14,7 +14,10 @@ my $cpanfile      = "$FindBin::Bin/../test_dists/DeploySnapshot/cpanfile";
 my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 chdir $dir;
 
-is(App::MechaCPAN::main('deploy', $cpanfile), 0, "Can run deploy");
+is(
+  App::MechaCPAN::main( 'deploy', { 'skip-perl' => 1 }, $cpanfile ), 0,
+  "Can run deploy"
+);
 is(cwd, $dir, 'Returned to whence it started');
 ok(-d "$dir/local_t/lib/perl5/", 'Created local lib');
 
