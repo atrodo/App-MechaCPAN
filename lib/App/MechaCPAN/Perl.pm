@@ -19,7 +19,7 @@ sub go
   my $src   = shift;
   my @argv  = shift;
 
-  my $orig_dir = $dest_dir;
+  my $orig_dir = &dest_dir;
 
   my $src_tz   = _get_targz($src);
   my $src_dir  = inflate_archive($src_tz);

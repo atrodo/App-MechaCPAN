@@ -35,8 +35,8 @@ sub go
   my @srcs  = @_;
 
   my $orig_dir = cwd;
+  my $dest_dir = &dest_dir;
 
-  local $dest_dir = "$orig_dir/local_t/";
   local $dest_lib = "$dest_dir/lib/perl5";
 
   my @targets = ( $src, @srcs );
@@ -515,6 +515,8 @@ sub _get_targz
 
     local $File::Fetch::WARN;
     my $ff = File::Fetch->new( uri => $url );
+    my $dest_dir = dest_dir() . "/pkgs";
+
     $ff->scheme('http')
         if $ff->scheme eq 'https';
     my $where = $ff->fetch( to => $dest_dir );

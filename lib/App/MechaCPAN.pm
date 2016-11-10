@@ -1,6 +1,6 @@
 package App::MechaCPAN;
 
-use v5.12;
+use v5.14;
 use strict;
 use Cwd qw/cwd/;
 use Carp;
@@ -17,7 +17,7 @@ use Exporter qw/import/;
 
 BEGIN
 {
-  our @EXPORT_OK = qw/run info inflate_archive url_re $dest_dir/;
+  our @EXPORT_OK = qw/run info inflate_archive url_re dest_dir/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -28,7 +28,6 @@ require App::MechaCPAN::Deploy;
 our $VERSION = '0.10';
 
 my $orig_dir = cwd;
-our $dest_dir = "$orig_dir/local_t/";
 
 my @args = (
   'dry-run|n!',
@@ -56,9 +55,10 @@ sub main
   return -1
     if !$getopt_ret;
 
-  my $cmd    = ucfirst lc shift @argv;
-  my $pkg    = join( '::', __PACKAGE__, $cmd );
-  my $action = eval { $pkg->can('go') };
+  my $dest_dir = &dest_dir;
+  my $cmd      = ucfirst lc shift @argv;
+  my $pkg      = join( '::', __PACKAGE__, $cmd );
+  my $action   = eval { $pkg->can('go') };
 
   if ( !defined $action )
   {
@@ -123,6 +123,39 @@ sub info
   print STDERR "$line";
 }
 END { print STDERR "\n" unless $QUIET; }
+
+package MechaCPAN::DestGuard
+{
+  use Cwd qw/cwd/;
+  use Scalar::Util qw/refaddr weaken/;
+  use overload '""' => sub { my $s = shift; return $$s }, fallback => 1;
+  my $dest_dir;
+
+  sub get
+  {
+    my $result = $dest_dir;
+    if ( !defined $result )
+    {
+      my $pwd = cwd;
+      $dest_dir = \"$pwd/local_t/";
+      bless $dest_dir;
+      $result = $dest_dir;
+      weaken $dest_dir;
+    }
+    return $dest_dir;
+  }
+
+  sub DESTROY
+  {
+    undef $dest_dir;
+  }
+}
+
+sub dest_dir
+{
+  my $result = MechaCPAN::DestGuard::get();
+  return $result;
+}
 
 sub inflate_archive
 {
