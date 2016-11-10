@@ -8,7 +8,7 @@ use Symbol qw/geniosym/;
 use autodie;
 use IPC::Open3;
 use IO::Select;
-use File::Temp qw/tempdir/;
+use File::Temp qw/tempfile tempdir/;
 use File::Spec qw//;
 use Archive::Tar;
 use Getopt::Long qw//;
@@ -77,6 +77,22 @@ sub main
     return 0;
   }
 
+  if ( !-d $dest_dir )
+  {
+    mkdir $dest_dir;
+  }
+
+  unless ( $options->{'no-log'} )
+  {
+    my $log_dir = "$dest_dir/logs";
+    if ( !-d $log_dir )
+    {
+      mkdir $log_dir;
+    }
+
+    my $log_path;
+    ( $LOGFH, $log_path ) = tempfile( "$log_dir/log.$$.XXXX", UNLINK => 0 );
+  }
 
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
 
