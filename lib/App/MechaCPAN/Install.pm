@@ -110,12 +110,9 @@ sub go
     chdir $target->{dir}
         if exists $target->{dir};
 
-    info(
-      $target->{src_name},
-      sprintf(
-        '%-21s %s', $state_desc[ $target->{state} ], $target->{src_name}
-      )
-    );
+    my $line = sprintf( '%-21s %s', $state_desc[ $target->{state} ],
+      $target->{src_name} );
+    info( $target->{src_name}, $line );
     my $method = $states[ $target->{state} ];
     unshift @targets, $method->( $target, $cache );
     $target->{state}++;
@@ -123,6 +120,7 @@ sub go
     if ( $target->{state} eq scalar @states )
     {
       _complete($target);
+      success( $target->{src_name}, $line );
     }
   }
 
@@ -154,7 +152,7 @@ sub _resolve
 
     if ( $target->{version} eq $ver )
     {
-      info(
+      success(
         $target->{src_name},
         sprintf( '%-21s %s', 'Up to date', $target->{src_name} )
       );
@@ -171,7 +169,7 @@ sub _resolve
 
       if ( $req->accepts_module( $module, $ver ) )
       {
-        info(
+        success(
           $target->{src_name},
           sprintf( '%-21s %s', 'Up to date', $target->{src_name} )
         );
@@ -560,7 +558,6 @@ sub _load_meta
         if defined $meta;
   }
 
-
   return $meta;
 }
 
@@ -585,7 +582,6 @@ sub _phase_prereq
       $version = $module eq 'perl' ? $] : $version;
       $status = $reqs->accepts_module( $module, $version );
     }
-
 
     push @result, $module
         if !$status;

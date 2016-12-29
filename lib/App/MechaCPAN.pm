@@ -6,8 +6,10 @@ use Cwd qw/cwd/;
 use Carp;
 use Symbol qw/geniosym/;
 use autodie;
+use Term::ANSIColor qw//;
 use IPC::Open3;
 use IO::Select;
+use List::Util qw/first/;
 use File::Temp qw/tempfile tempdir/;
 use File::Spec qw//;
 use Archive::Tar;
@@ -17,7 +19,7 @@ use Exporter qw/import/;
 
 BEGIN
 {
-  our @EXPORT_OK = qw/run info inflate_archive url_re dest_dir/;
+  our @EXPORT_OK = qw/url_re info success dest_dir inflate_archive run/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -117,26 +119,85 @@ sub url_re
 
 sub info
 {
-  my $key = shift;
-  my $line = shift // $key;
+  my $key  = shift;
+  my $line = shift;
+
+  if ( !defined $line )
+  {
+    $line = $key;
+    undef $key;
+  }
+
+  status( $key, 'YELLOW', $line );
+}
+
+sub success
+{
+  my $key  = shift;
+  my $line = shift;
+
+  if ( !defined $line )
+  {
+    $line = $key;
+    undef $key;
+  }
+
+  status( $key, 'GREEN', $line );
+}
+
+sub status
+{
+  my $key   = shift;
+  my $color = shift;
+  my $line  = shift;
+
+  if ( !defined $line )
+  {
+    $line  = $color;
+    $color = 'RESET';
+  }
 
   return
     if $QUIET;
 
+  state $RESET = Term::ANSIColor::color('RESET');
+  $color = eval { Term::ANSIColor::color($color) } // $RESET;
+
+  # Clean up the line
+  $line =~ s/\n/ /xmsg;
+
+  state @key_lines;
   state $last_key;
 
-  if ( $last_key eq $key )
+  my $idx = first { $key_lines[$_] eq $key } 0 .. $#key_lines;
+
+  if ( !defined $key )
   {
-    print STDERR "\e[0E\e[K\e[1E";
-  }
-  else
-  {
-    print STDERR "\n"
-      if defined $last_key;
-    $last_key = $key;
+    $idx = -1;
   }
 
-  print STDERR "$line";
+  if ( !defined $idx )
+  {
+    unshift @key_lines, $key;
+    $idx = 0;
+
+    # Scroll Up 1 line
+    print STDERR "\n";
+  }
+  $idx++;
+
+  # We always return to the last line, so we move up from there
+  print STDERR "\e[${idx}F";
+
+  # Clear the line (\e[K) and return to the beginning of the line (\e[0E)
+  print STDERR "\e[K";
+
+  $last_key = $key;
+
+  print STDERR "$color$line$RESET";
+
+  # Return to the last line (\e[E)
+  print STDERR "\e[${idx}E";
 }
 END { print STDERR "\n" unless $QUIET; }
 
