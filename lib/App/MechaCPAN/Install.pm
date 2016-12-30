@@ -76,14 +76,14 @@ sub go
 
   my $cache       = {};
   my @full_states = (
-    'Resolving'             => \&_resolve,
-    'Configuring'           => \&_meta,
-    'Configuring'           => \&_config_prereq,
-    'Configuring'           => \&_configure,
-    'Configuring'           => \&_mymeta,
-    'Finding Prerequisites' => \&_prereq,
-    'Installing'            => \&_install,
-    'Installed'             => \&_write_meta,
+    'Resolving'     => \&_resolve,
+    'Configuring'   => \&_meta,
+    'Configuring'   => \&_config_prereq,
+    'Configuring'   => \&_configure,
+    'Configuring'   => \&_mymeta,
+    'Prerequisites' => \&_prereq,
+    'Installing'    => \&_install,
+    'Installed'     => \&_write_meta,
   );
 
   my @states     = grep { ref $_ eq 'CODE' } @full_states;
@@ -110,8 +110,10 @@ sub go
     chdir $target->{dir}
         if exists $target->{dir};
 
-    my $line = sprintf( '%-21s %s', $state_desc[ $target->{state} ],
-      $target->{src_name} );
+    my $line = sprintf(
+      '%-13s %s', $state_desc[ $target->{state} ],
+      $target->{src_name}
+    );
     info( $target->{src_name}, $line );
     my $method = $states[ $target->{state} ];
     unshift @targets, $method->( $target, $cache );
@@ -154,7 +156,7 @@ sub _resolve
     {
       success(
         $target->{src_name},
-        sprintf( '%-21s %s', 'Up to date', $target->{src_name} )
+        sprintf( '%-13s %s', 'Up to date', $target->{src_name} )
       );
       _complete($target);
       return;
@@ -171,7 +173,7 @@ sub _resolve
       {
         success(
           $target->{src_name},
-          sprintf( '%-21s %s', 'Up to date', $target->{src_name} )
+          sprintf( '%-13s %s', 'Up to date', $target->{src_name} )
         );
         _complete($target);
         return;
