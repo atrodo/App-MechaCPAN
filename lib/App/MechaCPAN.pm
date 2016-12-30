@@ -145,29 +145,19 @@ sub success
   status( $key, 'GREEN', $line );
 }
 
-sub status
+my $RESET = Term::ANSIColor::color('RESET');
+my $BOLD  = Term::ANSIColor::color('BOLD');
+
+sub _show_line
 {
   my $key   = shift;
   my $color = shift;
   my $line  = shift;
 
-  if ( !defined $line )
-  {
-    $line  = $color;
-    $color = 'RESET';
-  }
-
-  return
-    if $QUIET;
-
-  state $RESET = Term::ANSIColor::color('RESET');
-  $color = eval { Term::ANSIColor::color($color) } // $RESET;
-
   # Clean up the line
   $line =~ s/\n/ /xmsg;
 
   state @key_lines;
-  state $last_key;
 
   my $idx = first { $key_lines[$_] eq $key } 0 .. $#key_lines;
 
@@ -186,18 +176,49 @@ sub status
   }
   $idx++;
 
-  # We always return to the last line, so we move up from there
+  # We use some ANSI escape codes, so they are:
+  # \e[.F  - Move up from current line, which is always the end of the list
+  # \e[K   - Clear the line
+  # $color - Colorize the text
+  # $line  - Print the text
+  # $RESET - Reset the colorize
+  # \e[.E  - Move down from the current line, back to the end of the list
   print STDERR "\e[${idx}F";
-
-  # Clear the line (\e[K) and return to the beginning of the line (\e[0E)
   print STDERR "\e[K";
-
-  $last_key = $key;
-
   print STDERR "$color$line$RESET";
-
-  # Return to the last line (\e[E)
   print STDERR "\e[${idx}E";
+
+  return;
+}
+
+sub status
+{
+  my $key   = shift;
+  my $color = shift;
+  my $line  = shift;
+
+  if ( !defined $line )
+  {
+    $line  = $color;
+    $color = 'RESET';
+  }
+
+  return
+    if $QUIET;
+
+  $color = eval { Term::ANSIColor::color($color) } // $RESET;
+
+  state @last_key;
+
+  # Undo the last line that is bold
+  if (@last_key)
+  {
+    _show_line(@last_key);
+  }
+
+  _show_line( $key, $color . $BOLD, $line );
+
+  @last_key = ( $key, $color, $line );
 }
 END { print STDERR "\n" unless $QUIET; }
 
