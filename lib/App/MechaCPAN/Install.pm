@@ -1,6 +1,6 @@
 package App::MechaCPAN::Install;
 
-use v5.12;
+use v5.14;
 
 use Config;
 use Cwd qw/cwd/;
@@ -16,7 +16,7 @@ use App::MechaCPAN qw/:go/;
 
 our @args = (
   'jobs=i',
-  'skip-tests!',
+  'skip-tests:s%',
   'install-man!',
   'source=s%',
   'only-sources!',
@@ -147,7 +147,7 @@ sub _resolve
     my $module = $target->{module};
     my $ver    = _get_mod_ver($module);
 
-    if ( $target->{version} eq $ver )
+    if ( defined $ver && $target->{version} eq $ver )
     {
       success(
         $target->{src_name},

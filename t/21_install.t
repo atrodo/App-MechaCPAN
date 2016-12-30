@@ -21,4 +21,5 @@ foreach my $dist ( sort glob("$FindBin::Bin/../test_dists/*/*.tar.gz") )
   ok( -e "$dir/local_t/lib/perl5/$name.pm", 'Library exists as expected' );
 }
 
+chdir $pwd;
 done_testing;

@@ -41,6 +41,7 @@ my @args = (
   'quiet|q!',
   'no-log!',
 );
+@args = keys { map { $_ => 1 } @args };
 
 our $VERBOSE;    # Print output from sub commands to STDERR
 our $QUIET;      # Do not print any progress to STDERR

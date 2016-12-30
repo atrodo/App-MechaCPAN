@@ -29,4 +29,5 @@ foreach my $file ( values %pkgs )
   ok( -e "$dir/local_t/lib/perl5/$file", "Library file $file exists" );
 }
 
+chdir $pwd;
 done_testing;

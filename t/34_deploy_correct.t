@@ -26,4 +26,5 @@ foreach my $file ( 'Try/Tiny.pm', 'Test/More.pm' )
   ok( -e "$dir/local_t/lib/perl5/$file", "Library file $file exists" );
 }
 
+chdir $pwd;
 done_testing;

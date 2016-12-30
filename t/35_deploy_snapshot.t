@@ -27,4 +27,5 @@ ok( -e "$dir/local_t/lib/perl5/$lib", "Library file $lib exists" );
 require_ok("$dir/local_t/lib/perl5/$lib");
 is( $Try::Tiny::VERSION, '0.24', "The correct version was installed" );
 
+chdir $pwd;
 done_testing;

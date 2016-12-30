@@ -30,8 +30,10 @@ foreach my $src (
 {
   local $App::MechaCPAN::Install::dest_dir
     = tempdir( TEMPLATE => 't_mechacpan_XXXXXXXX', CLEANUP => 1 );
+
+  my $target = App::MechaCPAN::Install::_create_target( $src, {} );
   local $@;
-  my $tgz = eval { App::MechaCPAN::Install::_get_targz($src) };
+  my $tgz = eval { App::MechaCPAN::Install::_get_targz($target) };
   diag("Error: '$@'")
     if $@;
   ok( -s $tgz, "Got '$src'" );
