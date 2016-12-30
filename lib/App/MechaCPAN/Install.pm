@@ -91,15 +91,15 @@ sub go
 
   foreach my $target (@targets)
   {
-    $target           = _source_translate( $target, $opts );
-    $target           = _create_target($target);
+    $target = _source_translate( $target, $opts );
+    $target = _create_target( $target, $cache );
     $target->{update} = 1;
   }
 
   while ( my $target = shift @targets )
   {
     $target = _source_translate( $target, $opts );
-    $target = _create_target($target);
+    $target = _create_target( $target, $cache );
 
     if ( $target->{state} eq $COMPLETE )
     {
@@ -137,11 +137,6 @@ sub _resolve
   my $cache  = shift;
 
   my $src_name = $target->{src_name};
-
-  return
-      if exists $cache->{src_names}->{$src_name};
-
-  $cache->{src_names}->{$src_name} = 1;
 
   # fetch
   my $src_tgz = _get_targz($target);
@@ -391,6 +386,10 @@ sub _escape
 sub _create_target
 {
   my $target = shift;
+  my $cache  = shift;
+
+  return $target
+      if ref $target eq 'HASH';
 
   if ( ref $target eq '' )
   {
@@ -413,12 +412,19 @@ sub _create_target
     };
   }
 
+  if ( exists $cache->{targets}->{ $target->{src_name} } )
+  {
+    $target = $cache->{targets}->{ $target->{src_name} };
+  }
+
+  $cache->{targets}->{ $target->{src_name} } = $target;
+
   return $target;
 }
 
 sub _get_targz
 {
-  my $target = _create_target(shift);
+  my $target = shift;
 
   my $src = $target->{src_name};
 
