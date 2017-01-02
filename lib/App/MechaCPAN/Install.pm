@@ -16,7 +16,8 @@ use App::MechaCPAN qw/:go/;
 
 our @args = (
   'jobs=i',
-  'skip-tests:s%',
+  'skip-tests!',
+  'skip-tests-for:s@',
   'install-man!',
   'source=s%',
   'only-sources!',
@@ -48,6 +49,12 @@ sub go
     $opts->{source} = {};
   }
 
+  if ( ref $opts->{'skip-tests-for'} ne 'ARRAY' )
+  {
+    $opts->{'skip-tests-for'} = [];
+  }
+  $opts->{'skip-tests-for'} = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
+
   # trick AutoInstall
   local $ENV{PERL5_CPAN_IS_RUNNING}     = $$;
   local $ENV{PERL5_CPANPLUS_IS_RUNNING} = $$;
@@ -74,7 +81,7 @@ sub go
   #  $ENV{PERL_MB_OPT} .= " --pureperl-only";
   #}
 
-  my $cache       = {};
+  my $cache       = { opts => $opts };
   my @full_states = (
     'Resolving'     => \&_resolve,
     'Configuring'   => \&_meta,
@@ -291,16 +298,30 @@ sub _install
   local $ENV{NONINTERACTIVE_TESTING} = 0;
 
   state $make;
+  my $opts = $cache->{opts};
 
   if ( !defined $make )
   {
     $make = $Config{make};
   }
 
+  my $skip_tests = $cache->{opts}->{'skip-tests'};
+  if (!$skip_tests )
+  {
+    my $skips = $opts->{'skip-tests-for'};
+    $skip_tests = exists $skips->{$target->{src_name} };
+
+    if ( !$skip_tests && defined $target->{module} )
+    {
+      $skip_tests = $skips->{$target->{module}};
+    }
+  }
+
   if ( $target->{maker} eq 'mb' )
   {
     run( $^X, './Build' );
-    run( $^X, './Build', 'test' );
+    run( $^X, './Build', 'test' )
+      unless $skip_tests;
     run( $^X, './Build', 'install' );
     return $target;
   }
@@ -308,7 +329,8 @@ sub _install
   if ( $target->{maker} eq 'mm' )
   {
     run($make);
-    run( $make, 'test' );
+    run( $make, 'test' )
+      unless $skip_tests;
     run( $make, 'install' );
     return $target;
   }
