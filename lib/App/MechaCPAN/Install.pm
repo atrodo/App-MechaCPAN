@@ -15,7 +15,6 @@ use ExtUtils::MakeMaker qw//;
 use App::MechaCPAN qw/:go/;
 
 our @args = (
-  'jobs=i',
   'skip-tests!',
   'skip-tests-for:s@',
   'install-man!',
