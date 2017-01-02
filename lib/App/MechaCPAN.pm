@@ -29,8 +29,6 @@ require App::MechaCPAN::Deploy;
 
 our $VERSION = '0.10';
 
-my $orig_dir = cwd;
-
 my @args = (
   'dry-run|n!',
   'diag-run!',
@@ -58,6 +56,7 @@ sub main
   return -1
     if !$getopt_ret;
 
+  my $orig_dir = cwd;
   my $dest_dir = &dest_dir;
   my $cmd      = ucfirst lc shift @argv;
   my $pkg      = join( '::', __PACKAGE__, $cmd );
@@ -98,6 +97,7 @@ sub main
   }
 
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
+  chdir $orig_dir;
 
   if ( !defined $ret )
   {
