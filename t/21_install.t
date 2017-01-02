@@ -11,6 +11,9 @@ require q[t/helper.pm];
 my $pwd = cwd;
 foreach my $dist ( sort glob("$FindBin::Bin/../test_dists/*/*.tar.gz") )
 {
+  next
+    if $dist =~ m/Fail/xms;
+
   chdir $pwd;
   my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
   chdir $dir;
