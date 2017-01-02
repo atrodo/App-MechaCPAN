@@ -67,13 +67,16 @@ sub go
   local $ENV{PERL5LIB} = "$dest_lib";
 
   # skip man page generation
-  $ENV{PERL_MM_OPT}
-    .= " " . join( " ", "INSTALLMAN1DIR=none", "INSTALLMAN3DIR=none" );
-  $ENV{PERL_MB_OPT} .= " " . join(
-    " ",                            "--config installman1dir=",
-    "--config installsiteman1dir=", "--config installman3dir=",
-    "--config installsiteman3dir="
-  );
+  if ( !$opts->{'install-man'} )
+  {
+    $ENV{PERL_MM_OPT}
+      .= " " . join( " ", "INSTALLMAN1DIR=none", "INSTALLMAN3DIR=none" );
+    $ENV{PERL_MB_OPT} .= " " . join(
+      " ",                            "--config installman1dir=",
+      "--config installsiteman1dir=", "--config installman3dir=",
+      "--config installsiteman3dir="
+    );
+  }
 
   #if ( $self->{pure_perl} )
   #{
