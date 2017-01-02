@@ -21,9 +21,9 @@ sub go
 
   my $orig_dir = &dest_dir;
 
-  my $src_tz   = _get_targz($src);
+  my ( $src_tz, $version ) = _get_targz($src);
   my $src_dir  = inflate_archive($src_tz);
-  my $dest_dir = "$orig_dir/local_t/perl";
+  my $dest_dir = "$orig_dir/perl";
 
   chdir $src_dir;
 
@@ -46,18 +46,30 @@ sub go
   # Make sure no tomfoolery is happening with perl, like plenv shims
   $ENV{PATH} = $Config{binexp} . ":$ENV{PATH}";
 
+  $version = "perl $version";
+
   eval {
     require Devel::PatchPerl;
-    info 'Patching perl';
+    info $version, "Patching $version";
     Devel::PatchPerl->patch_source();
   };
 
-  info 'Building perl';
+  info $version, "Configuring $version";
   run qw[sh Configure], @config;
+
+  info $version, "Building $version";
   run @make;
-  run @make, 'test_harness'
-      unless $opts->{'skip-tests'};
+
+  if ( !$opts->{'skip-tests'} )
+  {
+    info $version, "Testing $version";
+    run @make, 'test_harness';
+  }
+
+  info $version, "Installing $version";
   run @make, 'install';
+
+  success "Installed $version";
 
   chdir $orig_dir;
 
@@ -121,7 +133,7 @@ sub _get_targz
 
   if ( -e $src )
   {
-    return $src;
+    return ( $src, '' );
   }
 
   my $url;
@@ -129,7 +141,7 @@ sub _get_targz
   # URL
   if ( $src =~ url_re )
   {
-    return $src;
+    return ( $src, '' );
   }
 
   # CPAN
@@ -167,7 +179,7 @@ sub _get_targz
       $minor = $possible[0];
     }
 
-    return _dnld_url( $version, $minor );
+    return ( _dnld_url( $version, $minor ), "5.$version.$minor" );
   }
 
   die "Cannot find $src\n";
