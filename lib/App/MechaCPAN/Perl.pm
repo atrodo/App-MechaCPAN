@@ -9,7 +9,7 @@ use App::MechaCPAN qw/:go/;
 our @args = (
   'threads!',
   'jobs=i',
-  'skip-tests:s%',
+  'skip-tests!',
 );
 
 sub go
@@ -39,7 +39,12 @@ sub go
 
   my @config
       = ( '-des', "-Dprefix=$dest_dir", "-A'eval:scriptdir=$dest_dir'", );
-  my @make = ( "make", "-j" . ($opts->{jobs} // 2) );
+  my @make = ( "make", "-j" . ( $opts->{jobs} // 2 ) );
+
+  if ( $opts->{threads} )
+  {
+    push @config, '-Dusethreads';
+  }
 
   delete @ENV{qw(PERL5LIB PERL5OPT)};
 
