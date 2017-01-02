@@ -12,7 +12,7 @@ my %tests = (
 foreach my $test ( keys %tests )
 {
   like(
-    App::MechaCPAN::Perl::_get_targz($test), $tests{$test},
+    (App::MechaCPAN::Perl::_get_targz($test))[0], $tests{$test},
     "Got a good version for '$test'"
   );
 }
