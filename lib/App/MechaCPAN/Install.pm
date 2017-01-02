@@ -52,7 +52,8 @@ sub go
   {
     $opts->{'skip-tests-for'} = [];
   }
-  $opts->{'skip-tests-for'} = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
+  $opts->{'skip-tests-for'}
+    = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
 
   # trick AutoInstall
   local $ENV{PERL5_CPAN_IS_RUNNING}     = $$;
@@ -67,7 +68,7 @@ sub go
 
   # skip man page generation
   $ENV{PERL_MM_OPT}
-      .= " " . join( " ", "INSTALLMAN1DIR=none", "INSTALLMAN3DIR=none" );
+    .= " " . join( " ", "INSTALLMAN1DIR=none", "INSTALLMAN3DIR=none" );
   $ENV{PERL_MB_OPT} .= " " . join(
     " ",                            "--config installman1dir=",
     "--config installsiteman1dir=", "--config installman3dir=",
@@ -80,7 +81,7 @@ sub go
   #  $ENV{PERL_MB_OPT} .= " --pureperl-only";
   #}
 
-  my $cache       = { opts => $opts };
+  my $cache = { opts => $opts };
   my @full_states = (
     'Resolving'     => \&_resolve,
     'Configuring'   => \&_meta,
@@ -114,7 +115,7 @@ sub go
 
     chdir $orig_dir;
     chdir $target->{dir}
-        if exists $target->{dir};
+      if exists $target->{dir};
 
     my $line = sprintf(
       '%-13s %s', $state_desc[ $target->{state} ],
@@ -211,7 +212,7 @@ sub _config_prereq
   my $meta = $target->{meta};
 
   return $target
-      if !defined $meta;
+    if !defined $meta;
 
   #printf "testing requirements for %s version %s\n", $meta->name,
   #    $meta->version;
@@ -230,7 +231,7 @@ sub _configure
   my $meta   = $target->{meta};
 
   state $mb_deps = { map { $_ => 1 }
-        qw/version ExtUtils-ParseXS ExtUtils-Install ExtUtilsManifest/ };
+      qw/version ExtUtils-ParseXS ExtUtils-Install ExtUtilsManifest/ };
 
   # meta may not be defined, so wrap it in an eval
   my $is_mb_dep = eval { exists $mb_deps->{ $meta->name } };
@@ -241,7 +242,7 @@ sub _configure
     run( $^X, 'Build.PL' );
     my $configured = -e -f 'Build';
     die 'Unable to configure Buid.PL'
-        unless $configured;
+      unless $configured;
     $maker = 'mb';
   }
 
@@ -250,12 +251,12 @@ sub _configure
     run( $^X, 'Makefile.PL' );
     my $configured = -e 'Makefile';
     die 'Unable to configure Makefile.PL'
-        unless $configured;
+      unless $configured;
     $maker = 'mm';
   }
 
   die 'Unable to configure'
-      if !defined $maker;
+    if !defined $maker;
 
   $target->{maker} = $maker;
   return $target;
@@ -281,7 +282,7 @@ sub _prereq
   #    $meta->version;
 
   my @deps
-      = map { _phase_prereq( $target, $cache, $_ ) } qw/runtime build test/;
+    = map { _phase_prereq( $target, $cache, $_ ) } qw/runtime build test/;
 
   $target->{prereq} = [@deps];
 
@@ -305,14 +306,14 @@ sub _install
   }
 
   my $skip_tests = $cache->{opts}->{'skip-tests'};
-  if (!$skip_tests )
+  if ( !$skip_tests )
   {
     my $skips = $opts->{'skip-tests-for'};
-    $skip_tests = exists $skips->{$target->{src_name} };
+    $skip_tests = exists $skips->{ $target->{src_name} };
 
     if ( !$skip_tests && defined $target->{module} )
     {
-      $skip_tests = $skips->{$target->{module}};
+      $skip_tests = $skips->{ $target->{module} };
     }
   }
 
@@ -410,7 +411,7 @@ sub _create_target
   my $cache  = shift;
 
   return $target
-      if ref $target eq 'HASH';
+    if ref $target eq 'HASH';
 
   if ( ref $target eq '' )
   {
@@ -462,7 +463,7 @@ sub _get_targz
     my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
 
     my $dir
-        = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
+      = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
     my ( $fh, $file ) = tempfile(
       TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
       CLEANUP  => 1
@@ -513,12 +514,12 @@ sub _get_targz
     local $File::Fetch::WARN;
     my $ff = File::Fetch->new( uri => $dnld );
     $ff->scheme('http')
-        if $ff->scheme eq 'https';
+      if $ff->scheme eq 'https';
     my $json_info = '';
     my $where = $ff->fetch( to => \$json_info );
 
     die "Could not find module $src on metacpan"
-        if !defined $where;
+      if !defined $where;
 
     my $json_data = JSON::PP::decode_json($json_info);
 
@@ -545,10 +546,10 @@ sub _get_targz
     my $dest_dir = dest_dir() . "/pkgs";
 
     $ff->scheme('http')
-        if $ff->scheme eq 'https';
+      if $ff->scheme eq 'https';
     my $where = $ff->fetch( to => $dest_dir );
     die $ff->error || "Could not download $url"
-        if !defined $where;
+      if !defined $where;
 
     return $where;
   }
@@ -560,7 +561,7 @@ sub _get_mod_ver
 {
   my $module = shift;
   return $]
-      if $module eq 'perl';
+    if $module eq 'perl';
   local $@;
   my $ver = eval {
     my $file = _installed_file_for_module($module);
@@ -584,7 +585,7 @@ sub _load_meta
   {
     $meta = eval { CPAN::Meta->load_file($file) };
     last
-        if defined $meta;
+      if defined $meta;
   }
 
   return $meta;
@@ -613,7 +614,7 @@ sub _phase_prereq
     }
 
     push @result, $module
-        if !$status;
+      if !$status;
   }
 
   return @result;
@@ -634,11 +635,11 @@ sub _installed_file_for_module
     "$dest_lib/$archname",
     "$dest_lib",
     @Config{qw(archlibexp privlibexp)},
-      )
+    )
   {
     my $tmp = File::Spec->catfile( $dir, $file );
     return $tmp
-        if -r $tmp;
+      if -r $tmp;
   }
 }
 
@@ -670,7 +671,7 @@ sub _source_translate
   if ( $opts->{'only-sources'} )
   {
     die "Unable to locate $src_name from the sources list\n"
-        if !$new_src;
+      if !$new_src;
     return $new_src;
   }
 
