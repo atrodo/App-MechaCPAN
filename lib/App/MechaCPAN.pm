@@ -234,7 +234,8 @@ sub status
 
   @last_key = ( $key, $color, $line );
 }
-END { print STDERR "\n" unless $QUIET; }
+END  { print STDERR "\n" unless $QUIET; }
+INIT { print STDERR "\n" unless $QUIET; }
 
 package MechaCPAN::DestGuard
 {
