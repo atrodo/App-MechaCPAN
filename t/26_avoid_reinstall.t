@@ -5,7 +5,6 @@ use Config;
 use Cwd qw/cwd/;
 use File::Temp qw/tempdir/;
 
-use App::MechaCPAN;
 require q[t/helper.pm];
 
 my $pwd  = cwd;

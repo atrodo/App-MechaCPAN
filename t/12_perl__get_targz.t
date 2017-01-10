@@ -2,7 +2,6 @@ use strict;
 use FindBin;
 use Test::More;
 
-use App::MechaCPAN;
 require q[t/helper.pm];
 
 my %tests = (

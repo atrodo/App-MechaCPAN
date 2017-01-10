@@ -3,7 +3,6 @@ use FindBin;
 use Test::More;
 use File::Temp qw/tempdir/;
 
-use App::MechaCPAN;
 require q[t/helper.pm];
 
 # Notes:
