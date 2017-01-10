@@ -42,7 +42,6 @@ $loaded_at_compile //= 0;
 our $VERSION = '0.10';
 
 my @args = (
-  'dry-run|n!',
   'diag-run!',
   @App::MechaCPAN::Perl::args,
   @App::MechaCPAN::Install::args,
