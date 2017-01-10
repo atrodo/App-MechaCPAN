@@ -98,6 +98,8 @@ sub go
 
   chdir $orig_dir;
 
+  &restart_script();
+
   return 0;
 }
 
