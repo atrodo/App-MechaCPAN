@@ -101,7 +101,7 @@ sub go
   return 0;
 }
 
-my $perl5_re = qr/^ 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )? $/xms;
+my $perl5_re = qr/^ v? 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )? $/xms;
 
 sub _dnld_url
 {
