@@ -20,10 +20,29 @@ sub go
   my @argv  = shift;
 
   my $orig_dir = &dest_dir;
+  my $dest_dir = "$orig_dir/perl";
 
   my ( $src_tz, $version ) = _get_targz($src);
+
+  if ( -e -x "$dest_dir/bin/perl" )
+  {
+    unless ( $opts->{is_restarted_process} )
+    {
+      # If it exists, we're probably running it by now.
+      if ( $version && $^V ne "v$version" )
+      {
+        info( $version,
+          "perl has already been installed ($^V, not $version)" );
+      }
+      else
+      {
+        success( $version, "perl has already been installed" );
+      }
+    }
+    return 0;
+  }
+
   my $src_dir  = inflate_archive($src_tz);
-  my $dest_dir = "$orig_dir/perl";
 
   chdir $src_dir;
 
