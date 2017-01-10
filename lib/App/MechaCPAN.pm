@@ -4,6 +4,7 @@ use v5.14;
 use strict;
 use Cwd qw/cwd/;
 use Carp;
+use Config;
 use Symbol qw/geniosym/;
 use autodie;
 use Term::ANSIColor qw//;
@@ -19,7 +20,8 @@ use Exporter qw/import/;
 
 BEGIN
 {
-  our @EXPORT_OK = qw/url_re info success dest_dir inflate_archive run/;
+  our @EXPORT_OK
+    = qw/url_re info success dest_dir inflate_archive run restart_script/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -27,6 +29,16 @@ require App::MechaCPAN::Perl;
 require App::MechaCPAN::Install;
 require App::MechaCPAN::Deploy;
 
+my $loaded_at_compile;
+my $restarted_key        = 'APP_MECHACPAN_RESTARTED';
+my $is_restarted_process = delete $ENV{$restarted_key};
+INIT
+{
+  $loaded_at_compile = 1;
+  &restart_script();
+}
+
+$loaded_at_compile //= 0;
 our $VERSION = '0.10';
 
 my @args = (
@@ -78,6 +90,8 @@ sub main
     warn "Would run '$cmd'\n";
     return 0;
   }
+
+  $options->{is_restarted_process} = $is_restarted_process;
 
   if ( !-d $dest_dir )
   {
@@ -388,6 +402,73 @@ sub run
   }
 
   return $out;
+}
+
+sub restart_script
+{
+  my $dest_dir   = &dest_dir;
+  my $local_perl = File::Spec->canonpath("$dest_dir/perl/bin/perl");
+  my $this_perl  = File::Spec->canonpath($^X);
+  if ( $^O ne 'VMS' )
+  {
+    $this_perl .= $Config{_exe}
+      unless $this_perl =~ m/$Config{_exe}$/i;
+    $local_perl .= $Config{_exe}
+      unless $local_perl =~ m/$Config{_exe}$/i;
+  }
+
+  state $orig_cwd = cwd;
+  state $orig_0   = $0;
+
+  my $current_cwd = cwd;
+  chdir $orig_cwd;
+
+  if (
+    $loaded_at_compile              # IF we were loaded during compile-time
+    && -e -x $local_perl            # AND the local perl is there
+    && $this_perl ne $local_perl    # AND if we're not running it
+    && -e -f -r $0                  # AND we are a readable file
+    && !$^P                         # AND we're not debugging
+    )
+  {
+    # ReExecute using the local perl
+    my @inc_add;
+    my @paths = qw/
+      sitearchexp sitelibexp
+      vendorarchexp vendorlibexp
+      archlibexp privlibexp
+      otherlibdirsexp
+      /;
+    my %site_inc = map { $_ => 1 } @Config{@paths}, '.';
+
+    foreach my $lib ( split ':', $ENV{PERL5LIB} )
+    {
+      $site_inc{$lib} = 1;
+      $site_inc{"$lib/$Config{archname}"} = 1;
+    }
+
+    foreach my $lib (@INC)
+    {
+      push( @inc_add, $lib )
+        unless exists $site_inc{$lib};
+    }
+
+    # Make sure anything from PERL5LIB and local::lib are removed since it's
+    # most likely the wrong version as well.
+    @inc_add = grep { $_ !~ m/^$ENV{PERL_LOCAL_LIB_ROOT}/xms } @inc_add;
+    undef @ENV{qw/PERL_LOCAL_LIB_ROOT PERL5LIB/};
+
+    # If we've running, inform the new us that they are a restarted process
+    $ENV{$restarted_key} = 1
+      if ${^GLOBAL_PHASE} eq 'RUN';
+
+    # Cleanup any files opened already. They arn't useful after we exec
+    File::Temp::cleanup();
+
+    exec( $local_perl, map( {"-I$_"} @inc_add ), $0, @ARGV );
+  }
+
+  chdir $current_cwd;
 }
 
 1;
