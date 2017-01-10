@@ -42,7 +42,10 @@ sub go
     return 0;
   }
 
-  my $src_dir  = inflate_archive($src_tz);
+  $version = "perl $version";
+  info $version, "Fetching $version";
+
+  my $src_dir = inflate_archive($src_tz);
 
   chdir $src_dir;
 
@@ -69,8 +72,6 @@ sub go
 
   # Make sure no tomfoolery is happening with perl, like plenv shims
   $ENV{PATH} = $Config{binexp} . ":$ENV{PATH}";
-
-  $version = "perl $version";
 
   eval {
     require Devel::PatchPerl;
