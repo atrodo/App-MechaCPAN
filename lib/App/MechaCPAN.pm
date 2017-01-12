@@ -348,6 +348,9 @@ sub run
   warn( join( "\t", $cmd, @args ) . "\n" )
     if $VERBOSE;
 
+  print $dest_err_fh ( 'Running: ', join( "\t", $cmd, @args ) . "\n")
+    if defined $dest_err_fh;
+
   my $pid = open3( undef, $output, $error, $cmd, @args );
 
   my $select = IO::Select->new;
