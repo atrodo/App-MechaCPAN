@@ -391,9 +391,15 @@ sub run
 
   if ( $? >> 8 )
   {
-    croak qq/\e[32m$out\e[31m$err\nCould not execute '/
-      . join( ' ', $cmd, @args )
-      . qq/'.\e[0m\n/;
+    croak ""
+      . Term::ANSIColor::color('GREEN')
+      . $out
+      . Term::ANSIColor::color('RED')
+      . $err
+      . qq/\nCould not execute '/
+      . join( ' ', $cmd, @args ) . qq/'./
+      . Term::ANSIColor::color('RESET')
+      . "\n";
   }
 
   return
