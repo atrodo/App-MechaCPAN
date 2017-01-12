@@ -10,6 +10,8 @@ our @args = (
   'threads!',
   'jobs=i',
   'skip-tests!',
+  'skip-local!',
+  'skip-lib!',
 );
 
 sub go
@@ -20,6 +22,8 @@ sub go
   my @argv  = shift;
 
   my $orig_dir = &dest_dir;
+  my @orig_dir = File::Spec->splitdir("$orig_dir");
+  my $orig_len = $#orig_dir;
   my $dest_dir = "$orig_dir/perl";
 
   my ( $src_tz, $version ) = _get_targz($src);
@@ -59,8 +63,22 @@ sub go
     chdir $files[0];
   }
 
-  my @config
-      = ( '-des', "-Dprefix=$dest_dir", "-A'eval:scriptdir=$dest_dir'", );
+  my $local_dir = [ @orig_dir, qw/lib perl5/ ];
+  my $lib_dir   = [ @orig_dir[ 0 .. $orig_len - 1 ], qw/lib perl5/ ];
+
+  my @otherlib = (
+    !$opts->{skip_local} ? () : $local_dir,
+    !$opts->{skip_lib} && -d $lib_dir ? $lib_dir : (),
+  );
+
+  @otherlib = map { File::Spec->catdir(@$_) } @otherlib;
+
+  my @config = (
+    q[-des],
+    qq[-Dprefix=$dest_dir],
+    q[-Accflags=-DAPPLLIB_EXP=\"] . join( ":", @otherlib ) . q[\"],
+    qq[-A'eval:scriptdir=$dest_dir/bin'],
+  );
   my @make = ( "make", "-j" . ( $opts->{jobs} // 2 ) );
 
   if ( $opts->{threads} )
