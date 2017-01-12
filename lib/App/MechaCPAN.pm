@@ -250,7 +250,7 @@ package MechaCPAN::DestGuard
     if ( !defined $result )
     {
       my $pwd = cwd;
-      $dest_dir = \"$pwd/local_t/";
+      $dest_dir = \"$pwd/local";
       bless $dest_dir;
       $result = $dest_dir;
       weaken $dest_dir;
