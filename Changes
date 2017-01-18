@@ -1,5 +1,7 @@
 Revision history for App-MechaCPAN
 
 {{$NEXT}}
+
+0.10  2017-01-18 01:02:36 EST
   - Initial release that includes installing perl and modules as well as
     deploying with a cpanfile/cpanfile.snapshot. Includes pretty-like colors.
