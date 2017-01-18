@@ -67,6 +67,24 @@ sub main
   return -1
     if !$getopt_ret;
 
+  if ( $0 =~ m/zhuli/ )
+  {
+    if ( $argv[0] =~ m/^do the thing/i )
+    {
+      success( "zhuli$$", 'Running deployment' )
+        unless $is_restarted_process;
+      $argv[0] = 'deploy';
+    }
+    if ( $argv[0] =~ m/^do$/i
+      && $argv[1] =~ m/^the$/i
+      && $argv[2] =~ m/^thing$/i )
+    {
+      success( "zhuli$$", 'Running deployment' )
+        unless $is_restarted_process;
+      @argv = ( 'deploy', @argv[ 3 .. $#argv ] );
+    }
+  }
+
   my $orig_dir = cwd;
   my $dest_dir = &dest_dir;
   my $cmd      = ucfirst lc shift @argv;
