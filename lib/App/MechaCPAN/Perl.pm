@@ -290,7 +290,7 @@ Test for perl are ran by default. If you are sure that the tests will pass and y
 
 =head3 skip-local
 
-Since perl and modules will be installed by L<App::MechaCPAN> into C<local/>, by default C<local/> will be added to C<@INC>. This means that if you use the C<local/> installed perl you do not need to use L<local::lib> or other C<@INC> tricks. If you want to supress this behavior, use this flag.
+Since perl and modules will be installed by L<App::MechaCPAN> into C<local/>, by default C<local/> will be added to C<@INC>. This means that if you use the C<local/> installed perl you do not need to use L<local::lib> or other C<@INC> tricks. If you want to suppress this behavior, use this flag.
 
 =head3 skip-lib
 
