@@ -1,4 +1,5 @@
 Revision history for App-MechaCPAN
 
 {{$NEXT}}
-        - Initial release
+  - Initial release that includes installing perl and modules as well as
+    deploying with a cpanfile/cpanfile.snapshot. Includes pretty-like colors.
