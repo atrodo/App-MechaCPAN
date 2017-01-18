@@ -21,7 +21,7 @@ my $options = {
 is( App::MechaCPAN::Install->go( $options, "$lib" ), 0, 'Can use a source' );
 is( cwd, $dir, 'Returned to whence it started' );
 
-ok( -e "$dir/local_t/lib/perl5/$lib.pm", 'Library file $file exists' );
+ok( -e "$dir/local/lib/perl5/$lib.pm", 'Library file $file exists' );
 
 chdir $pwd;
 done_testing;

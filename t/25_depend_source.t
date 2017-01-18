@@ -23,10 +23,10 @@ my $options = {
 is( App::MechaCPAN::Install->go( $options, "$lib" ), 0, 'Can use a source' );
 is( cwd, $dir, 'Returned to whence it started' );
 
-ok( -e "$dir/local_t/lib/perl5/$lib.pm", "Library file $lib exists" );
-ok( -e "$dir/local_t/lib/perl5/$lib.pm", "Library file $deplib exists" );
+ok( -e "$dir/local/lib/perl5/$lib.pm", "Library file $lib exists" );
+ok( -e "$dir/local/lib/perl5/$lib.pm", "Library file $deplib exists" );
 
-require_ok("$dir/local_t/lib/perl5/$deplib.pm");
+require_ok("$dir/local/lib/perl5/$deplib.pm");
 is( $Try::Tiny::VERSION, '0.24', "The correct version was installed" );
 
 chdir $pwd;

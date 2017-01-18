@@ -18,7 +18,7 @@ foreach my $dist ( sort glob("$FindBin::Bin/../test_dists/Deploy*/") )
     "Can run deploy for $dist"
   );
   is( cwd, $dist, 'Returned to whence it started' );
-  ok( -d "$dist/local_t/lib/perl5/", 'Created local lib' );
+  ok( -d "$dist/local/lib/perl5/", 'Created local lib' );
 }
 
 done_testing;

@@ -18,11 +18,11 @@ is(
   "Can run deploy"
 );
 is( cwd, $dir, 'Returned to whence it started' );
-ok( -d "$dir/local_t/lib/perl5/", 'Created local lib' );
+ok( -d "$dir/local/lib/perl5/", 'Created local lib' );
 
 foreach my $file ( 'Try/Tiny.pm', 'Test/More.pm' )
 {
-  ok( -e "$dir/local_t/lib/perl5/$file", "Library file $file exists" );
+  ok( -e "$dir/local/lib/perl5/$file", "Library file $file exists" );
 }
 
 chdir $pwd;

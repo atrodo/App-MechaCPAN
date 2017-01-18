@@ -18,12 +18,12 @@ is(
   "Can run deploy"
 );
 is( cwd, $dir, 'Returned to whence it started' );
-ok( -d "$dir/local_t/lib/perl5/", 'Created local lib' );
+ok( -d "$dir/local/lib/perl5/", 'Created local lib' );
 
 my $lib = 'Try/Tiny.pm';
-ok( -e "$dir/local_t/lib/perl5/$lib", "Library file $lib exists" );
+ok( -e "$dir/local/lib/perl5/$lib", "Library file $lib exists" );
 
-require_ok("$dir/local_t/lib/perl5/$lib");
+require_ok("$dir/local/lib/perl5/$lib");
 is( $Try::Tiny::VERSION, '0.24', "The correct version was installed" );
 
 chdir $pwd;

@@ -25,7 +25,7 @@ is( cwd, $dir, 'Returned to whence it started' );
 
 foreach my $file ( values %pkgs )
 {
-  ok( -e "$dir/local_t/lib/perl5/$file", "Library file $file exists" );
+  ok( -e "$dir/local/lib/perl5/$file", "Library file $file exists" );
 }
 
 chdir $pwd;
