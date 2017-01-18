@@ -231,3 +231,89 @@ sub _get_targz
 }
 
 1;
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+App::MechaCPAN::Perl - Mechanize the installation of Perl.
+
+=head1 SYNOPSIS
+
+  # Install 5.24 into local/
+  user@host:~$ mechacpan perl 5.24
+
+=head1 DESCRIPTION
+
+The C<perl> command is used to install L<perl> into C<local/>. This removes the packages dependency on the operating system perl.
+
+=head2 Methods
+
+=head3 go( \%opts, $version )
+
+There is only a single public function that should be called. This will install the version of perl given in C<$version> using the options in C<\%opts>. The options available are listed in the L<arguments|/Arguments> section below.
+
+C<$version> is either 0 or 1 parameter:
+
+=over
+
+=item If 0 parameters are given and there is a .perl-version file, it will try and use that as the version to install.
+
+=item Otherwise, if 0 parameters are given, it will attempt to find and install the newest, stable version of perl.
+
+=item If the parameter is a major version (5.XX), it will attempt to find and install the newest minor version of that major version.
+
+=item If the parameter is a minor version (5.XX.X), it will attempt to download and install that exact version.
+
+=item If the parameter is a file, it will try to use that file as a perl source tarball.
+
+=item If the parameter looks like a URL, it will fetch that URL and try to use it as a perl source tarball.
+
+=back
+
+=head2 Arguments
+
+=head3 threads
+
+By default, perl is compiled without threads. If you'd like to enable threads, use this argument.
+
+=head3 jobs
+
+How many make jobs to use when running make. Defaults to 2.
+
+=head3 skip-tests
+
+Test for perl are ran by default. If you are sure that the tests will pass and you want to save some time, you can skip the testing phase with this option.
+
+=head3 skip-local
+
+Since perl and modules will be installed by L<App::MechaCPAN> into C<local/>, by default C<local/> will be added to C<@INC>. This means that if you use the C<local/> installed perl you do not need to use L<local::lib> or other C<@INC> tricks. If you want to supress this behavior, use this flag.
+
+=head3 skip-lib
+
+If a C<lib/> directory exists in the same directory as the C<local/> directory, then C<lib/> will also bee added to C<@INC>. This is helpful if you're installing to run an application that includes a C<lib/> directory. If you do not want this to be added, use this flag.
+
+=head1 AUTHOR
+
+Jon Gentle E<lt>cpan@atrodo.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2017- Jon Gentle
+
+=head1 LICENSE
+
+This is free software. You may redistribute copies of it under the terms of the Artistic License 2 as published by The Perl Foundation.
+
+=head1 SEE ALSO
+
+=over
+
+=item L<plenv|https://github.com/tokuhirom/plenv>
+
+=item L<App::perlbrew>
+
+=back
+
+=cut

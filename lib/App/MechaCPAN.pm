@@ -491,24 +491,103 @@ App::MechaCPAN - Mechanize the installation of CPAN things.
 
 =head1 SYNOPSIS
 
-  # Install 5.24 into local/
-  user@host:~$ zhuli perl 5.24
+  # Install 5.24 into local/perl/
+  user@host:~$ mechacpan perl 5.24
   
   # Install Catalyst into local/
-  user@host:~$ zhuli install Catalyst
+  user@host:~$ mechacpan install Catalyst
   
   # Install everything from the cpanfile into local/
   # If cpanfile.snapshot exists, it will be consulted first
-  user@host:~$ zhuli install
+  user@host:~$ mechacpan install
   
   # Install perl and everything from the cpanfile into local/
   # If cpanfile.snapshot exists, it will be consulted exclusivly
-  user@host:~$ zhuli deploy
+  user@host:~$ mechacpan deploy
   user@host:~$ zhuli do the thing
 
 =head1 DESCRIPTION
 
 App::MechaCPAN Mechanizes the installation of perl and CPAN modules.
+It is designed to be small and focuses more on installing things in a self-contained manner. That means that everything is installed into a C<local/> directory.
+
+MechaCPAN was created because installation of a self-contained deployment required at least 4 tools:
+
+=over
+
+=item plenv/Perl-Build or perlbrew to manage perl installations
+
+=item cpanm to install packages
+
+=item local::lib to use locally installed modules
+
+=item carton to manage and deploy exact package versions
+
+=back
+
+In development these tools are invaluable, but when deploying a package, installing at least 4 packages from github, CPAN and the web just for a small portion of each tool is more than needed. App::MechaCPAN aims to be a single tool that can be used for deploying packages in a automated fashion.
+
+App::MechaCPAN focuses on the aspects of these tools needed for deploying packages to a system. For instance, it will read and use carton's C<cpanfile.snapshot> files, but cannot create them. To create C<cpanfile.snapshot files>, you must use carton.
+
+=head2 Should I use App::MechaCPAN instead of <tool>
+
+Probably not, no. It can be used in place of some tools, but it's focus is not on the features a developer needs. If your needs are very simple and you don't need many options, you might be able to get away with only using C<App::MechaCPAN>. However be prepared to run into limitations quickly.
+
+=head1 USING FOR DEPLOYMENTS
+
+=head2 COMMANDS
+
+  user@host:~/project/$ ls -la
+  drwxr-xr-x  6 user users 20480 Jan 18 13:00 .
+  drwxr-xr-x 25 user users  4096 Jan 18 13:00 ..
+  drwxr-xr-x  8 user users  4096 Jan 18 13:05 .git
+  -rw-r--r--  1 user users     7 Jan 18 13:06 .perl-version
+  -rw-r--r--  1 user users   109 Jan 18 13:06 cpanfile
+  drwxr-xr-x  3 user users  4096 Jan 18 13:10 lib
+  
+  user@host:~/project/$ mechacpan deploy
+
+That command will do 2 things:
+
+=over
+
+=item Install perl
+
+It will install perl into the directory local/perl.  It will use the version in C<.perl-version> to decide what version will be installed.
+
+=item Install modules
+
+Then it will use the installed perl to install all the module dependencies that are listed in the cpanfile.
+
+=back
+
+=head1 COMMANDS
+
+=head2 Perl
+
+  user@host:~$ mechacpan perl 5.24
+
+The L<perl|App::MechaCPAN::Perl> command is used to install L<perl> into C<local/>. This removes the packages dependency on the operating system perl. By default, it tries to be helpful and include C<lib/> and C<local/> into C<@INC> automatically, but this feature can be disabled. See L<App::MechaCPAN::Perl> for more details.
+
+=head2 Install
+
+  user@host:~$ mechacpan install Catalyst
+
+The L<install|App::MechaCPAN::Install> command is used for installing specific modules. All modules are installed into the C<local/> directory. See See L<App::MechaCPAN::Install> for more details.
+
+=head2 Deploy
+
+  user@host:~$ mechacpan deploy
+
+The L<deploy|App::MechaCPAN::Deploy> command is used for automating a deployment. It will install both L<perl> and all the modules specified from the C<cpanfile>. If there is a C<cpanfile.snapshot> that was created by L<Carton>, C<deploy> will treat the modules lised in the snapshot file as the only modules available to install. See L<App::MechaCPAN::Deploy> for more details.
+
+=head1 SCRIPT RESTART WARNING
+
+This module B<WILL> restart the running script B<IF> it's used as a module (e.g. with C<use>) and the perl that is running is not the version installed in C<local/>. It does this at two points: First right before run-time and Second right after a perl is installed into C<local/>.
+
+The scripts and modules that come with C<App::MechaCPAN> are prepared to handle this. If you use C<App::MechaCPAN> as a module, you should to be prepared to handle it as well.
+
+This means that any END and DESTROY blocks B<WILL NOT RUN>. Anything created with File::Temp will be cleaned up, however.
 
 =head1 AUTHOR
 
@@ -516,13 +595,28 @@ Jon Gentle E<lt>cpan@atrodo.orgE<gt>
 
 =head1 COPYRIGHT
 
-Copyright 2016- Jon Gentle
+Copyright 2017- Jon Gentle
 
 =head1 LICENSE
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+This is free software. You may redistribute copies of it under the terms of the Artistic License 2 as published by The Perl Foundation.
 
 =head1 SEE ALSO
+
+=over
+
+=item L<App::cpanminus>
+
+=item L<local::lib>
+
+=item L<Carton>
+
+=item L<CPAN>
+
+=item L<plenv|https://github.com/tokuhirom/plenv>
+
+=item L<App::perlbrew>
+
+=back
 
 =cut

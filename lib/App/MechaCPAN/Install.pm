@@ -689,3 +689,96 @@ sub _complete
 }
 
 1;
+__END__
+
+=encoding utf-8
+
+=head1 NAME
+
+App::MechaCPAN::Install - Mechanize the installation of CPAN modules.
+
+=head1 SYNOPSIS
+
+  # Install Catalyst into local/
+  user@host:~$ mechacpan install Catalyst
+
+=head1 DESCRIPTION
+
+  user@host:~$ mechacpan install Catalyst
+
+The C<install> command is used for installing specific modules. All modules are installed into the C<local/> directory.
+It can accept module names in various formats. This includes:
+
+                                         # Install from:
+  foo-bar.tar.gz                         # * an archive
+  foo::bar                               # * a CPAN module
+  foo::bar@1.0                           # * a specific module version
+  foo::bar~<1.0                          # * a module with version < 1.0
+  BAZ/foo-bar.tar.gz                     # * a PAUSE URL
+  B/BA/BAZ/foo-bar.tar.gz                # * a PAUSE URL
+  https://example.com/foo-bar.zip        # * a URL
+  https://example.com/foo-bar.git        # * a git repo
+  https://example.com/foo-bar.git@master # * a git branch
+
+L<MetaCPAN|https://metacpan.org> is used to search for modules by name.
+
+=head2 Methods
+
+=head3 go( \%opts, @srcs )
+
+There is only a single public function that should be called. This will install the modules listed in C<@srcs> using the options in C<\%opts>. The options available are listed in the L<arguments|/Arguments> section below.
+
+  # Example of calling go
+  App::MecahCPAN::Install->go({}, 'Try::Tiny');
+
+=head2 Arguments
+
+=head3 skip-tests
+
+=head3 skip-tests-for
+
+By default the tests of each module will be ran. If you do not want to run tests when installing modules, use this option. Alternatively, you can use C<skip-tests-for> to specify module names that will skip the tests for that module.
+
+  # Examples of --skip-tests
+  mechacpan install Try::Tiny --skip-tests
+  mechacpan install Catalyst --skip-tests-for=Moose
+
+=head3 install-man
+
+By default, man pages are not installed. Use this option to install the man pages.
+
+=head3 source
+
+Add a source translation to the installation. This can be used to translate a module name into another form, like using an exact version of a module or pull another module from its git repo. This can be repeated multiple times for multiple translations.
+
+  # Examples of --source
+  mechacpan install Catalyst --source Try::Tiny=ETHER/Try-Tiny-0.24
+  mechacpan install Catalyst --source Catalyst=git://git.shadowcat.co.uk/catagits/Catalyst-Runtime.git
+
+=head3 only-sources
+
+Do not use modules not listed in the source list. This means if you do not specify every module and every prerequisite in the source list, then it will not be installed. This doesn't sound very useful since you would be potentially listing hundreds of modules. However, this feature is mostly used in conjuncture with L<App::MechaCPAN::Deploy> so that the modules listed in the C<cpanfile.snapshot> are the only module versions used.
+
+=head1 AUTHOR
+
+Jon Gentle E<lt>cpan@atrodo.orgE<gt>
+
+=head1 COPYRIGHT
+
+Copyright 2017- Jon Gentle
+
+=head1 LICENSE
+
+This is free software. You may redistribute copies of it under the terms of the Artistic License 2 as published by The Perl Foundation.
+
+=head1 SEE ALSO
+
+=over
+
+=item L<App::cpanminus>
+
+=item L<CPAN>
+
+=back
+
+=cut
