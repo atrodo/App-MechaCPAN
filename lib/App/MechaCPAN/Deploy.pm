@@ -152,6 +152,7 @@ sub parse_cpanfile
 }
 
 my $snapshot_re = qr/^\# carton snapshot format: version 1\.0/;
+
 sub parse_snapshot
 {
   my $file = shift;

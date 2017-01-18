@@ -35,8 +35,10 @@ sub go
       # If it exists, we're probably running it by now.
       if ( $version && $^V ne "v$version" )
       {
-        info( $version,
-          "perl has already been installed ($^V, not $version)" );
+        info(
+          $version,
+          "perl has already been installed ($^V, not $version)"
+        );
       }
       else
       {
@@ -64,7 +66,7 @@ sub go
   }
 
   my $local_dir = [ @orig_dir, qw/lib perl5/ ];
-  my $lib_dir   = [ @orig_dir[ 0 .. $orig_len - 1 ], qw/lib perl5/ ];
+  my $lib_dir = [ @orig_dir[ 0 .. $orig_len - 1 ], qw/lib perl5/ ];
 
   my @otherlib = (
     !$opts->{skip_local} ? () : $local_dir,

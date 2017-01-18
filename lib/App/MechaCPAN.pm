@@ -367,7 +367,7 @@ sub run
   warn( join( "\t", $cmd, @args ) . "\n" )
     if $VERBOSE;
 
-  print $dest_err_fh ( 'Running: ', join( "\t", $cmd, @args ) . "\n")
+  print $dest_err_fh ( 'Running: ', join( "\t", $cmd, @args ) . "\n" )
     if defined $dest_err_fh;
 
   my $pid = open3( undef, $output, $error, $cmd, @args );
@@ -417,8 +417,7 @@ sub run
       . $err
       . qq/\nCould not execute '/
       . join( ' ', $cmd, @args ) . qq/'./
-      . Term::ANSIColor::color('RESET')
-      . "\n";
+      . Term::ANSIColor::color('RESET') . "\n";
   }
 
   return
