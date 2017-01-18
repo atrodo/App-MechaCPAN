@@ -31,10 +31,10 @@ find(
   $prefix
 );
 
-my $parser = Pod::Simple->new;
-
 foreach my $file (@files)
 {
+  my $parser = Pod::Simple->new;
+
   $parser->code_handler(
     sub
     {
@@ -47,3 +47,7 @@ foreach my $file (@files)
   );
   $parser->parse_file("$prefix/$file");
 }
+
+open my $mc_fh, "<", "$FindBin::Bin/script/mechacpan";
+$ouFH->say("package main;");
+$ouFH->say(do { local $/; <$mc_fh> });
