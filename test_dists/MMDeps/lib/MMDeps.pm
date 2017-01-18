@@ -1,4 +1,5 @@
-package MMDeps;
+package #hide from CPAN
+  MMDeps;
 
 use strict;
 use 5.008_005;

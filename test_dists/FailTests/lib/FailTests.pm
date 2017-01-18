@@ -1,4 +1,5 @@
-package FailTests;
+package #hide from CPAN
+  FailTests;
 
 use strict;
 use 5.008_005;

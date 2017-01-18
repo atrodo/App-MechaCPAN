@@ -1,4 +1,5 @@
-package ConfigDeps;
+package #hide from CPAN
+  ConfigDeps;
 
 use strict;
 use 5.008_005;

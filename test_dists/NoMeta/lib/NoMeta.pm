@@ -1,4 +1,5 @@
-package NoMeta;
+package #hide from CPAN
+  NoMeta;
 
 use strict;
 use 5.008_005;

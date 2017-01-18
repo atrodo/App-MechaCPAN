@@ -1,4 +1,5 @@
-package TestDeps;
+package #hide from CPAN
+  TestDeps;
 
 use strict;
 use 5.008_005;

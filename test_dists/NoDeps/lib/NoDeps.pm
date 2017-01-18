@@ -1,4 +1,5 @@
-package NoDeps;
+package #hide from CPAN
+  NoDeps;
 
 use strict;
 use 5.008_005;
