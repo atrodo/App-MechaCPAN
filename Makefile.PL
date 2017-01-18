@@ -2,28 +2,30 @@
 use strict;
 use warnings;
 
-use 5.010000;
+use 5.014000;
 
 use ExtUtils::MakeMaker;
 
 my %WriteMakefileArgs = (
-  "ABSTRACT" => "Blah blah blah",
+  "ABSTRACT" => "Mechanize the installation of CPAN things.",
   "AUTHOR" => "Jon Gentle <cpan\@atrodo.org>",
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => 0
   },
   "DISTNAME" => "App-MechaCPAN",
   "EXE_FILES" => [
-    "script/zhuli"
+    "script/mechacpan"
   ],
-  "LICENSE" => "perl",
-  "MIN_PERL_VERSION" => "5.010000",
+  "LICENSE" => "artistic_2",
+  "MIN_PERL_VERSION" => "5.014000",
   "NAME" => "App::MechaCPAN",
-  "PREREQ_PM" => {},
+  "PREREQ_PM" => {
+    "CPAN::Meta" => 0
+  },
   "TEST_REQUIRES" => {
     "Test::More" => "0.96"
   },
-  "VERSION" => "0.01",
+  "VERSION" => "0.10",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -31,6 +33,7 @@ my %WriteMakefileArgs = (
 
 
 my %FallbackPrereqs = (
+  "CPAN::Meta" => 0,
   "Test::More" => "0.96"
 );
 

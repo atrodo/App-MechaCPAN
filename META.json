@@ -1,12 +1,12 @@
 {
-   "abstract" : "Blah blah blah",
+   "abstract" : "Mechanize the installation of CPAN things.",
    "author" : [
       "Jon Gentle <cpan@atrodo.org>"
    ],
    "dynamic_config" : 0,
    "generated_by" : "Dist::Zilla version 6.005, Dist::Milla version v1.0.16, CPAN::Meta::Converter version 2.150005",
    "license" : [
-      "perl_5"
+      "artistic_2"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
@@ -37,7 +37,8 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.010000"
+            "CPAN::Meta" : "0",
+            "perl" : "5.014000"
          }
       },
       "test" : {
@@ -47,7 +48,18 @@
       }
    },
    "release_status" : "stable",
-   "version" : "0.01",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/atrodo/App-MechaCPAN/issues"
+      },
+      "homepage" : "https://github.com/atrodo/App-MechaCPAN",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/atrodo/App-MechaCPAN.git",
+         "web" : "https://github.com/atrodo/App-MechaCPAN"
+      }
+   },
+   "version" : "0.10",
    "x_contributors" : [
       "Jon Gentle <atrodo@atrodo.org>"
    ]
