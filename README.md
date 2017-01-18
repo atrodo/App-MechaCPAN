@@ -37,7 +37,7 @@ App::MechaCPAN focuses on the aspects of these tools needed for deploying packag
 
 ## Should I use App::MechaCPAN instead of &lt;tool>
 
-Probably not, no. It can be used in place of some tools, but it's focus is not on the features a developer needs. If your needs are very simple and you don't need many options, you might be able to get away with only using `App::MechaCPAN`. However be prepared to run into limitations quickly.
+Probably not, no. It can be used in place of some tools, but its focus is not on the features a developer needs. If your needs are very simple and you don't need many options, you might be able to get away with only using `App::MechaCPAN`. However be prepared to run into limitations quickly.
 
 # USING FOR DEPLOYMENTS
 
@@ -75,7 +75,7 @@ The [perl](https://metacpan.org/pod/App::MechaCPAN::Perl) command is used to ins
 
     user@host:~$ mechacpan install Catalyst
 
-The [install](https://metacpan.org/pod/App::MechaCPAN::Install) command is used for installing specific modules. All modules are installed into the `local/` directory. See See [App::MechaCPAN::Install](https://metacpan.org/pod/App::MechaCPAN::Install) for more details.
+The [install](https://metacpan.org/pod/App::MechaCPAN::Install) command is used for installing specific modules. All modules are installed into the `local/` directory. See [App::MechaCPAN::Install](https://metacpan.org/pod/App::MechaCPAN::Install) for more details.
 
 ## Deploy
 
