@@ -25,6 +25,8 @@ BEGIN
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
+our $VERSION = '0.10';
+
 require App::MechaCPAN::Perl;
 require App::MechaCPAN::Install;
 require App::MechaCPAN::Deploy;
@@ -39,7 +41,6 @@ INIT
 }
 
 $loaded_at_compile //= 0;
-our $VERSION = '0.10';
 
 my @args = (
   'diag-run!',
