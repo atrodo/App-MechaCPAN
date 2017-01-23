@@ -353,9 +353,11 @@ sub run
   # If the output is asked for (non-void context), don't show it anywhere
   if ( defined wantarray )
   {
-    undef $print_output;
     open $dest_out_fh, ">", \$out;
     open $dest_err_fh, ">", \$err;
+    undef $print_output;
+    undef $out;
+    undef $err;
   }
 
   my $output = geniosym;
@@ -393,14 +395,20 @@ sub run
 
       print STDERR $line if $print_output;
 
-      if ( $fh eq $output && defined $dest_out_fh )
+      if ( $fh eq $output )
       {
-        print $dest_out_fh $line;
+        print $dest_out_fh $line
+          if defined $dest_out_fh ;
+        $out .= $line
+          if defined $out;
       }
 
-      if ( $fh eq $error && defined $dest_err_fh )
+      if ( $fh eq $error )
       {
-        print $dest_err_fh $line;
+        print $dest_err_fh $line
+          if defined $dest_err_fh ;
+        $err .= $line
+          if defined $err;
       }
 
     }
@@ -411,12 +419,13 @@ sub run
   if ( $? >> 8 )
   {
     croak ""
-      . Term::ANSIColor::color('GREEN')
-      . $out
       . Term::ANSIColor::color('RED')
-      . $err
       . qq/\nCould not execute '/
-      . join( ' ', $cmd, @args ) . qq/'./
+      . join( ' ', $cmd, @args )
+      . Term::ANSIColor::color('GREEN')
+      . qq/\n$out/
+      . Term::ANSIColor::color('YELLOW')
+      . qq/\n$err/
       . Term::ANSIColor::color('RESET') . "\n";
   }
 
