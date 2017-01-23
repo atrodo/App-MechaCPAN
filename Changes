@@ -2,6 +2,14 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.12  2017-01-22 22:42:03 EST
+  - Remove fake documentation showing up on CPAN
+  - Stop using the local directory for tests
+  - Stop running git tests if git isn't available
+  - Fix run() so STDOUT and STDERR are actually shown on error
+  - Change the prereq logic to use Module::CoreList
+  - Spelling fixes via Greg Arnold/DrunkPyromaniac
+
 0.11  2017-01-18 01:18:44 EST
   - Hide testing modules from the CPAN indexer
 
