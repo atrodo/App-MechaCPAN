@@ -10,7 +10,7 @@ require q[t/helper.pm];
 my $pwd      = cwd;
 my $cpanfile = "$FindBin::Bin/../test_dists/DeploySnapshot/cpanfile";
 
-my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 chdir $dir;
 
 is(

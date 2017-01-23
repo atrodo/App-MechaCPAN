@@ -3,7 +3,6 @@ use FindBin;
 use File::Copy;
 use Test::More;
 use Cwd qw/cwd/;
-use File::Temp qw/tempdir/;
 
 require q[t/helper.pm];
 

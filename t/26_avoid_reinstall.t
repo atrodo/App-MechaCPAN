@@ -9,7 +9,7 @@ require q[t/helper.pm];
 
 my $pwd  = cwd;
 my $dist = 'Try::Tiny';
-my $dir  = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+my $dir  = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 
 chdir $dir;
 is( App::MechaCPAN::main( 'install', $dist ), 0, "Can install $dist" );

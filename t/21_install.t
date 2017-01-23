@@ -14,7 +14,7 @@ foreach my $dist ( sort glob("$FindBin::Bin/../test_dists/*/*.tar.gz") )
     if $dist =~ m/Fail/xms;
 
   chdir $pwd;
-  my $dir = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+  my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 0 );
   chdir $dir;
 
   my ($name) = $dist =~ m[test_dists/(.*?)/]xms;

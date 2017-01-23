@@ -9,7 +9,7 @@ require q[t/helper.pm];
 
 my $pwd  = cwd;
 my $dist = "$FindBin::Bin/../test_dists/FailTests/FailTests-1.0.tar.gz";
-my $dir  = tempdir( TEMPLATE => "$pwd/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+my $dir  = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
 
 local $SIG{__WARN__} = sub {note shift};
 
