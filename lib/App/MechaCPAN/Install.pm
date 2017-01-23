@@ -11,6 +11,7 @@ use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
 use CPAN::Meta::Prereqs qw//;
 use File::Fetch qw//;
+use Module::CoreList;
 use ExtUtils::MakeMaker qw//;
 use App::MechaCPAN qw/:go/;
 
@@ -607,17 +608,16 @@ sub _phase_prereq
   my $reqs = $prereqs->requirements_for( $phase, "requires" );
   for my $module ( sort $reqs->required_modules )
   {
-    my $status;
+    my $is_core;
 
-    my $version = _get_mod_ver($module);
+    my $version = $Module::CoreList::version{$]}{$module};
     if ( defined $version )
     {
-      $version = $module eq 'perl' ? $] : $version;
-      $status = $reqs->accepts_module( $module, $version );
+      $is_core = $reqs->accepts_module( $module, $version );
     }
 
     push @result, $module
-        if !$status;
+      if $module ne 'perl' && !$is_core;
   }
 
   return @result;
@@ -633,11 +633,8 @@ sub _installed_file_for_module
   my $perlver  = $Config{version};
 
   for my $dir (
-    "$dest_lib/$perlver/$archname",
-    "$dest_lib/$perlver",
     "$dest_lib/$archname",
     "$dest_lib",
-    @Config{qw(archlibexp privlibexp)},
       )
   {
     my $tmp = File::Spec->catfile( $dir, $file );
