@@ -5,6 +5,8 @@ use File::Temp qw/tempdir/;
 
 require q[t/helper.pm];
 
+my $has_git = eval { App::MechaCPAN::run(qw/git --version/); 1; };
+
 # Notes:
 #  * we don't test with git or ssh since those require some kind of login
 #  * File::Remove is included to make sure that it's not confused with file://
@@ -27,15 +29,24 @@ foreach my $src (
   [qw/Try::Tiny <0.24/],
   )
 {
-  local $App::MechaCPAN::Install::dest_dir
-    = tempdir( TEMPLATE => 't_mechacpan_XXXXXXXX', CLEANUP => 1 );
+SKIP:
+  {
+    if ( $src =~ m/[.]git/xms && !$has_git )
+    {
+      skip "git not available", 1;
+    }
 
-  my $target = App::MechaCPAN::Install::_create_target( $src, {} );
-  local $@;
-  my $tgz = eval { App::MechaCPAN::Install::_get_targz($target) };
-  diag("Error: '$@'")
-    if $@;
-  ok( -s $tgz, "Got '$src'" );
+    local $App::MechaCPAN::Install::dest_dir
+      = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
+      CLEANUP => 1 );
+
+    my $target = App::MechaCPAN::Install::_create_target( $src, {} );
+    local $@;
+    my $tgz = eval { App::MechaCPAN::Install::_get_targz($target) };
+    diag("Error: '$@'")
+      if $@;
+    ok( -s $tgz, "Got '$src'" );
+  }
 }
 
 done_testing;
