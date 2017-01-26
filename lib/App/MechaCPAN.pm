@@ -86,6 +86,7 @@ sub main
     }
   }
 
+  local $LOGFH;
   my $orig_dir = cwd;
   my $dest_dir = &dest_dir;
   my $cmd      = ucfirst lc shift @argv;
