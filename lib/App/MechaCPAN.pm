@@ -53,10 +53,11 @@ my @args = (
 );
 @args = keys %{ { map { $_ => 1 } @args } };
 
-our $VERBOSE;    # Print output from sub commands to STDERR
-our $QUIET;      # Do not print any progress to STDERR
-our $LOGFH;      # File handle to send the logs to
-our $LOG_ON = 1; # Default if to log or not
+our $VERBOSE;      # Print output from sub commands to STDERR
+our $QUIET;        # Do not print any progress to STDERR
+our $LOGFH;        # File handle to send the logs to
+our $LOG_ON = 1;   # Default if to log or not
+our $TIMEOUT = 30; # Timeout when there's no output in seconds
 
 sub main
 {
@@ -370,6 +371,7 @@ sub run
   my $dest_out_fh  = $LOGFH;
   my $dest_err_fh  = $LOGFH;
   my $print_output = $VERBOSE;
+  my $wantoutput   = defined wantarray;
 
   if ( ref $cmd eq 'GLOB' )
   {
@@ -378,13 +380,11 @@ sub run
   }
 
   # If the output is asked for (non-void context), don't show it anywhere
-  if ( defined wantarray )
+  if ( $wantoutput )
   {
     open $dest_out_fh, ">", \$out;
     open $dest_err_fh, ">", \$err;
     undef $print_output;
-    undef $out;
-    undef $err;
   }
 
   my ( $output, $output_chld ) = _genio;
@@ -409,47 +409,71 @@ sub run
 
   $select->add( $output, $error );
 
-  while ( my @ready = $select->can_read )
-  {
-    foreach my $fh (@ready)
+  my $alrm_code = "TIMEOUT\n";
+  local $SIG{ALRM} = sub { die $alrm_code };
+  local $@;
+
+  eval {
+    alarm $TIMEOUT;
+    while ( my @ready = $select->can_read )
     {
-      my $line = <$fh>;
-
-      if ( !defined $line )
+      alarm $TIMEOUT;
+      foreach my $fh (@ready)
       {
-        $select->remove($fh);
-        next;
+        my $line = <$fh>;
+
+        if ( !defined $line )
+        {
+          $select->remove($fh);
+          next;
+        }
+
+        print STDERR $line if $print_output;
+
+        if ( $fh eq $output )
+        {
+          print $dest_out_fh $line
+              if defined $dest_out_fh;
+          $out .= $line
+              unless $wantoutput;
+        }
+
+        if ( $fh eq $error )
+        {
+          print $dest_err_fh $line
+              if defined $dest_err_fh;
+          $err .= $line
+              unless $wantoutput;
+        }
+
       }
-
-      print STDERR $line if $print_output;
-
-      if ( $fh eq $output )
-      {
-        print $dest_out_fh $line
-            if defined $dest_out_fh;
-        $out .= $line
-            if defined $out;
-      }
-
-      if ( $fh eq $error )
-      {
-        print $dest_err_fh $line
-            if defined $dest_err_fh;
-        $err .= $line
-            if defined $err;
-      }
-
     }
+  };
+
+  my $error = $@;
+  alarm 0;
+
+  if ($error eq $alrm_code)
+  {
+    kill "KILL", $pid;
   }
 
   waitpid( $pid, 0 );
 
-  if ( $? >> 8 )
+  if ($?)
   {
+    my $code = qq/Exit Code: / . ( $? >> 8 );
+    my $sig = ( $? & 127 ) ? qq/Signal: / . ( $? & 127 ) : '';
+    my $core = $? & 128 ? 'Core Dumped' : '';
+
     croak ""
         . Term::ANSIColor::color('RED')
         . qq/\nCould not execute '/
-        . join( ' ', $cmd, @args )
+        . join( ' ', $cmd, @args ) . qq/'/
+        . qq/\nPID: $pid/
+        . qq/\t$code/
+        . qq/\t$sig/
+        . qq/\t$core/
         . Term::ANSIColor::color('GREEN')
         . qq/\n$out/
         . Term::ANSIColor::color('YELLOW')
