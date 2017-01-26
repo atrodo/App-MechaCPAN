@@ -4,6 +4,11 @@ use Test::More;
 
 require q[t/helper.pm];
 
+if( $^O eq 'MSWin32' )
+{
+  plan skip_all => 'Cannot build perl on Win32';
+}
+
 is(
   App::MechaCPAN::main(
     'perl',

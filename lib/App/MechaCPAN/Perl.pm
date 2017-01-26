@@ -21,6 +21,12 @@ sub go
   my $src   = shift;
   my @argv  = shift;
 
+  if ($^O eq 'MSWin32')
+  {
+    info 'Cannot build perl on Win32';
+    return 0;
+  }
+
   my $orig_dir = &dest_dir;
   my @orig_dir = File::Spec->splitdir("$orig_dir");
   my $orig_len = $#orig_dir;
