@@ -333,6 +333,32 @@ sub inflate_archive
   return $dir;
 }
 
+sub _genio
+{
+  state $iswin32 = $^O eq 'MSWin32';
+  my $write_hdl;
+  my $read_hdl;
+
+  if ($iswin32)
+  {
+    use Socket;
+    socketpair( $read_hdl, $write_hdl, AF_UNIX, SOCK_STREAM, PF_UNSPEC );
+    shutdown( $read_hdl,  1 );
+    shutdown( $write_hdl, 0 );
+  }
+  else
+  {
+    $write_hdl = $read_hdl = geniosym;
+  }
+
+  $write_hdl->blocking(0);
+  $write_hdl->autoflush(1);
+  $read_hdl->blocking(0);
+  $read_hdl->autoflush(1);
+
+  return ( $read_hdl, $write_hdl );
+}
+
 sub run
 {
   my $cmd  = shift;
@@ -361,19 +387,23 @@ sub run
     undef $err;
   }
 
-  my $output = geniosym;
-  my $error  = geniosym;
-
-  $output->blocking(0);
-  $error->blocking(0);
+  my ( $output, $output_chld ) = _genio;
+  my ( $error,  $error_chld )  = _genio;
 
   warn( join( "\t", $cmd, @args ) . "\n" )
-    if $VERBOSE;
+      if $VERBOSE;
 
   print $dest_err_fh ( 'Running: ', join( "\t", $cmd, @args ) . "\n" )
-    if defined $dest_err_fh;
+      if defined $dest_err_fh;
 
-  my $pid = open3( undef, $output, $error, $cmd, @args );
+  my $pid = open3(
+    undef,
+    $output_chld->fileno ? '>&' . $output_chld->fileno : $output_chld,
+    $error_chld->fileno  ? '>&' . $error_chld->fileno  : $error_chld,
+    $cmd, @args
+  );
+  undef $output_chld;
+  undef $error_chld;
 
   my $select = IO::Select->new;
 
@@ -385,9 +415,6 @@ sub run
     {
       my $line = <$fh>;
 
-      #warn "reading $fh";
-      #my $ret = $fh->read($line, 2048) ;
-      #warn $ret;
       if ( !defined $line )
       {
         $select->remove($fh);
@@ -399,17 +426,17 @@ sub run
       if ( $fh eq $output )
       {
         print $dest_out_fh $line
-          if defined $dest_out_fh ;
+            if defined $dest_out_fh;
         $out .= $line
-          if defined $out;
+            if defined $out;
       }
 
       if ( $fh eq $error )
       {
         print $dest_err_fh $line
-          if defined $dest_err_fh ;
+            if defined $dest_err_fh;
         $err .= $line
-          if defined $err;
+            if defined $err;
       }
 
     }
@@ -420,18 +447,18 @@ sub run
   if ( $? >> 8 )
   {
     croak ""
-      . Term::ANSIColor::color('RED')
-      . qq/\nCould not execute '/
-      . join( ' ', $cmd, @args )
-      . Term::ANSIColor::color('GREEN')
-      . qq/\n$out/
-      . Term::ANSIColor::color('YELLOW')
-      . qq/\n$err/
-      . Term::ANSIColor::color('RESET') . "\n";
+        . Term::ANSIColor::color('RED')
+        . qq/\nCould not execute '/
+        . join( ' ', $cmd, @args )
+        . Term::ANSIColor::color('GREEN')
+        . qq/\n$out/
+        . Term::ANSIColor::color('YELLOW')
+        . qq/\n$err/
+        . Term::ANSIColor::color('RESET') . "\n";
   }
 
   return
-    if !defined wantarray;
+      if !defined wantarray;
 
   if (wantarray)
   {
