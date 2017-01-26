@@ -10,8 +10,9 @@ require q[t/helper.pm];
 my $pwd      = cwd;
 my $cpanfile = "$FindBin::Bin/../test_dists/DeployCpanfile/cpanfile";
 
-my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
-chdir $dir;
+my $tmpdir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+chdir $tmpdir;
+my $dir = cwd;
 
 is(
   App::MechaCPAN::main( 'deploy', { 'skip-perl' => 1 }, $cpanfile ), 0,

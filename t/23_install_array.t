@@ -14,8 +14,9 @@ my %pkgs = (
 );
 
 chdir $pwd;
-my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
-chdir $dir;
+my $tmpdir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+chdir $tmpdir;
+my $dir = cwd;
 
 is(
   App::MechaCPAN::Install->go( {}, keys %pkgs ), 0,

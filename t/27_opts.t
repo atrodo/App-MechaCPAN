@@ -9,11 +9,13 @@ require q[t/helper.pm];
 
 my $pwd  = cwd;
 my $dist = "$FindBin::Bin/../test_dists/FailTests/FailTests-1.0.tar.gz";
-my $dir  = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+my $tmpdir  = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+chdir $tmpdir;
 
 local $SIG{__WARN__} = sub {note shift};
 
-chdir $dir;
+my $dir = cwd;
+
 isnt( App::MechaCPAN::main( 'install', $dist ), 0, "Fail as expected: $dist" );
 is( cwd, $dir, 'Returned to whence it started' );
 

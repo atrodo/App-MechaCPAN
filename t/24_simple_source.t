@@ -9,8 +9,9 @@ require q[t/helper.pm];
 
 my $pwd = cwd;
 
-my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
-chdir $dir;
+my $tmpdir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+chdir $tmpdir;
+my $dir = cwd;
 
 my $lib     = 'NoDeps';
 my $options = {

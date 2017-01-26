@@ -14,8 +14,9 @@ foreach my $dist ( sort glob("$FindBin::Bin/../test_dists/*/*.tar.gz") )
     if $dist =~ m/Fail/xms;
 
   chdir $pwd;
-  my $dir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 0 );
-  chdir $dir;
+  my $tmpdir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+  chdir $tmpdir;
+  my $dir = cwd;
 
   my ($name) = $dist =~ m[test_dists/(.*?)/]xms;
   is( App::MechaCPAN::main( 'install', $dist ), 0, "Can install $dist" );
