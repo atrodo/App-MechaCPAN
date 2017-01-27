@@ -8,7 +8,6 @@ use App::MechaCPAN qw/:go/;
 
 our @args = (
   'threads!',
-  'jobs=i',
   'skip-tests!',
   'skip-local!',
   'skip-lib!',
@@ -87,7 +86,7 @@ sub go
     q[-Accflags=-DAPPLLIB_EXP=\"] . join( ":", @otherlib ) . q[\"],
     qq[-A'eval:scriptdir=$dest_dir/bin'],
   );
-  my @make = ( "make", "-j" . ( $opts->{jobs} // 2 ) );
+  my @make = ( $Config{make} );
 
   if ( $opts->{threads} )
   {
@@ -285,10 +284,6 @@ C<$version> is either 0 or 1 parameter:
 =head3 threads
 
 By default, perl is compiled without threads. If you'd like to enable threads, use this argument.
-
-=head3 jobs
-
-How many make jobs to use when running make. Defaults to 2.
 
 =head3 skip-tests
 
