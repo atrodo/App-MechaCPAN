@@ -53,11 +53,12 @@ my @args = (
 );
 @args = keys %{ { map { $_ => 1 } @args } };
 
-our $VERBOSE;      # Print output from sub commands to STDERR
-our $QUIET;        # Do not print any progress to STDERR
-our $LOGFH;        # File handle to send the logs to
-our $LOG_ON = 1;   # Default if to log or not
-our $TIMEOUT = 30; # Timeout when there's no output in seconds
+# Timeout when there's no output in seconds
+our $TIMEOUT = $ENV{MECHACPAN_TIMEOUT} // 30;
+our $VERBOSE;    # Print output from sub commands to STDERR
+our $QUIET;      # Do not print any progress to STDERR
+our $LOGFH;      # File handle to send the logs to
+our $LOG_ON = 1; # Default if to log or not
 
 sub main
 {
@@ -455,6 +456,7 @@ sub run
 
   if ($error eq $alrm_code)
   {
+    info "Idle timeout (${TIMEOUT}s) exceeded, killing";
     kill "KILL", $pid;
   }
 
