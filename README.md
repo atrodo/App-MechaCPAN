@@ -83,6 +83,26 @@ The [install](https://metacpan.org/pod/App::MechaCPAN::Install) command is used 
 
 The [deploy](https://metacpan.org/pod/App::MechaCPAN::Deploy) command is used for automating a deployment. It will install both [perl](https://metacpan.org/pod/perl) and all the modules specified from the `cpanfile`. If there is a `cpanfile.snapshot` that was created by [Carton](https://metacpan.org/pod/Carton), `deploy` will treat the modules lised in the snapshot file as the only modules available to install. See [App::MechaCPAN::Deploy](https://metacpan.org/pod/App::MechaCPAN::Deploy) for more details.
 
+# OPTIONS
+
+Besides the options that the individual commands take, `App::MechaCPAN` takes several that are always available.
+
+## --verbose
+
+By default only informational descriptions of what is happening is shown. Turning verbose on will show every command and all output produced by running each command. Note that this is **not** the opposite of quiet.
+
+## --quiet
+
+Using quiet means that the normal information descriptions are hidden. Note that this is **not** the opposite of verbose, turning both options on means no descriptions will be show, but all output from all commands will be.
+
+## --no-log
+
+A log is normally outputted into the `local/logs` directory. This option will prevent a log from being created.
+
+## `$ENV{MECHACPAN_TIMEOUT}`
+
+Every command that `App::MechaCPAN` runs is given an idle timeout before it is killed and a failure is returned. This timeout is reset every time the command outputs to `STDOUT` or `STDERR`. Using the environment variable `MECHACPAN_TIMEOUT`, you can override or disable this timeout. It is always in seconds and setting it to 0 will disable it.
+
 # SCRIPT RESTART WARNING
 
 This module **WILL** restart the running script **IF** it's used as a module (e.g. with `use`) and the perl that is running is not the version installed in `local/`. It does this at two points: First right before run-time and Second right after a perl is installed into `local/`.

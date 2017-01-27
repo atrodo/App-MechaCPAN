@@ -2,6 +2,11 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.14  2017-01-26 23:27:35 EST
+  - Make the command idle timeout an env variable
+  - Remove -j from make since not all makes accept it
+  - Update documentation
+
 0.13  2017-01-25 23:54:21 EST
   - Deal with how to deal with Win32
   - Prevent the building of perl on Win32
