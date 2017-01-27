@@ -297,6 +297,10 @@ Since perl and modules will be installed by L<App::MechaCPAN> into C<local/>, by
 
 If a C<lib/> directory exists in the same directory as the C<local/> directory, then C<lib/> will also bee added to C<@INC>. This is helpful if you're installing to run an application that includes a C<lib/> directory. If you do not want this to be added, use this flag.
 
+=head1 WIN32 LIMITATION
+
+Building perl from scratch on Win32 is nothing like building it on other platforms. At this point, the perl command does not work on Win32.
+
 =head1 AUTHOR
 
 Jon Gentle E<lt>cpan@atrodo.orgE<gt>

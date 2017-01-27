@@ -662,6 +662,26 @@ The L<install|App::MechaCPAN::Install> command is used for installing specific m
 
 The L<deploy|App::MechaCPAN::Deploy> command is used for automating a deployment. It will install both L<perl> and all the modules specified from the C<cpanfile>. If there is a C<cpanfile.snapshot> that was created by L<Carton>, C<deploy> will treat the modules lised in the snapshot file as the only modules available to install. See L<App::MechaCPAN::Deploy> for more details.
 
+=head1 OPTIONS
+
+Besides the options that the individual commands take, C<App::MechaCPAN> takes several that are always available.
+
+=head2 --verbose
+
+By default only informational descriptions of what is happening is shown. Turning verbose on will show every command and all output produced by running each command. Note that this is B<not> the opposite of quiet.
+
+=head2 --quiet
+
+Using quiet means that the normal information descriptions are hidden. Note that this is B<not> the opposite of verbose, turning both options on means no descriptions will be show, but all output from all commands will be.
+
+=head2 --no-log
+
+A log is normally outputted into the C<local/logs> directory. This option will prevent a log from being created.
+
+=head2 C<$ENV{MECHACPAN_TIMEOUT}>
+
+Every command that C<App::MechaCPAN> runs is given an idle timeout before it is killed and a failure is returned. This timeout is reset every time the command outputs to C<STDOUT> or C<STDERR>. Using the environment variable C<MECHACPAN_TIMEOUT>, you can override or disable this timeout. It is always in seconds and setting it to 0 will disable it.
+
 =head1 SCRIPT RESTART WARNING
 
 This module B<WILL> restart the running script B<IF> it's used as a module (e.g. with C<use>) and the perl that is running is not the version installed in C<local/>. It does this at two points: First right before run-time and Second right after a perl is installed into C<local/>.
