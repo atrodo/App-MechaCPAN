@@ -298,16 +298,15 @@ sub _install
   my $target = shift;
   my $cache  = shift;
 
+  my $unsafe_inc
+    = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
+
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
+  local $ENV{PERL_USE_UNSAFE_INC}    = $unsafe_inc;
 
-  state $make;
+  my $make = $Config{make};
   my $opts = $cache->{opts};
-
-  if ( !defined $make )
-  {
-    $make = $Config{make};
-  }
 
   my $skip_tests = $cache->{opts}->{'skip-tests'};
   if ( !$skip_tests )
