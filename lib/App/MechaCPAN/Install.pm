@@ -54,13 +54,17 @@ sub go
     $opts->{'skip-tests-for'} = [];
   }
   $opts->{'skip-tests-for'}
-      = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
+    = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
+
+  my $unsafe_inc
+    = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
 
   # trick AutoInstall
   local $ENV{PERL5_CPAN_IS_RUNNING}     = $$;
   local $ENV{PERL5_CPANPLUS_IS_RUNNING} = $$;
 
   local $ENV{PERL_MM_USE_DEFAULT} = 1;
+  local $ENV{PERL_USE_UNSAFE_INC} = $unsafe_inc;
 
   local $ENV{PERL_MM_OPT} = "INSTALL_BASE=$dest_dir";
   local $ENV{PERL_MB_OPT} = "--install_base $dest_dir";
@@ -298,12 +302,8 @@ sub _install
   my $target = shift;
   my $cache  = shift;
 
-  my $unsafe_inc
-    = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
-
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
-  local $ENV{PERL_USE_UNSAFE_INC}    = $unsafe_inc;
 
   my $make = $Config{make};
   my $opts = $cache->{opts};
