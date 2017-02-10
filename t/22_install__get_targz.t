@@ -6,6 +6,7 @@ use File::Temp qw/tempdir/;
 require q[t/helper.pm];
 
 my $has_git = eval { App::MechaCPAN::run(qw/git --version/); 1; };
+local $ENV{GIT_SSL_NO_VERIFY}='true';
 
 # Notes:
 #  * we don't test with git or ssh since those require some kind of login
