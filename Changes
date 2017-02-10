@@ -2,6 +2,12 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.15  2017-02-10 00:07:28 EST
+  - Include PERL_USE_UNSAFE_INC environment variable to handle the upcoming
+    perl v5.26 change that will remove . from the default @INC. Fixes GitHub #3
+  - Disable certificate checking in git while testing. It is less than ideal,
+    but certificate faulures are not a good reason to fail the tests.
+
 0.14  2017-01-26 23:27:35 EST
   - Make the command idle timeout an env variable
   - Remove -j from make since not all makes accept it
