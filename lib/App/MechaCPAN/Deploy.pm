@@ -10,6 +10,7 @@ use App::MechaCPAN;
 
 our @args = (
   'skip-perl!',
+  'update!',
 );
 
 sub go
@@ -68,10 +69,12 @@ sub go
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
     $opts->{source} = \%srcs;
+    $opts->{update} = 1;
     $opts->{'only-sources'} = 1;
   }
 
   my $result;
+  $opts->{update} //= 0;
 
   if ( !$opts->{'skip-perl'} )
   {
@@ -238,6 +241,10 @@ The C<skip-perl> boolean option will force C<deploy> to not install perl, only t
 
   # Examples of skip-perl
   mechacpan deploy --skip-perl
+
+=head3 update
+
+Determines what to do with the installation of top-level dependencies. By default, C<deploy> does not update the immediate prerequisites in the C<cpanfile>. This overrides the same option in C<App::MechaCPAN::Install>. See L<update|App::MechaCPAN::Install/update> in L<App::MechaCPAN::Install>.
 
 =head1 AUTHOR
 

@@ -21,9 +21,14 @@ is(
 is( cwd, $dir, 'Returned to whence it started' );
 ok( -d "$dir/local/lib/perl5/", 'Created local lib' );
 
-foreach my $file ( 'Try/Tiny.pm', 'Test/More.pm' )
+foreach my $file ( 'Try/Tiny.pm' )
 {
   ok( -e "$dir/local/lib/perl5/$file", "Library file $file exists" );
+}
+
+foreach my $file ( 'Test/More.pm' )
+{
+  ok( !-e "$dir/local/lib/perl5/$file", "Library file $file doesn't exists" );
 }
 
 chdir $pwd;

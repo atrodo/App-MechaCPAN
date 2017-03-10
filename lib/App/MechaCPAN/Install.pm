@@ -21,6 +21,7 @@ our @args = (
   'install-man!',
   'source=s%',
   'only-sources!',
+  'update!',
 );
 
 our $dest_lib;
@@ -108,7 +109,7 @@ sub go
   {
     $target = _source_translate( $target, $opts );
     $target = _create_target( $target, $cache );
-    $target->{update} = 1;
+    $target->{update} = $opts->{update} // 1;
   }
 
   while ( my $target = shift @targets )
@@ -754,6 +755,14 @@ Add a source translation to the installation. This can be used to translate a mo
 =head3 only-sources
 
 Do not use modules not listed in the source list. This means if you do not specify every module and every prerequisite in the source list, then it will not be installed. This doesn't sound very useful since you would be potentially listing hundreds of modules. However, this feature is mostly used in conjuncture with L<App::MechaCPAN::Deploy> so that the modules listed in the C<cpanfile.snapshot> are the only module versions used.
+
+=head3 update
+
+If an older version of a given module is installed, a newer version will be installed. This is on by default.
+
+Because to update is the default, the more useful option is false, or C<--no-update> from the command line. This will only install modules, not update modules to a newer version.
+
+B<Note> this option I<ONLY> affects CPAN modules listed by package name, prerequisites and modules given not by package name are not affected by this option.
 
 =head1 AUTHOR
 
