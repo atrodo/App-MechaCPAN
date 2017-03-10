@@ -2,6 +2,11 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.16  2017-03-09 23:48:57 EST
+  - Add --directory
+  - Add --update to Install and Deploy
+  - Start using CoreList when checking for library versions
+
 0.15  2017-02-10 00:07:28 EST
   - Include PERL_USE_UNSAFE_INC environment variable to handle the upcoming
     perl v5.26 change that will remove . from the default @INC. Fixes GitHub #3

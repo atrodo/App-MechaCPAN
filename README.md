@@ -99,6 +99,10 @@ Using quiet means that the normal information descriptions are hidden. Note that
 
 A log is normally outputted into the `local/logs` directory. This option will prevent a log from being created.
 
+## --directory=&lt;path>
+
+Changes to a specified directory before any processing is done. This allows you to specify what directory you want `local/` to be in.
+
 ## `$ENV{MECHACPAN_TIMEOUT}`
 
 Every command that `App::MechaCPAN` runs is given an idle timeout before it is killed and a failure is returned. This timeout is reset every time the command outputs to `STDOUT` or `STDERR`. Using the environment variable `MECHACPAN_TIMEOUT`, you can override or disable this timeout. It is always in seconds and setting it to 0 will disable it.
