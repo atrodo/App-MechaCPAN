@@ -572,6 +572,11 @@ sub _get_mod_ver
     MM->parse_version($file);
   };
 
+  if (!defined $ver)
+  {
+    $ver = $Module::CoreList::version{$]}{$module};
+  }
+
   return $ver;
 }
 
