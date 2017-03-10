@@ -50,6 +50,7 @@ my @args = (
   'verbose|v!',
   'quiet|q!',
   'no-log!',
+  'directory|d=s',
 );
 @args = keys %{ { map { $_ => 1 } @args } };
 
@@ -63,12 +64,6 @@ our $LOG_ON = 1; # Default if to log or not
 sub main
 {
   my @argv = @_;
-
-  my $options = {};
-  my $getopt_ret
-    = Getopt::Long::GetOptionsFromArray( \@argv, $options, @args );
-  return -1
-    if !$getopt_ret;
 
   if ( $0 =~ m/zhuli/ )
   {
@@ -88,8 +83,38 @@ sub main
     }
   }
 
-  local $LOGFH;
+  my $options = {};
+  my $getopt_ret
+    = Getopt::Long::GetOptionsFromArray( \@argv, $options, @args );
+  return -1
+    if !$getopt_ret;
+
+  my $merge_options = sub
+  {
+    my $arg = shift;
+    if ( ref $arg eq 'HASH' )
+    {
+      $options = { %$arg, %$options };
+
+      #say Data::Dumper::Dumper($arg, $options);
+      return 0;
+    }
+    return 1;
+  };
+
+  @argv = grep { $merge_options->($_) } @argv;
+
   my $orig_dir = cwd;
+  if ( exists $options->{directory} )
+  {
+    if ( !-d $options->{directory} )
+    {
+      die "Cannot find directory: $options->{directory}\n";
+    }
+    chdir $options->{directory};
+  }
+
+  local $LOGFH;
   my $dest_dir = &dest_dir;
   my $cmd      = ucfirst lc shift @argv;
   my $pkg      = join( '::', __PACKAGE__, $cmd );
@@ -101,14 +126,10 @@ sub main
     return -1;
   }
 
-  if ( ref $argv[0] eq 'HASH' )
-  {
-    $options = shift @argv;
-  }
-
   if ( $options->{'diag-run'} )
   {
     warn "Would run '$cmd'\n";
+    chdir $orig_dir;
     return 0;
   }
 
@@ -677,6 +698,10 @@ Using quiet means that the normal information descriptions are hidden. Note that
 =head2 --no-log
 
 A log is normally outputted into the C<local/logs> directory. This option will prevent a log from being created.
+
+=head2 --directory=<path>
+
+Changes to a specified directory before any processing is done. This allows you to specify what directory you want C<local/> to be in.
 
 =head2 C<$ENV{MECHACPAN_TIMEOUT}>
 
