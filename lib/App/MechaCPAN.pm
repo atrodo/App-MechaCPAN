@@ -115,6 +115,9 @@ sub main
   }
 
   local $LOGFH;
+  local $VERBOSE = $options->{verbose};
+  local $QUIET   = $options->{quiet};
+
   my $dest_dir = &dest_dir;
   my $cmd      = ucfirst lc shift @argv;
   my $pkg      = join( '::', __PACKAGE__, $cmd );
@@ -233,6 +236,13 @@ sub _show_line
   }
   $idx++;
 
+  # Don't bother with fancy line movements if we are verbose
+  if ($VERBOSE)
+  {
+    print STDERR "$color$line$RESET\n";
+    return;
+  }
+
   # We use some ANSI escape codes, so they are:
   # \e[.F  - Move up from current line, which is always the end of the list
   # \e[K   - Clear the line
@@ -268,7 +278,7 @@ sub status
   state @last_key;
 
   # Undo the last line that is bold
-  if (@last_key)
+  if (@last_key && !$VERBOSE)
   {
     _show_line(@last_key);
   }
