@@ -12,5 +12,5 @@ MYMETA.*
 /local*
 /blib/
 mechacpan_t_*
-local_t/
+local/
 tmp*
