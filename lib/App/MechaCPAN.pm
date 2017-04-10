@@ -117,8 +117,8 @@ sub main
   }
 
   local $LOGFH;
-  local $VERBOSE = $options->{verbose};
-  local $QUIET   = $options->{quiet};
+  local $VERBOSE = $options->{verbose} // $VERBOSE;
+  local $QUIET   = $options->{quiet}   // $QUIET;
 
   my $dest_dir = &dest_dir;
   my $cmd      = ucfirst lc shift @argv;
