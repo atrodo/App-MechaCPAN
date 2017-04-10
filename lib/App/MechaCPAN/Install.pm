@@ -387,8 +387,8 @@ my $url_re = qr[
 
 my $full_pause_re = qr[
   (?: authors/id/ )
-  (   \w / \w\w /)
-
+  (   \w / \w\w )
+  /
   ( \w{2,} )
   /
   ( [^/]+ )
