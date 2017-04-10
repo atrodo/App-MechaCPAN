@@ -17,3 +17,5 @@
 -boc    # Keep breakpoints after commas
 -cti=0  # Line up closing tokens/brackets with indent
 -nolc   # Don't outdent long comments
+
+tests { -l=120 }
