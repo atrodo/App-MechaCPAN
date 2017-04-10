@@ -630,7 +630,7 @@ sub _phase_prereq
 
   my $requirements = $prereqs->requirements_for( $phase, "requires" );
   my $reqs = $requirements->as_string_hash;
-  for my $module ( sort keys $reqs )
+  for my $module ( sort keys %$reqs )
   {
     my $is_core;
 
