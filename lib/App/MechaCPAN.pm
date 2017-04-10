@@ -99,8 +99,6 @@ sub main
     if ( ref $arg eq 'HASH' )
     {
       $options = { %$arg, %$options };
-
-      #say Data::Dumper::Dumper($arg, $options);
       return 0;
     }
     return 1;
@@ -282,7 +280,7 @@ sub status
   state @last_key;
 
   # Undo the last line that is bold
-  if (@last_key && !$VERBOSE)
+  if ( @last_key && !$VERBOSE )
   {
     _show_line(@last_key);
   }
@@ -416,7 +414,7 @@ sub run
   }
 
   # If the output is asked for (non-void context), don't show it anywhere
-  if ( $wantoutput )
+  if ($wantoutput)
   {
     open $dest_out_fh, ">", \$out;
     open $dest_err_fh, ">", \$err;
@@ -427,10 +425,10 @@ sub run
   my ( $error,  $error_chld )  = _genio;
 
   warn( join( "\t", $cmd, @args ) . "\n" )
-      if $VERBOSE;
+    if $VERBOSE;
 
   print $dest_err_fh ( 'Running: ', join( "\t", $cmd, @args ) . "\n" )
-      if defined $dest_err_fh;
+    if defined $dest_err_fh;
 
   my $pid = open3(
     undef,
@@ -469,17 +467,17 @@ sub run
         if ( $fh eq $output )
         {
           print $dest_out_fh $line
-              if defined $dest_out_fh;
+            if defined $dest_out_fh;
           $out .= $line
-              unless $wantoutput;
+            unless $wantoutput;
         }
 
         if ( $fh eq $error )
         {
           print $dest_err_fh $line
-              if defined $dest_err_fh;
+            if defined $dest_err_fh;
           $err .= $line
-              unless $wantoutput;
+            unless $wantoutput;
         }
 
       }
@@ -489,7 +487,7 @@ sub run
   my $error = $@;
   alarm 0;
 
-  if ($error eq $alrm_code)
+  if ( $error eq $alrm_code )
   {
     info "Idle timeout (${TIMEOUT}s) exceeded, killing";
     kill "KILL", $pid;
@@ -504,22 +502,22 @@ sub run
     my $core = $? & 128 ? 'Core Dumped' : '';
 
     croak ""
-        . Term::ANSIColor::color('RED')
-        . qq/\nCould not execute '/
-        . join( ' ', $cmd, @args ) . qq/'/
-        . qq/\nPID: $pid/
-        . qq/\t$code/
-        . qq/\t$sig/
-        . qq/\t$core/
-        . Term::ANSIColor::color('GREEN')
-        . qq/\n$out/
-        . Term::ANSIColor::color('YELLOW')
-        . qq/\n$err/
-        . Term::ANSIColor::color('RESET') . "\n";
+      . Term::ANSIColor::color('RED')
+      . qq/\nCould not execute '/
+      . join( ' ', $cmd, @args ) . qq/'/
+      . qq/\nPID: $pid/
+      . qq/\t$code/
+      . qq/\t$sig/
+      . qq/\t$core/
+      . Term::ANSIColor::color('GREEN')
+      . qq/\n$out/
+      . Term::ANSIColor::color('YELLOW')
+      . qq/\n$err/
+      . Term::ANSIColor::color('RESET') . "\n";
   }
 
   return
-      if !defined wantarray;
+    if !defined wantarray;
 
   if (wantarray)
   {

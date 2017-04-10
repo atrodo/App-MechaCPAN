@@ -503,7 +503,7 @@ sub _get_targz
     my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
 
     my $dir
-        = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
+      = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
     my ( $fh, $file ) = tempfile(
       TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
       CLEANUP  => 1
@@ -569,10 +569,10 @@ sub _get_targz
     my $dest_dir = dest_dir() . "/pkgs";
 
     $ff->scheme('http')
-        if $ff->scheme eq 'https';
+      if $ff->scheme eq 'https';
     my $where = $ff->fetch( to => $dest_dir );
     die $ff->error || "Could not download $url"
-        if !defined $where;
+      if !defined $where;
 
     return $where;
   }
