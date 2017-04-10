@@ -2,6 +2,9 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.18  2017-04-10 16:20:23 EDT
+  - Goofed up and did 'keys $req', which is not really okay
+
 0.17  2017-04-10 01:18:00 EDT
   - Make --verbose and --quiet work
   - Fix it so module load order doesn't prevent arguments
