@@ -2,6 +2,13 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.17  2017-04-10 01:18:00 EDT
+  - Make --verbose and --quiet work
+  - Fix it so module load order doesn't prevent arguments
+  - Make sure module versions are revisited after seeing them
+  - Calculate the module name since it's not easily gotten
+  - Manually add . to the require path for perl 5.26
+
 0.16  2017-03-09 23:48:57 EST
   - Add --directory
   - Add --update to Install and Deploy
