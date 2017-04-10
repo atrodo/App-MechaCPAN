@@ -45,7 +45,7 @@ sub go
   my %src_names;
   my @deps;
 
-  if ( ref $opts->{source} ne 'HASH' )
+  if ( ref $opts->{source} ne 'HASH' && ref $opts->{source} ne 'CODE' )
   {
     $opts->{source} = {};
   }
@@ -444,12 +444,44 @@ sub _create_target
 
   if ( exists $cache->{targets}->{ $target->{src_name} } )
   {
-    $target = $cache->{targets}->{ $target->{src_name} };
+    my $cached_target = $cache->{targets}->{ $target->{src_name} };
+    if ( $cached_target->{state} == $COMPLETE
+      && $target->{constraint} ne $cached_target->{constraint} )
+    {
+      $cached_target->{constraint} = $target->{constraint};
+      $cached_target->{state}      = 0;
+    }
+    $target = $cached_target;
   }
 
   $cache->{targets}->{ $target->{src_name} } = $target;
 
   return $target;
+}
+
+sub _search_metacpan
+{
+  my $src        = shift;
+  my $constraint = shift;
+
+  # TODO mirrors
+  my $dnld = 'https://api-v1.metacpan.org/download_url/' . _escape($src);
+  if ( defined $constraint )
+  {
+    $dnld .= '?version=' . _escape($constraint);
+  }
+
+  local $File::Fetch::WARN;
+  my $ff = File::Fetch->new( uri => $dnld );
+  $ff->scheme('http')
+    if $ff->scheme eq 'https';
+  my $json_info = '';
+  my $where = $ff->fetch( to => \$json_info );
+
+  die "Could not find module $src on metacpan"
+    if !defined $where;
+
+  return JSON::PP::decode_json($json_info);
 }
 
 sub _get_targz
@@ -512,24 +544,7 @@ sub _get_targz
   # Module Name
   if ( !defined $url )
   {
-    # TODO mirrors
-    my $dnld = 'https://api-v1.metacpan.org/download_url/' . _escape($src);
-    if ( defined $target->{constraint} )
-    {
-      $dnld .= '?version=' . _escape( $target->{constraint} );
-    }
-
-    local $File::Fetch::WARN;
-    my $ff = File::Fetch->new( uri => $dnld );
-    $ff->scheme('http')
-        if $ff->scheme eq 'https';
-    my $json_info = '';
-    my $where = $ff->fetch( to => \$json_info );
-
-    die "Could not find module $src on metacpan"
-        if !defined $where;
-
-    my $json_data = JSON::PP::decode_json($json_info);
+    my $json_data = _search_metacpan( $src, $target->{constraint} );
 
     $url = $json_data->{download_url};
 
@@ -613,19 +628,19 @@ sub _phase_prereq
   my $prereqs = $target->{meta}->effective_prereqs;
   my @result;
 
-  #say "  Requirements for $phase:";
-  my $reqs = $prereqs->requirements_for( $phase, "requires" );
-  for my $module ( sort $reqs->required_modules )
+  my $requirements = $prereqs->requirements_for( $phase, "requires" );
+  my $reqs = $requirements->as_string_hash;
+  for my $module ( sort keys $reqs )
   {
     my $is_core;
 
     my $version = $Module::CoreList::version{$]}{$module};
     if ( defined $version )
     {
-      $is_core = $reqs->accepts_module( $module, $version );
+      $is_core = $requirements->accepts_module( $module, $version );
     }
 
-    push @result, $module
+    push @result, [ $module, $reqs->{$module} ]
       if $module ne 'perl' && !$is_core;
   }
 
@@ -675,12 +690,22 @@ sub _source_translate
     $src_name = $target->{src_name};
   }
 
-  my $new_src = $sources->{$src_name};
+  my $new_src;
+
+  if ( ref $sources eq 'HASH' )
+  {
+    $new_src = $sources->{$src_name};
+  }
+
+  if ( ref $sources eq 'CODE' )
+  {
+    $new_src = $sources->($src_name);
+  }
 
   if ( $opts->{'only-sources'} )
   {
     die "Unable to locate $src_name from the sources list\n"
-        if !$new_src;
+      if !$new_src;
     return $new_src;
   }
 
