@@ -3,7 +3,7 @@ use FindBin;
 use Test::More;
 use File::Temp qw/tempdir/;
 
-require q[t/helper.pm];
+require q[./t/helper.pm];
 
 my $has_git = eval { App::MechaCPAN::run(qw/git --version/); 1; };
 local $ENV{GIT_SSL_NO_VERIFY}='true';

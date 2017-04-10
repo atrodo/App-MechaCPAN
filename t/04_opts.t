@@ -4,7 +4,7 @@ use Test::More;
 use Cwd qw/cwd/;
 use File::Temp qw/tempdir/;
 
-require q[t/helper.pm];
+require q[./t/helper.pm];
 
 $SIG{__WARN__} = sub { };
 

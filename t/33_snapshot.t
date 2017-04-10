@@ -4,7 +4,7 @@ use File::Copy;
 use Test::More;
 use Cwd qw/cwd/;
 
-require q[t/helper.pm];
+require q[./t/helper.pm];
 
 my $pwd = cwd;
 

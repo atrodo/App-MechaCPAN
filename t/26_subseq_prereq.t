@@ -5,7 +5,7 @@ use Config;
 use Cwd qw/cwd/;
 use File::Temp qw/tempdir/;
 
-require q[t/helper.pm];
+require q[./t/helper.pm];
 
 # Make sure the prereqs from a previous module don't prevent newer prereqs
 my $pwd = cwd;

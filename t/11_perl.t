@@ -2,7 +2,7 @@ use strict;
 use FindBin;
 use Test::More;
 
-require q[t/helper.pm];
+require q[./t/helper.pm];
 
 if( $^O eq 'MSWin32' )
 {

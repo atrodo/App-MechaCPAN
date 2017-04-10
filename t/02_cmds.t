@@ -1,7 +1,7 @@
 use strict;
 use Test::More;
 
-require q[t/helper.pm];
+require q[./t/helper.pm];
 
 local $SIG{__WARN__} = sub { };
 
