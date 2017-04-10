@@ -42,17 +42,13 @@ INIT
 
 $loaded_at_compile //= 0;
 
-my @args = (
+our @args = (
   'diag-run!',
-  @App::MechaCPAN::Perl::args,
-  @App::MechaCPAN::Install::args,
-  @App::MechaCPAN::Deploy::args,
   'verbose|v!',
   'quiet|q!',
   'no-log!',
   'directory|d=s',
 );
-@args = keys %{ { map { $_ => 1 } @args } };
 
 # Timeout when there's no output in seconds
 our $TIMEOUT = $ENV{MECHACPAN_TIMEOUT} // 30;
@@ -82,6 +78,14 @@ sub main
       @argv = ( 'deploy', @argv[ 3 .. $#argv ] );
     }
   }
+
+  my @args = (
+    @App::MechaCPAN::args,
+    @App::MechaCPAN::Perl::args,
+    @App::MechaCPAN::Install::args,
+    @App::MechaCPAN::Deploy::args,
+  );
+  @args = keys %{ { map { $_ => 1 } @args } };
 
   my $options = {};
   my $getopt_ret
