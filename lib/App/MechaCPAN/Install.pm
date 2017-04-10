@@ -277,6 +277,9 @@ sub _mymeta
   my $cache  = shift;
 
   $target->{meta} = _load_meta( $target, $cache, 1 );
+  $target->{name} = $target->{meta}->name;
+  $target->{name} =~ s[-][::]xmsg;
+
   return $target;
 }
 
@@ -356,7 +359,8 @@ sub _write_meta
     $target->{meta}->save("$dir/MYMETA.json");
 
     my $install = {
-      name     => $target->{meta}->name,
+      name     => $target->{name},
+      target   => $target->{src_name},
       version  => $target->{meta}->version,
       dist     => $target->{distvname},
       pathname => $target->{pathname},
