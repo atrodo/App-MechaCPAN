@@ -51,7 +51,7 @@ our @args = (
 );
 
 # Timeout when there's no output in seconds
-our $TIMEOUT = $ENV{MECHACPAN_TIMEOUT} // 30;
+our $TIMEOUT = $ENV{MECHACPAN_TIMEOUT} // 60;
 our $VERBOSE;    # Print output from sub commands to STDERR
 our $QUIET;      # Do not print any progress to STDERR
 our $LOGFH;      # File handle to send the logs to
