@@ -133,7 +133,8 @@ sub go
     info( $target->{src_name}, $line );
     my $method = $states[ $target->{state} ];
     unshift @targets, $method->( $target, $cache );
-    $target->{state}++;
+    $target->{state}++
+        if $target->{state} ne $COMPLETE;
 
     if ( $target->{state} eq scalar @states )
     {
