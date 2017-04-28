@@ -11,6 +11,7 @@ our @args = (
   'skip-tests!',
   'skip-local!',
   'skip-lib!',
+  'devel!',
 );
 
 sub go
@@ -91,6 +92,11 @@ sub go
   if ( $opts->{threads} )
   {
     push @config, '-Dusethreads';
+  }
+
+  if ($opts->{devel} )
+  {
+    push @config, '-Dusedevel';
   }
 
   delete @ENV{qw(PERL5LIB PERL5OPT)};
@@ -296,6 +302,10 @@ Since perl and modules will be installed by L<App::MechaCPAN> into C<local/>, by
 =head3 skip-lib
 
 If a C<lib/> directory exists in the same directory as the C<local/> directory, then C<lib/> will also bee added to C<@INC>. This is helpful if you're installing to run an application that includes a C<lib/> directory. If you do not want this to be added, use this flag.
+
+=head3 devel
+
+By default, perl will not compile a development version without -Dusedevel passed to configure. This adds that flag to the configure step so that perl will install unstable development versions. This is B<NOT> recommended except for testing.
 
 =head1 WIN32 LIMITATION
 
