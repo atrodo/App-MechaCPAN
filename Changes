@@ -2,6 +2,13 @@ Revision history for App-MechaCPAN
 
 {{$NEXT}}
 
+0.19  2017-04-27 23:39:40 EDT
+  - Delete PERL_USE_UNSAFE_INC before running other module's tests (GH#5)
+  - Increase the default timeout to 60s
+  - Add a --devel flag so you can install unstable versions of perl
+  - Fix a bug that would try to install a module after it was determined that
+    it didn't need to be installed again
+
 0.18  2017-04-10 16:20:23 EDT
   - Goofed up and did 'keys $req', which is not really okay
 
@@ -10,7 +17,7 @@ Revision history for App-MechaCPAN
   - Fix it so module load order doesn't prevent arguments
   - Make sure module versions are revisited after seeing them
   - Calculate the module name since it's not easily gotten
-  - Manually add . to the require path for perl 5.26
+  - Manually add . to the require path for perl 5.26 (GH#4)
 
 0.16  2017-03-09 23:48:57 EST
   - Add --directory
