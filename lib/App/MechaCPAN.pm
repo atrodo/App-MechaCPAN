@@ -717,7 +717,7 @@ Changes to a specified directory before any processing is done. This allows you 
 
 =head2 C<$ENV{MECHACPAN_TIMEOUT}>
 
-Every command that C<App::MechaCPAN> runs is given an idle timeout before it is killed and a failure is returned. This timeout is reset every time the command outputs to C<STDOUT> or C<STDERR>. Using the environment variable C<MECHACPAN_TIMEOUT>, you can override or disable this timeout. It is always in seconds and setting it to 0 will disable it.
+Every command that C<App::MechaCPAN> runs is given an idle timeout before it is killed and a failure is returned. This timeout is reset every time the command outputs to C<STDOUT> or C<STDERR>. Using the environment variable C<MECHACPAN_TIMEOUT>, you can override or disable this timeout. It is always in seconds and setting it to 0 will disable it. The default is 60 seconds.
 
 =head1 SCRIPT RESTART WARNING
 
