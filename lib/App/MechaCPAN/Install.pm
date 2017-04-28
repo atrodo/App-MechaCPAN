@@ -55,10 +55,10 @@ sub go
     $opts->{'skip-tests-for'} = [];
   }
   $opts->{'skip-tests-for'}
-    = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
+      = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
 
   my $unsafe_inc
-    = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
+      = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
 
   # trick AutoInstall
   local $ENV{PERL5_CPAN_IS_RUNNING}     = $$;
@@ -257,7 +257,7 @@ sub _configure
   {
     run( $^X, 'Build.PL' );
     my $configured = -e -f 'Build';
-    die 'Unable to configure Buid.PL'
+    die 'Unable to configure Buid.PL for ' . $target->{module}
         unless $configured;
     $maker = 'mb';
   }
@@ -266,12 +266,12 @@ sub _configure
   {
     run( $^X, 'Makefile.PL' );
     my $configured = -e 'Makefile';
-    die 'Unable to configure Makefile.PL'
+    die 'Unable to configure Makefile.PL for ' . $target->{module}
         unless $configured;
     $maker = 'mm';
   }
 
-  die 'Unable to configure'
+  die 'Unable to configure ' . $target->{module}
       if !defined $maker;
 
   $target->{maker} = $maker;
@@ -481,12 +481,12 @@ sub _search_metacpan
   local $File::Fetch::WARN;
   my $ff = File::Fetch->new( uri => $dnld );
   $ff->scheme('http')
-    if $ff->scheme eq 'https';
+      if $ff->scheme eq 'https';
   my $json_info = '';
   my $where = $ff->fetch( to => \$json_info );
 
   die "Could not find module $src on metacpan"
-    if !defined $where;
+      if !defined $where;
 
   return JSON::PP::decode_json($json_info);
 }
@@ -510,7 +510,7 @@ sub _get_targz
     my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
 
     my $dir
-      = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
+        = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
     my ( $fh, $file ) = tempfile(
       TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
       CLEANUP  => 1
@@ -576,10 +576,10 @@ sub _get_targz
     my $dest_dir = dest_dir() . "/pkgs";
 
     $ff->scheme('http')
-      if $ff->scheme eq 'https';
+        if $ff->scheme eq 'https';
     my $where = $ff->fetch( to => $dest_dir );
     die $ff->error || "Could not download $url"
-      if !defined $where;
+        if !defined $where;
 
     return $where;
   }
@@ -598,7 +598,7 @@ sub _get_mod_ver
     MM->parse_version($file);
   };
 
-  if (!defined $ver)
+  if ( !defined $ver )
   {
     $ver = $Module::CoreList::version{$]}{$module};
   }
@@ -648,7 +648,7 @@ sub _phase_prereq
     }
 
     push @result, [ $module, $reqs->{$module} ]
-      if $module ne 'perl' && !$is_core;
+        if $module ne 'perl' && !$is_core;
   }
 
   return @result;
@@ -712,7 +712,7 @@ sub _source_translate
   if ( $opts->{'only-sources'} )
   {
     die "Unable to locate $src_name from the sources list\n"
-      if !$new_src;
+        if !$new_src;
     return $new_src;
   }
 
