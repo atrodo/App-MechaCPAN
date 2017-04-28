@@ -139,6 +139,7 @@ sub go
     if ( $target->{state} eq scalar @states )
     {
       _complete($target);
+      $target->{was_installed} = 1;
       success( $target->{src_name}, $line );
     }
   }
@@ -164,11 +165,16 @@ sub _resolve
     my $module = $target->{module};
     my $ver    = _get_mod_ver($module);
 
+    my $msg = 'Up to date';
+
+    $msg = 'Installed'
+        if $target->{was_installed};
+
     if ( defined $ver && $target->{version} eq $ver )
     {
       success(
         $target->{src_name},
-        sprintf( '%-13s %s', 'Up to date', $target->{src_name} )
+        sprintf( '%-13s %s', "$msg-", $target->{src_name} )
       );
       _complete($target);
       return;
@@ -185,7 +191,7 @@ sub _resolve
       {
         success(
           $target->{src_name},
-          sprintf( '%-13s %s', 'Up to date', $target->{src_name} )
+          sprintf( '%-13s %s', "$msg=", $target->{src_name} )
         );
         _complete($target);
         return;
@@ -201,7 +207,7 @@ sub _resolve
     $src_dir = $files[0];
   }
 
-  @{$target}{qw/src_tgz dir/} = ( $src_tgz, $src_dir );
+  @{$target}{qw/src_tgz dir was_installed/} = ( $src_tgz, $src_dir, 0 );
   return $target;
 }
 
