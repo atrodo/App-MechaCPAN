@@ -452,7 +452,7 @@ sub _create_target
   if ( exists $cache->{targets}->{ $target->{src_name} } )
   {
     my $cached_target = $cache->{targets}->{ $target->{src_name} };
-    if ( $cached_target->{state} == $COMPLETE
+    if ( $cached_target->{state} eq $COMPLETE
       && $target->{constraint} ne $cached_target->{constraint} )
     {
       $cached_target->{constraint} = $target->{constraint};
