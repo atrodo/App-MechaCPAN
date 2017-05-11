@@ -540,7 +540,7 @@ sub _search_metacpan
       if exists $seen{$src}->{$constraint};
 
   # TODO mirrors
-  my $dnld = 'https://api-v1.metacpan.org/download_url/' . _escape($src);
+  my $dnld = 'https://fastapi.metacpan.org/download_url/' . _escape($src);
   if ( defined $constraint )
   {
     $dnld .= '?version=' . _escape($constraint);
