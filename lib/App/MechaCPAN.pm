@@ -21,7 +21,7 @@ use Exporter qw/import/;
 BEGIN
 {
   our @EXPORT_OK
-    = qw/url_re info success dest_dir inflate_archive run restart_script/;
+    = qw/url_re git_re info success dest_dir inflate_archive run restart_script/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -174,9 +174,19 @@ sub url_re
   state $url_re = qr[
     ^
     (?: ftp | http | https | file )
-    :
+    : //
   ]xmsi;
   return $url_re;
+}
+
+sub git_re
+{
+  state $git_re = qr[
+    ^ (?: git | ssh ) :
+    |
+    [.]git (?: @|$ )
+  ]xmsi;
+  return $git_re;
 }
 
 sub info

@@ -388,18 +388,6 @@ sub _write_meta
   return;
 }
 
-my $git_re = qr[
-  ^ (?: git | ssh ) :
-  |
-  [.]git (?: @|$ )
-]xmsi;
-
-my $url_re = qr[
-  ^
-  (?: ftp | http | https | file )
-  : //
-]xmsi;
-
 my $full_pause_re = qr[
   (?: authors/id/ )
   (   \w / \w\w )
