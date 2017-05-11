@@ -534,6 +534,11 @@ sub _search_metacpan
   my $src        = shift;
   my $constraint = shift;
 
+  state %seen;
+
+  return $seen{$src}->{$constraint}
+      if exists $seen{$src}->{$constraint};
+
   # TODO mirrors
   my $dnld = 'https://api-v1.metacpan.org/download_url/' . _escape($src);
   if ( defined $constraint )
@@ -551,7 +556,10 @@ sub _search_metacpan
   die "Could not find module $src on metacpan"
       if !defined $where;
 
-  return JSON::PP::decode_json($json_info);
+  my $result = JSON::PP::decode_json($json_info);
+  $seen{$src}->{$constraint} = $result;
+
+  return $result;
 }
 
 sub _get_targz
