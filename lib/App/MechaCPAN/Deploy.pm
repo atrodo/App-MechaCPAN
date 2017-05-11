@@ -71,6 +71,8 @@ sub go
     $opts->{source} = \%srcs;
     $opts->{update} = 1;
     $opts->{'only-sources'} = 1;
+    $opts->{'smart-tests'} = 1
+      if !defined $opts->{'smart-tests'};
   }
 
   my $result;
@@ -225,7 +227,13 @@ App::MechaCPAN::Deploy - Mechanize the deployment of CPAN things.
 
   user@host:~$ mechacpan deploy
 
-The C<deploy> command is used for automating a deployment. It will install both L<perl> and all the modules specified from the C<cpanfile>.  If there is a C<cpanfile.snapshot> that was created by L<Carton>, C<deploy> will treat the modules listed in the snapshot file as the only modules available to install. If a module has a dependency not listed in the snapshot, the deployment will fail.
+The C<deploy> command is used for automating a deployment. It will install both L<perl> and all the modules specified from the C<cpanfile>.
+
+=head3 C<cpanfile.snapshot>
+
+If there is a C<cpanfile.snapshot> that was created by L<Carton>, C<deploy> will treat the modules listed in the snapshot file as the only modules available to install. If a module has a dependency not listed in the snapshot, the deployment will fail.
+
+The option C<smart-tests> is enabled by default when there is a C<cpanfile.snapshot> file. See L<App::MechaCPAN::Install/smart-tests> for more details.
 
 =head2 Methods
 
