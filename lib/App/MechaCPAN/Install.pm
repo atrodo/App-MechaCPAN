@@ -18,6 +18,7 @@ use App::MechaCPAN qw/:go/;
 our @args = (
   'skip-tests!',
   'skip-tests-for:s@',
+  'smart-tests!',
   'install-man!',
   'source=s%',
   'only-sources!',
@@ -165,6 +166,8 @@ sub _resolve
     my $module = $target->{module};
     my $ver    = _get_mod_ver($module);
 
+    $target->{installed_version} = $ver;
+
     my $msg = 'Up to date';
 
     $msg = 'Installed'
@@ -174,7 +177,7 @@ sub _resolve
     {
       success(
         $target->{src_name},
-        sprintf( '%-13s %s', "$msg-", $target->{src_name} )
+        sprintf( '%-13s %s', $msg, $target->{src_name} )
       );
       _complete($target);
       return;
@@ -191,7 +194,7 @@ sub _resolve
       {
         success(
           $target->{src_name},
-          sprintf( '%-13s %s', "$msg=", $target->{src_name} )
+          sprintf( '%-13s %s', $msg, $target->{src_name} )
         );
         _complete($target);
         return;
@@ -329,6 +332,11 @@ sub _install
     {
       $skip_tests = $skips->{ $target->{module} };
     }
+
+    if ( !$skip_tests && $opts->{'smart-tests'} )
+    {
+      $skip_tests = _target_prereqs_were_installed( $target, $cache );
+    }
   }
 
   if ( $target->{maker} eq 'mb' )
@@ -420,12 +428,35 @@ sub _escape
   return $str;
 }
 
+sub _find_cache_target
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  my $src_name = $target->{src_name};
+  for my $altkey (qw/distvname name/)
+  {
+    my $altname = $target->{$altkey};
+    if ( defined $altname )
+    {
+      if ( !exists $cache->{targets}->{$altname} )
+      {
+        $cache->{targets}->{$altname} = $target;
+      }
+      $target = $cache->{targets}->{$altname};
+    }
+  }
+
+  $cache->{targets}->{$src_name} = $target;
+  return $target;
+}
+
 sub _create_target
 {
   my $target = shift;
   my $cache  = shift;
 
-  return $target
+  return _find_cache_target( $target, $cache )
       if ref $target eq 'HASH';
 
   if ( ref $target eq '' )
@@ -463,7 +494,39 @@ sub _create_target
 
   $cache->{targets}->{ $target->{src_name} } = $target;
 
+  return _find_cache_target( $target, $cache );
   return $target;
+}
+
+sub _target_prereqs
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  return
+      map { _create_target $_, $cache }
+      ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
+}
+
+sub _target_prereqs_were_installed
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  foreach my $prereq ( _target_prereqs( $target, $cache ) )
+  {
+    if ( !exists $prereq->{prereqs_was_installed} )
+    {
+    }
+    _target_prereqs_were_installed( $prereq, $cache );
+
+    if ( !$prereq->{prereqs_was_installed} || !$prereq->{was_installed} )
+    {
+      return $target->{prereqs_was_installed} = 0;
+    }
+  }
+
+  return $target->{prereqs_was_installed} = 1;
 }
 
 sub _search_metacpan
@@ -723,6 +786,17 @@ sub _complete
 {
   my $target = shift;
   $target->{state} = $COMPLETE;
+
+  # If we are marking complete because the installed version is the Core
+  # version, mark that it "was_installed"
+  if ( exists $target->{installed_version} && !$target->{was_installed} )
+  {
+    my $module = $target->{module};
+    my $ver    = $target->{installed_version};
+
+    $target->{was_installed} = 1
+        if $ver eq $Module::CoreList::version{$]}{$module};
+  }
   return;
 }
 
@@ -780,6 +854,12 @@ By default the tests of each module will be ran. If you do not want to run tests
   # Examples of --skip-tests
   mechacpan install Try::Tiny --skip-tests
   mechacpan install Catalyst --skip-tests-for=Moose
+
+=head3 smart-tests
+
+An alternative to skipping all tests is to try and be clever about which tests to run and which to skip. The smart-tests option will skip tests for any package that it considers pristine. It defines pristine modules as modules that only depend on modules that are either Core or other pristine modules that have been installed during the current run. This means that on a fresh install, no tests will be ran, whereas installing new modules will cause tests to be ran to make sure there are no issues.
+
+This isn't a fool-proof system, tests are an important part of making sure that all modules installed play well. This option is most useful with L<App::MechaCPAN::Deploy> and a C<cpanfile.snapshot> since the versions of packages listed in the snapshot file have been likely tested together so they are unlikely to have problems that would be revealed by running tests.
 
 =head3 install-man
 
