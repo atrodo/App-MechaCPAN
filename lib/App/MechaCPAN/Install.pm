@@ -610,7 +610,7 @@ sub _get_targz
   my $url;
 
   # git
-  if ( $src =~ $git_re )
+  if ( $src =~ git_re )
   {
     my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
 
@@ -631,7 +631,7 @@ sub _get_targz
   }
 
   # URL
-  if ( $src =~ $url_re )
+  if ( $src =~ url_re )
   {
     $url = $src;
   }
