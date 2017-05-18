@@ -21,7 +21,7 @@ use Exporter qw/import/;
 BEGIN
 {
   our @EXPORT_OK
-    = qw/url_re git_re info success dest_dir inflate_archive run restart_script/;
+    = qw/url_re git_re logmsg info success error dest_dir inflate_archive run restart_script/;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -162,7 +162,7 @@ sub main
 
   if ( !defined $ret )
   {
-    warn $@;
+    error($@);
     return -1;
   }
 
@@ -187,6 +187,25 @@ sub git_re
     [.]git (?: @|$ )
   ]xmsi;
   return $git_re;
+}
+
+sub logmsg
+{
+  my @lines = @_;
+
+  return
+    unless defined $LOGFH;
+
+  foreach my $line (@lines)
+  {
+    if ($line !~ m/\n$/xms)
+    {
+      $line .= "\n";
+    }
+    print $LOGFH $line
+  }
+
+  return;
 }
 
 sub info
@@ -215,6 +234,20 @@ sub success
   }
 
   status( $key, 'GREEN', $line );
+}
+
+sub error
+{
+  my $key  = shift;
+  my $line = shift;
+
+  if ( !defined $line )
+  {
+    $line = $key;
+    undef $key;
+  }
+
+  status( $key, 'RED', $line );
 }
 
 my $RESET = Term::ANSIColor::color('RESET');
@@ -281,6 +314,8 @@ sub status
     $line  = $color;
     $color = 'RESET';
   }
+
+  logmsg($line);
 
   return
     if $QUIET;
