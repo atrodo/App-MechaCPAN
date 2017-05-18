@@ -419,36 +419,9 @@ sub _escape
   return $str;
 }
 
-sub _find_cache_target
+sub _src_to_target
 {
   my $target = shift;
-  my $cache  = shift;
-
-  my $src_name = $target->{src_name};
-  for my $altkey (qw/distvname name/)
-  {
-    my $altname = $target->{$altkey};
-    if ( defined $altname )
-    {
-      if ( !exists $cache->{targets}->{$altname} )
-      {
-        $cache->{targets}->{$altname} = $target;
-      }
-      $target = $cache->{targets}->{$altname};
-    }
-  }
-
-  $cache->{targets}->{$src_name} = $target;
-  return $target;
-}
-
-sub _create_target
-{
-  my $target = shift;
-  my $cache  = shift;
-
-  return _find_cache_target( $target, $cache )
-      if ref $target eq 'HASH';
 
   if ( ref $target eq '' )
   {
@@ -471,9 +444,64 @@ sub _create_target
     };
   }
 
-  if ( exists $cache->{targets}->{ $target->{src_name} } )
+  return $target;
+}
+
+sub _find_cache_target
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  my $src_name = $target->{src_name};
+  if ( exists $cache->{targets}->{$src_name} )
   {
-    my $cached_target = $cache->{targets}->{ $target->{src_name} };
+    $target = $cache->{targets}->{$src_name};
+  }
+
+  for my $altkey (qw/distvname name/)
+  {
+    my $altname = $target->{$altkey};
+    if ( defined $altname )
+    {
+      if ( !exists $cache->{targets}->{$altname} )
+      {
+        $cache->{targets}->{$altname} = $target;
+      }
+      $target = $cache->{targets}->{$altname};
+    }
+  }
+
+  $cache->{targets}->{$src_name} = $target;
+  return $target;
+}
+
+sub _find_target
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  $target = _src_to_target($target)
+    if ref $target ne 'HASH';
+
+  $target = $cache->{targets}->{ $target->{src_name} }
+    if exists $cache->{targets}->{ $target->{src_name} };
+
+  return _find_cache_target( $target, $cache );
+}
+
+sub _create_target
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  $target = _src_to_target($target)
+    if ref $target ne 'HASH';
+
+
+  my $cached_target = _find_cache_target( $target, $cache );
+
+  if ( $cached_target != $target )
+  {
     if ( $cached_target->{state} eq $COMPLETE
       && $target->{constraint} ne $cached_target->{constraint} )
     {
@@ -483,9 +511,6 @@ sub _create_target
     $target = $cached_target;
   }
 
-  $cache->{targets}->{ $target->{src_name} } = $target;
-
-  return _find_cache_target( $target, $cache );
   return $target;
 }
 
@@ -495,8 +520,8 @@ sub _target_prereqs
   my $cache  = shift;
 
   return
-      map { _create_target $_, $cache }
-      ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
+    map { _find_target $_, $cache }
+    ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
 }
 
 sub _target_prereqs_were_installed
@@ -506,9 +531,6 @@ sub _target_prereqs_were_installed
 
   foreach my $prereq ( _target_prereqs( $target, $cache ) )
   {
-    if ( !exists $prereq->{prereqs_was_installed} )
-    {
-    }
     _target_prereqs_were_installed( $prereq, $cache );
 
     if ( !$prereq->{prereqs_was_installed} || !$prereq->{was_installed} )
