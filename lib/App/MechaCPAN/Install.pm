@@ -286,7 +286,10 @@ sub _mymeta
   my $target = shift;
   my $cache  = shift;
 
-  $target->{meta} = _load_meta( $target, $cache, 1 );
+  my $new_meta = _load_meta( $target, $cache, 1 );
+  $target->{meta} = $new_meta
+    if defined $new_meta;
+
   $target->{name} = $target->{meta}->name;
   $target->{name} =~ s[-][::]xmsg;
 
