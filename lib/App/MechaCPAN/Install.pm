@@ -99,6 +99,7 @@ sub go
     'Configuring'   => \&_configure,
     'Configuring'   => \&_mymeta,
     'Prerequisites' => \&_prereq,
+    'Prerequisites' => \&_prereq_verify,
     'Installing'    => \&_install,
     'Installed'     => \&_write_meta,
   );
@@ -312,6 +313,26 @@ sub _prereq
   $target->{prereq} = [@deps];
 
   return @deps, $target;
+}
+
+sub _prereq_verify
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  my @deps = _target_prereqs( $target, $cache );
+  my @incomplete_deps = grep { $_->{state} ne $COMPLETE } @deps;
+
+  if ( @incomplete_deps > 0 )
+  {
+    my $line = 'Unmet dependencies: ' . $target->{src_name};
+    error $target->{src_name}, $line;
+    logmsg "Missing requirements: "
+      . join( ", ", map { $_->{src_name} } @incomplete_deps );
+    return;
+  }
+
+  return $target;
 }
 
 sub _install
