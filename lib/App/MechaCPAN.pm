@@ -461,8 +461,8 @@ sub run
   # If the output is asked for (non-void context), don't show it anywhere
   if ($wantoutput)
   {
-    open $dest_out_fh, ">", \$out;
-    open $dest_err_fh, ">", \$err;
+    undef $dest_out_fh; open $dest_out_fh, ">", \$out;
+    undef $dest_err_fh; open $dest_err_fh, ">", \$err;
     undef $print_output;
   }
 
