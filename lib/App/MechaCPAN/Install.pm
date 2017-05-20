@@ -11,6 +11,7 @@ use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
 use CPAN::Meta::Prereqs qw//;
 use File::Fetch qw//;
+use List::Util qw/uniq/;
 use Module::CoreList;
 use ExtUtils::MakeMaker qw//;
 use App::MechaCPAN qw/:go/;
@@ -29,6 +30,7 @@ our $dest_lib;
 
 # Constants
 my $COMPLETE = 'COMPLETE';
+my $FAILED   = 'FAILED';
 
 sub go
 {
@@ -114,12 +116,13 @@ sub go
     $target->{update} = $opts->{update} // 1;
   }
 
+TARGET:
   while ( my $target = shift @targets )
   {
     $target = _source_translate( $target, $opts );
     $target = _create_target( $target, $cache );
 
-    if ( $target->{state} eq $COMPLETE )
+    if ( $target->{state} eq $COMPLETE || $target->{state} eq $FAILED )
     {
       next;
     }
@@ -134,7 +137,31 @@ sub go
     );
     info( $target->{src_name}, $line );
     my $method = $states[ $target->{state} ];
-    unshift @targets, $method->( $target, $cache );
+
+    {
+      local $@;
+      my $succ = eval { unshift @targets, $method->( $target, $cache ); 1; };
+      my $err = $@;
+
+      if ( !$succ )
+      {
+        my $line = sprintf(
+          '%-13s %s', 'Error',
+          "Could not install $target->{src_name}"
+        );
+
+        #error $err;
+        _failed($target);
+
+        if ( $opts->{stop_on_error} )
+        {
+          die $err;
+        }
+
+        next TARGET;
+      }
+    }
+
     $target->{state}++
         if $target->{state} ne $COMPLETE;
 
@@ -147,6 +174,20 @@ sub go
   }
 
   chdir $orig_dir;
+
+  my @attempted = uniq map { $_->{name} } values %{ $cache->{targets} };
+  my @failed
+      = grep { $cache->{targets}->{$_}->{state} eq $FAILED } @attempted;
+  my @installed
+      = grep { $cache->{targets}->{$_}->{was_installed} } @attempted;
+
+  success "Installed " . scalar @installed . " modules";
+
+  if ( @failed > 0 )
+  {
+    logmsg "Failed modules: " . join( ", ", @failed );
+    die "Failed to install " . scalar @failed . " modules\n";
+  }
 
   return 0;
 }
@@ -842,6 +883,13 @@ sub _complete
     $target->{was_installed} = 1
         if $ver eq $Module::CoreList::version{$]}{$module};
   }
+  return;
+}
+
+sub _failed
+{
+  my $target = shift;
+  $target->{state} = $FAILED;
   return;
 }
 
