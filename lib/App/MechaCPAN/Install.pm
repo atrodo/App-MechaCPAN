@@ -814,16 +814,14 @@ sub _source_translate
     $new_src = $sources->($src_name);
   }
 
-  if ( !$new_src && exists $Module::CoreList::version{$]}{$src_name} )
+  if ( $opts->{'only-sources'} && !defined $new_src )
   {
-    $new_src = $src_name;
-  }
+    if ( exists $Module::CoreList::version{$]}{$src_name} )
+    {
+      return $src_name;
+    }
 
-  if ( $opts->{'only-sources'} )
-  {
-    die "Unable to locate $src_name from the sources list\n"
-        if !$new_src;
-    return $new_src;
+    die "Unable to locate $src_name from the sources list\n";
   }
 
   return defined $new_src ? $new_src : $target;
