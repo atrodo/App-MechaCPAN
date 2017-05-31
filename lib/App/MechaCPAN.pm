@@ -120,10 +120,10 @@ sub main
   local $VERBOSE = $options->{verbose} // $VERBOSE;
   local $QUIET   = $options->{quiet}   // $QUIET;
 
-  my $dest_dir = &dest_dir;
-  my $cmd      = ucfirst lc shift @argv;
-  my $pkg      = join( '::', __PACKAGE__, $cmd );
-  my $action   = eval { $pkg->can('go') };
+  my $cmd    = ucfirst lc shift @argv;
+  my $pkg    = join( '::', __PACKAGE__, $cmd );
+  my $action = eval { $pkg->can('go') };
+  my $munge  = eval { $pkg->can('munge_args') };
 
   if ( !defined $action )
   {
@@ -140,6 +140,12 @@ sub main
 
   $options->{is_restarted_process} = $is_restarted_process;
 
+  if ( defined $munge )
+  {
+    @argv = $pkg->$munge( $options, @argv );
+  }
+
+  my $dest_dir = &dest_dir;
   if ( !-d $dest_dir )
   {
     mkdir $dest_dir;
