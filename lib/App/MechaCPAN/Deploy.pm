@@ -202,6 +202,15 @@ sub parse_cpanfile
     };
   }
 
+  foreach my $phase (qw/configure build test author/)
+  {
+    $methods->{ $phase . '_requires' } = sub
+    {
+      my ( $module, $ver ) = @_;
+      $result->{$phase}->{requires}->{$module} = $ver;
+    };
+  }
+
   open my $code_fh, '<', $file;
   my $code = do { local $/; <$code_fh> };
 
