@@ -102,6 +102,8 @@ sub go
     'Configuring'   => \&_mymeta,
     'Prerequisites' => \&_prereq,
     'Prerequisites' => \&_prereq_verify,
+    'Building'      => \&_build,
+    'Testing'       => \&_test,
     'Installing'    => \&_install,
     'Installed'     => \&_write_meta,
   );
@@ -376,7 +378,33 @@ sub _prereq_verify
   return $target;
 }
 
-sub _install
+sub _build
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  local $ENV{PERL_MM_USE_DEFAULT}    = 0;
+  local $ENV{NONINTERACTIVE_TESTING} = 0;
+
+  my $make = $Config{make};
+  my $opts = $cache->{opts};
+
+  if ( $target->{maker} eq 'mb' )
+  {
+    run( $^X, './Build' );
+    return $target;
+  }
+
+  if ( $target->{maker} eq 'mm' )
+  {
+    run($make);
+    return $target;
+  }
+
+  die 'Unable to determine how to install ' . $target->{meta}->name;
+}
+
+sub _test
 {
   my $target = shift;
   my $cache  = shift;
@@ -404,21 +432,46 @@ sub _install
     }
   }
 
+  if ($skip_tests)
+  {
+    return $target;
+  }
+
   if ( $target->{maker} eq 'mb' )
   {
-    run( $^X, './Build' );
-    run( $^X, './Build', 'test' )
-        unless $skip_tests;
-    run( $^X, './Build', 'install' );
+    run( $^X, './Build', 'test' );
     return $target;
   }
 
   if ( $target->{maker} eq 'mm' )
   {
-    run($make);
-    run( $make, 'test' )
-        unless $skip_tests;
-    run( $make, 'install' );
+    run( $make, 'test' );
+    return $target;
+  }
+
+  die 'Unable to determine how to install ' . $target->{meta}->name;
+}
+
+sub _install
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  local $ENV{PERL_MM_USE_DEFAULT}    = 0;
+  local $ENV{NONINTERACTIVE_TESTING} = 0;
+
+  my $make = $Config{make};
+  my $opts = $cache->{opts};
+
+  if ( $target->{maker} eq 'mb' )
+  {
+    run( $^X, './Build', 'install');
+    return $target;
+  }
+
+  if ( $target->{maker} eq 'mm' )
+  {
+    run($make, 'install' );
     return $target;
   }
 
