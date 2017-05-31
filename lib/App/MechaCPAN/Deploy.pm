@@ -5,21 +5,99 @@ use warnings;
 use autodie;
 use Carp;
 use CPAN::Meta;
-use List::Util qw/reduce/;
-use App::MechaCPAN;
+use List::Util qw/first reduce/;
+use File::Temp qw/tempdir/;
+use App::MechaCPAN qw/:go/;
 
 our @args = (
   'skip-perl!',
   'update!',
 );
 
+sub munge_args
+{
+  my $class = shift;
+  my $opts  = shift;
+  my $file  = shift || '.';
+
+  if ( $file =~ git_re )
+  {
+    my ( $git_url, $branch ) = $file =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
+
+    if ( !eval { run(qw/git --version/); 1; } )
+    {
+      die eval { run(qw/git --version/); 1; };
+      croak "Was given a git-looking URL, but could not run git";
+    }
+
+    my $remote      = 'origin';
+    my $needs_clone = 1;
+
+    # Determine if we're in a git directory
+    if ( -d '.git' || eval { run(qw/git rev-parse --git-dir/); 1 } )
+    {
+      my $remote_line = first {m/\t $git_url \s/xms} run(qw/git remote -v/);
+      if ($remote_line)
+      {
+        ($remote) = $remote_line =~ m/^ ([^\t]*) \t/xms;
+
+        success "Found git checkout of of $git_url";
+
+        $needs_clone = 0;
+      }
+    }
+
+    if ($needs_clone)
+    {
+      info 'git-clone', "Cloning $git_url";
+
+      my $dir = tempdir(
+        TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
+        CLEANUP  => 1
+      );
+
+      # We use a temp directory and --seperate-git-dir  since byt his point
+      # local exists because we're created it and started logging. These
+      # options, plus the git config below, allow us to clone a git repo
+      # without a clean current directory.
+      run qw/git clone/, '--separate-git-dir=.git', '-n', '-o', $remote,
+          $git_url, $dir;
+      run qw/git config --unset core.worktree/;
+      $branch //= 'master';
+      success 'git-clone', "Cloned $git_url";
+    }
+
+    if ($branch)
+    {
+      info 'git-branch', "Checking out $branch";
+      run qw/git checkout/, $branch;
+      run qw/git fetch/, $remote, $branch;
+      info 'git-branch', "Merging with remote branch $remote/$branch";
+      run qw/git merge --ff-only FETCH_HEAD/;
+      success 'git-branch', "Switched branch to $remote/$branch";
+    }
+
+    if ( !-f 'cpanfile' )
+    {
+      my @cpanfiles = glob '*/cpanfile';
+      if ( scalar @cpanfiles == 1 )
+      {
+        my $dir = $cpanfiles[0];
+        $dir =~ s[/cpanfile$][]xms;
+        chdir $dir;
+        $file = 'cpanfile';
+      }
+    }
+  }
+
+  return ($file);
+}
+
 sub go
 {
   my $class = shift;
   my $opts  = shift;
-  my $src   = shift || '.';
-
-  my $file = $src;
+  my $file  = shift || '.';
 
   if ( -d $file )
   {
