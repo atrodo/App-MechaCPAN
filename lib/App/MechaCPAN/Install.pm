@@ -185,7 +185,7 @@ TARGET:
   my @installed
       = grep { $cache->{targets}->{$_}->{was_installed} } @attempted;
 
-  success "Installed " . scalar @installed . " modules";
+  success "\tsuccess", "Installed " . scalar @installed . " modules";
 
   if ( @failed > 0 )
   {
