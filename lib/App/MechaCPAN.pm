@@ -274,6 +274,8 @@ sub _show_line
 
   if ( !defined $key )
   {
+    # Scroll Up 1 line
+    print STDERR "\n";
     $idx = -1;
   }
 
@@ -303,8 +305,9 @@ sub _show_line
   # \e[.E  - Move down from the current line, back to the end of the list
   print STDERR "\e[${idx}F";
   print STDERR "\e[K";
-  print STDERR "$color$line$RESET";
-  print STDERR "\e[${idx}E";
+  print STDERR "$color$line$RESET\n";
+  print STDERR "\e[" . ( $idx - 1 ) . "E"
+    if $idx > 1;
 
   return;
 }
