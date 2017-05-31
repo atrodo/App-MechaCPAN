@@ -24,6 +24,7 @@ our @args = (
   'source=s%',
   'only-sources!',
   'update!',
+  'stop-on-error!',
 );
 
 our $dest_lib;
@@ -152,10 +153,11 @@ TARGET:
           "Could not install $target->{src_name}"
         );
 
-        #error $err;
+        error( $target->{src_name}, $line );
+
         _failed($target);
 
-        if ( $opts->{stop_on_error} )
+        if ( $opts->{'stop-on-error'} )
         {
           die $err;
         }
