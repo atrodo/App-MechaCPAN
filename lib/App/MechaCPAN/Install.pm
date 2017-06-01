@@ -536,6 +536,7 @@ sub _escape
   return $str;
 }
 
+my $ident_re = qr/^ \p{ID_Start} (?: :: | \p{ID_Continue} )* $/xms;
 sub _src_to_target
 {
   my $target = shift;
@@ -559,6 +560,13 @@ sub _src_to_target
       src_name   => $target->[0],
       constraint => $target->[1],
     };
+  }
+
+  if ( $target->{src_name} =~ $ident_re )
+  {
+    my $module = $target->{src_name};
+    $target->{module}         = $module;
+    $target->{inital_version} = _get_mod_ver($module);
   }
 
   return $target;
