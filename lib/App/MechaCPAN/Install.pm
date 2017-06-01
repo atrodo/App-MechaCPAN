@@ -638,6 +638,7 @@ sub _target_prereqs
 
   return
     map { _find_target $_, $cache }
+    map { _source_translate( $_, $cache->{opts} ) }
     ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
 }
 
