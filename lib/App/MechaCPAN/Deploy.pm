@@ -128,6 +128,7 @@ sub go
   {
     my $snapshot_info = parse_snapshot("$file.snapshot");
     my %srcs;
+    my %reqs;
     foreach my $dist ( values %$snapshot_info )
     {
       my $src = $dist->{pathname};
@@ -140,13 +141,18 @@ sub go
         }
         $srcs{$provide} = $src;
       }
+
+      foreach my $req ( keys %{ $dist->{requirements} } )
+      {
+        $reqs{$req} = undef;
+      }
     }
 
     if ( ref $opts->{source} eq 'HASH' )
     {
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
-    $opts->{source} = \%srcs;
+    $opts->{source} = { %reqs, %srcs };
     $opts->{update} = 1;
     $opts->{'only-sources'} = 1;
     $opts->{'smart-tests'} = 1
