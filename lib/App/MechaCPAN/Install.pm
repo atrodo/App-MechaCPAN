@@ -947,6 +947,15 @@ sub _complete
     $target->{was_installed} = 1
         if $ver eq $Module::CoreList::version{$]}{$module};
   }
+
+  if ( !defined $target->{inital_version} )
+  {
+    # If the module was initally not installed but now is, we probbaly
+    # installed it by another package name, so mark it as was_installed
+    $target->{was_installed} = 1
+      if defined _get_mod_ver($target->{module});
+  }
+
   return;
 }
 
