@@ -95,6 +95,13 @@ sub go
   #}
 
   my $cache = { opts => $opts };
+  foreach my $source_key ( keys %{ $opts->{source} } )
+  {
+    my $source = $opts->{source}->{$source_key};
+    my $target = _create_target( $source || $source_key, $cache );
+    _alias_target( $target, $source_key, $cache );
+  }
+
   my @full_states = (
     'Resolving'     => \&_resolve,
     'Configuring'   => \&_meta,
