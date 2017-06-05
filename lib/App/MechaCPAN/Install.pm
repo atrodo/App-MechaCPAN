@@ -423,8 +423,8 @@ sub _build
 
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
+  state $make = $Config{make};
 
-  my $make = $Config{make};
   my $opts = $cache->{opts};
 
   if ( $target->{maker} eq 'mb' )
@@ -449,8 +449,8 @@ sub _test
 
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
+  state $make = $Config{make};
 
-  my $make = $Config{make};
   my $opts = $cache->{opts};
 
   if ($target->{skip_tests})
@@ -480,8 +480,8 @@ sub _install
 
   local $ENV{PERL_MM_USE_DEFAULT}    = 0;
   local $ENV{NONINTERACTIVE_TESTING} = 0;
+  state $make = $Config{make};
 
-  my $make = $Config{make};
   my $opts = $cache->{opts};
 
   if ( $target->{maker} eq 'mb' )
@@ -889,8 +889,8 @@ sub _installed_file_for_module
   my $file   = "$prereq.pm";
   $file =~ s{::}{/}g;
 
-  my $archname = $Config{archname};
-  my $perlver  = $Config{version};
+  state $archname = $Config{archname};
+  state $perlver  = $Config{version};
 
   for my $dir (
     "$dest_lib/$archname",
