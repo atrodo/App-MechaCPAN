@@ -406,11 +406,11 @@ sub _prereq_verify
 
   if ( @incomplete_deps > 0 )
   {
-    my $line = 'Unmet dependencies: ' . $target->{src_name};
+    my $line = 'Unmet dependencies for: ' . $target->{src_name};
     error $target->{src_name}, $line;
     logmsg "Missing requirements: "
-      . join( ", ", map { $_->{src_name} } @incomplete_deps );
-    return;
+        . join( ", ", map { $_->{src_name} } @incomplete_deps );
+    die 'Error with prerequisites';
   }
 
   return $target;
