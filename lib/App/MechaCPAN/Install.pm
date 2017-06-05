@@ -141,10 +141,7 @@ TARGET:
     chdir $target->{dir}
         if exists $target->{dir};
 
-    my $line = sprintf(
-      '%-13s %s', $state_desc[ $target->{state} ],
-      $target->{src_name}
-    );
+    my $line = _target_line( $target, $state_desc[ $target->{state} ]);
     info( $target->{src_name}, $line );
     my $method = $states[ $target->{state} ];
 
@@ -228,7 +225,7 @@ sub _resolve
     {
       success(
         $target->{src_name},
-        sprintf( '%-13s %s', $msg, $target->{src_name} )
+        _target_line( $target, $msg )
       );
       _complete($target);
       return;
@@ -245,7 +242,7 @@ sub _resolve
       {
         success(
           $target->{src_name},
-          sprintf( '%-13s %s', $msg, $target->{src_name} )
+          _target_line( $target, $msg )
         );
         _complete($target);
         return;
@@ -986,6 +983,19 @@ sub _failed
   my $target = shift;
   $target->{state} = $FAILED;
   return;
+}
+
+sub _target_line
+{
+  my $target = shift;
+  my $status = shift;
+
+    my $line = sprintf(
+      '%-13s %s', $status,
+      $target->{name} || $target->{module} || $target->{src_name}
+    );
+
+    return $line;
 }
 
 1;
