@@ -11,7 +11,6 @@ use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
 use CPAN::Meta::Prereqs qw//;
 use File::Fetch qw//;
-use List::Util qw/uniq/;
 use Module::CoreList;
 use ExtUtils::MakeMaker qw//;
 use App::MechaCPAN qw/:go/;
@@ -186,11 +185,9 @@ TARGET:
 
   chdir $orig_dir;
 
-  my @attempted = uniq map { $_->{name} } values %{ $cache->{targets} };
-  my @failed
-      = grep { $cache->{targets}->{$_}->{state} eq $FAILED } @attempted;
-  my @installed
-      = grep { $cache->{targets}->{$_}->{was_installed} } @attempted;
+  my %attempted = map { $_->{name} => $_ } values %{ $cache->{targets} };
+  my @failed = grep { $_->{state} eq $FAILED } values %attempted;
+  my @installed = grep { $_->{was_installed} } values %attempted;
 
   success "\tsuccess", "Installed " . scalar @installed . " modules";
 
