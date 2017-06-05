@@ -870,9 +870,9 @@ sub _phase_prereq
   {
     my $is_core;
 
-    my $version = $Module::CoreList::version{$]}{$module};
-    if ( defined $version )
+    if ( exists $Module::CoreList::version{$]}{$module} )
     {
+      my $version = $Module::CoreList::version{$]}{$module};
       $is_core = $requirements->accepts_module( $module, $version );
     }
 
