@@ -108,6 +108,7 @@ sub go
     'Configuring'   => \&_configure,
     'Configuring'   => \&_mymeta,
     'Prerequisites' => \&_prereq,
+    'Prerequisites' => \&_test_prereq,
     'Prerequisites' => \&_prereq_verify,
     'Building'      => \&_build,
     'Testing'       => \&_test,
@@ -353,13 +354,47 @@ sub _prereq
 
   my $meta = $target->{meta};
 
-  #printf "testing requirements for %s version %s\n", $meta->name,
-  #    $meta->version;
-
-  my @deps
-      = map { _phase_prereq( $target, $cache, $_ ) } qw/runtime build test/;
+  my @deps = map { _phase_prereq( $target, $cache, $_ ) } qw/runtime build/;
 
   $target->{prereq} = [@deps];
+
+  return @deps, $target;
+}
+
+sub _test_prereq
+{
+  my $target = shift;
+  my $cache  = shift;
+
+  my $meta = $target->{meta};
+  my $opts = $cache->{opts};
+
+  my $skip_tests = $opts->{'skip-tests'};
+  if ( !$skip_tests )
+  {
+    my $skips = $opts->{'skip-tests-for'};
+    $skip_tests = exists $skips->{ $target->{src_name} };
+
+    if ( !$skip_tests && defined $target->{module} )
+    {
+      $skip_tests = $skips->{ $target->{module} };
+    }
+
+    if ( !$skip_tests && $opts->{'smart-tests'} )
+    {
+      $skip_tests = _target_prereqs_were_installed( $target, $cache );
+    }
+  }
+
+  $target->{skip_tests} = $skip_tests;
+
+  my @deps;
+
+  if ( !$skip_tests )
+  {
+    @deps = map { _phase_prereq( $target, $cache, $_ ) } qw/test/;
+    push @{ $target->{prereq} }, @deps;
+  }
 
   return @deps, $target;
 }
@@ -421,24 +456,7 @@ sub _test
   my $make = $Config{make};
   my $opts = $cache->{opts};
 
-  my $skip_tests = $cache->{opts}->{'skip-tests'};
-  if ( !$skip_tests )
-  {
-    my $skips = $opts->{'skip-tests-for'};
-    $skip_tests = exists $skips->{ $target->{src_name} };
-
-    if ( !$skip_tests && defined $target->{module} )
-    {
-      $skip_tests = $skips->{ $target->{module} };
-    }
-
-    if ( !$skip_tests && $opts->{'smart-tests'} )
-    {
-      $skip_tests = _target_prereqs_were_installed( $target, $cache );
-    }
-  }
-
-  if ($skip_tests)
+  if ($target->{skip_tests})
   {
     return $target;
   }
