@@ -334,7 +334,7 @@ sub status
   state @last_key;
 
   # Undo the last line that is bold
-  if ( @last_key && !$VERBOSE )
+  if ( @last_key && !$VERBOSE && $last_key[0] ne $key )
   {
     _show_line(@last_key);
   }
