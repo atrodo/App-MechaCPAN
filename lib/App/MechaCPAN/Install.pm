@@ -633,6 +633,17 @@ sub _find_target
   return _find_cache_target( $target, $cache );
 }
 
+sub _alias_target
+{
+  my $target = shift;
+  my $alias  = shift;
+  my $cache  = shift;
+
+  #return _find_cache_target( $target, $cache );
+  $cache->{targets}->{$alias} = _find_target( $target, $cache );
+  return;
+}
+
 sub _create_target
 {
   my $target = shift;
