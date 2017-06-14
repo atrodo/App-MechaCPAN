@@ -556,7 +556,7 @@ sub _escape
 }
 
 my $ident_re = qr/^ \p{ID_Start} (?: :: | \p{ID_Continue} )* $/xms;
-sub _src_to_target
+sub _src_normalize
 {
   my $target = shift;
 
@@ -575,20 +575,15 @@ sub _src_to_target
   if ( ref $target eq 'ARRAY' )
   {
     $target = {
-      state      => 0,
       src_name   => $target->[0],
       constraint => $target->[1],
     };
   }
 
-  if ( $target->{src_name} =~ $ident_re )
-  {
-    my $module = $target->{src_name};
-    $target->{module}         = $module;
-    $target->{inital_version} = _get_mod_ver($module);
-  }
-
-  return $target;
+  return {
+      src_name   => $target->{src_name},
+      constraint => $target->{constraint},
+  };
 }
 
 sub _find_cache_target
@@ -624,13 +619,12 @@ sub _find_target
   my $target = shift;
   my $cache  = shift;
 
-  $target = _src_to_target($target)
-    if ref $target ne 'HASH';
+  my $src = _src_normalize($target);
+  my $src_name = $src->{src_name};
 
-  $target = $cache->{targets}->{ $target->{src_name} }
-    if exists $cache->{targets}->{ $target->{src_name} };
+  return $cache->{targets}->{$src_name};
 
-  return _find_cache_target( $target, $cache );
+
 }
 
 sub _alias_target
@@ -640,7 +634,14 @@ sub _alias_target
   my $cache  = shift;
 
   #return _find_cache_target( $target, $cache );
-  $cache->{targets}->{$alias} = _find_target( $target, $cache );
+  my $target = _find_target( $target, $cache );
+
+  if (!exists $target->{module} && $alias =~ $ident_re)
+  {
+    $target->{module}         = $alias;
+    $target->{inital_version} = _get_mod_ver($alias);
+  }
+  $cache->{targets}->{$alias} = $target;
   return;
 }
 
@@ -649,24 +650,40 @@ sub _create_target
   my $target = shift;
   my $cache  = shift;
 
-  $target = _src_to_target($target)
-    if ref $target ne 'HASH';
+  my $src = _src_normalize($target);
+  my $cached_target = _find_target( $target, $cache );
 
-
-  my $cached_target = _find_cache_target( $target, $cache );
-
-  if ( $cached_target != $target )
+  if (!defined $cached_target)
   {
-    if ( $cached_target->{state} eq $COMPLETE
-      && $target->{constraint} ne $cached_target->{constraint} )
-    {
-      $cached_target->{constraint} = $target->{constraint};
-      $cached_target->{state}      = 0;
-    }
-    $target = $cached_target;
+    my $src_name = $src->{src_name};
+
+    $cached_target = { %$src, state => 0 };
+    $cache->{targets}->{$src_name} = $cached_target;
   }
 
-  return $target;
+  {
+    if ( $cached_target->{state} eq $COMPLETE
+      && $src->{constraint} ne $cached_target->{constraint} )
+    {
+      $cached_target->{constraint} = $src->{constraint};
+      $cached_target->{state}      = 0;
+    }
+  }
+
+  for my $altkey (qw/distvname name module/)
+  {
+    my $altname = $cached_target->{$altkey};
+    if ( defined $altname )
+    {
+      if ( !exists $cache->{targets}->{$altname} )
+      {
+        _alias_target( $cached_target, $altname, $cache );
+      }
+      #$target = $cache->{targets}->{$altname};
+    }
+  }
+
+  return $cached_target;
 }
 
 sub _target_prereqs
