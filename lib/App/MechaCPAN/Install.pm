@@ -623,7 +623,21 @@ sub _find_target
 
   return $cache->{targets}->{$src_name};
 
+  for my $altkey (qw/distvname name/)
+  {
+    my $altname = $target->{$altkey};
+    if ( defined $altname )
+    {
+      if ( !exists $cache->{targets}->{$altname} )
+      {
+        $cache->{targets}->{$altname} = $target;
+      }
+      $target = $cache->{targets}->{$altname};
+    }
+  }
 
+  $cache->{targets}->{$src_name} = $target;
+  return $target;
 }
 
 sub _alias_target
