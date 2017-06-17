@@ -153,7 +153,7 @@ sub go
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
     $opts->{source} = { %reqs, %srcs };
-    $opts->{update} = 1;
+    $opts->{update} = 0;
     $opts->{'only-sources'} = 1;
     $opts->{'smart-tests'} = 1
       if !defined $opts->{'smart-tests'};
