@@ -121,7 +121,6 @@ sub go
 
   foreach my $target (@targets)
   {
-    $target = _source_translate( $target, $opts );
     $target = _create_target( $target, $cache );
     $target->{update} = $opts->{update} // 1;
   }
@@ -129,7 +128,6 @@ sub go
 TARGET:
   while ( my $target = shift @targets )
   {
-    $target = _source_translate( $target, $opts );
     $target = _create_target( $target, $cache );
 
     if ( $target->{state} eq $COMPLETE || $target->{state} eq $FAILED )
@@ -203,11 +201,6 @@ sub _resolve
   my $target = shift;
   my $cache  = shift;
 
-  my $src_name = $target->{src_name};
-
-  # fetch
-  my $src_tgz = _get_targz($target);
-
   # Verify we need to install it
   if ( defined $target->{module} )
   {
@@ -250,6 +243,12 @@ sub _resolve
     }
   }
 
+  my $src_name = $target->{src_name};
+
+  $target->{src_name} = _source_translate( $src_name, $cache->{opts} );
+
+  # fetch
+  my $src_tgz = _get_targz($target);
   my $src_dir = inflate_archive($src_tgz);
 
   my @files = glob( $src_dir . '/*' );
@@ -308,7 +307,7 @@ sub _configure
   {
     run( $^X, 'Build.PL' );
     my $configured = -e -f 'Build';
-    die 'Unable to configure Buid.PL for ' . $target->{module}
+    die 'Unable to configure Buid.PL for ' . $target->{src_name}
         unless $configured;
     $maker = 'mb';
   }
@@ -317,12 +316,12 @@ sub _configure
   {
     run( $^X, 'Makefile.PL' );
     my $configured = -e 'Makefile';
-    die 'Unable to configure Makefile.PL for ' . $target->{module}
+    die 'Unable to configure Makefile.PL for ' . $target->{src_name}
         unless $configured;
     $maker = 'mm';
   }
 
-  die 'Unable to configure ' . $target->{module}
+  die 'Unable to configure ' . $target->{src_name}
       if !defined $maker;
 
   $target->{maker} = $maker;
@@ -636,11 +635,13 @@ sub _alias_target
   #return _find_cache_target( $target, $cache );
   my $target = _find_target( $target, $cache );
 
-  if (!exists $target->{module} && $alias =~ $ident_re)
+  if ($alias =~ $ident_re)
   {
-    $target->{module}         = $alias;
-    $target->{inital_version} = _get_mod_ver($alias);
+    $target->{modules}->{$alias} = {
+      inital_version => _get_mod_ver($alias),
+    };
   }
+
   $cache->{targets}->{$alias} = $target;
   return;
 }
@@ -683,6 +684,11 @@ sub _create_target
     }
   }
 
+  if ($src->{src_name} =~ $ident_re)
+  {
+    $cached_target->{module} = $src->{src_name};
+  }
+
   return $cached_target;
 }
 
@@ -693,7 +699,6 @@ sub _target_prereqs
 
   return
     map { _find_target $_, $cache }
-    map { _source_translate( $_, $cache->{opts} ) }
     ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
 }
 
@@ -813,7 +818,6 @@ sub _get_targz
     $url = $json_data->{download_url};
 
     $target->{is_cpan} = 1;
-    $target->{module}  = "$src";
     $target->{version} = version->parse( $json_data->{version} );
   }
 
@@ -938,10 +942,6 @@ sub _source_translate
 
   my $sources = $opts->{source};
 
-  if ( ref $target eq 'HASH' && exists $target->{state} )
-  {
-    return $target;
-  }
 
   my $src_name = $target;
   if ( ref $target eq 'ARRAY' )
@@ -976,7 +976,7 @@ sub _source_translate
     die "Unable to locate $src_name from the sources list\n";
   }
 
-  return defined $new_src ? $new_src : $target;
+  return defined $new_src ? $new_src : $src_name;
 }
 
 sub _complete
