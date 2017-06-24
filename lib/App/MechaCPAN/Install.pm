@@ -202,46 +202,8 @@ sub _resolve
   my $cache  = shift;
 
   # Verify we need to install it
-  if ( defined $target->{module} )
-  {
-    my $module = $target->{module};
-    my $ver    = _get_mod_ver($module);
-
-    $target->{installed_version} = $ver;
-
-    my $msg = 'Up to date';
-
-    $msg = 'Installed'
-        if $target->{was_installed};
-
-    if ( defined $ver && $target->{version} eq $ver )
-    {
-      success(
-        $target->{src_name},
-        _target_line( $target, $msg )
-      );
-      _complete($target);
-      return;
-    }
-
-    if ( defined $ver && !$target->{update} )
-    {
-      my $constraint = $target->{constraint};
-      my $prereq     = CPAN::Meta::Prereqs->new(
-        { runtime => { requires => { $module => $constraint // 0 } } } );
-      my $req = $prereq->requirements_for( 'runtime', 'requires' );
-
-      if ( $req->accepts_module( $module, $ver ) )
-      {
-        success(
-          $target->{src_name},
-          _target_line( $target, $msg )
-        );
-        _complete($target);
-        return;
-      }
-    }
-  }
+  return
+      if !_should_install($target);
 
   my $src_name = $target->{src_name};
 
@@ -249,6 +211,10 @@ sub _resolve
 
   # fetch
   my $src_tgz = _get_targz($target);
+
+  return
+      if !_should_install($target);
+
   my $src_dir = inflate_archive($src_tgz);
 
   my @files = glob( $src_dir . '/*' );
@@ -947,6 +913,57 @@ sub _installed_file_for_module
     return $tmp
         if -r $tmp;
   }
+}
+
+sub _should_install
+{
+  my $target = shift;
+
+  return 1
+      unless defined $target->{module};
+
+  my $module = $target->{module};
+  my $ver    = _get_mod_ver($module);
+
+  $target->{installed_version} = $ver;
+
+  return 1
+      if !defined $ver;
+
+  my $msg = 'Up to date';
+
+  $msg = 'Installed'
+      if $target->{was_installed};
+
+  if ( !$target->{update} )
+  {
+    my $constraint = $target->{constraint};
+    my $prereq     = CPAN::Meta::Prereqs->new(
+      { runtime => { requires => { $module => $constraint // 0 } } } );
+    my $req = $prereq->requirements_for( 'runtime', 'requires' );
+
+    if ( $req->accepts_module( $module, $ver ) )
+    {
+      success(
+        $target->{src_name},
+        _target_line( $target, $msg )
+      );
+      _complete($target);
+      return;
+    }
+  }
+
+  if ( defined $target->{version} && $target->{version} eq $ver )
+  {
+    success(
+      $target->{src_name},
+      _target_line( $target, $msg )
+    );
+    _complete($target);
+    return;
+  }
+
+  return 1;
 }
 
 sub _source_translate
