@@ -650,13 +650,12 @@ sub _create_target
     $cache->{targets}->{$src_name} = $cached_target;
   }
 
+  if ( $cached_target->{state} eq $COMPLETE
+    && $src->{constraint} ne $cached_target->{constraint} )
   {
-    if ( $cached_target->{state} eq $COMPLETE
-      && $src->{constraint} ne $cached_target->{constraint} )
-    {
-      $cached_target->{constraint} = $src->{constraint};
-      $cached_target->{state}      = 0;
-    }
+    $cached_target->{constraint} = $src->{constraint};
+    $cached_target->{state}      = 0;
+    delete $cached_target->{version};
   }
 
   for my $altkey (qw/distvname name module/)
