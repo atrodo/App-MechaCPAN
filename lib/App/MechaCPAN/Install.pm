@@ -97,8 +97,12 @@ sub go
   foreach my $source_key ( keys %{ $opts->{source} } )
   {
     my $source = $opts->{source}->{$source_key};
-    my $target = _create_target( $source || $source_key, $cache );
-    _alias_target( $target, $source_key, $cache );
+
+    my $target = _create_target( $source_key, $cache );
+    if (defined $source)
+    {
+      _alias_target( $target, $source, $cache );
+    }
   }
 
   my @full_states = (
@@ -337,9 +341,16 @@ sub _test_prereq
     my $skips = $opts->{'skip-tests-for'};
     $skip_tests = exists $skips->{ $target->{src_name} };
 
-    if ( !$skip_tests && defined $target->{module} )
+    if ( !$skip_tests && defined $target->{modules} )
     {
-      $skip_tests = $skips->{ $target->{module} };
+      foreach my $module ( %{ $target->{modules} } )
+      {
+        if ( $skips->{$module} )
+        {
+          $skip_tests = 1;
+          last;
+        }
+      }
     }
 
     if ( !$skip_tests && $opts->{'smart-tests'} )
@@ -418,7 +429,7 @@ sub _test
 
   my $opts = $cache->{opts};
 
-  if ($target->{skip_tests})
+  if ( $target->{skip_tests} )
   {
     return $target;
   }
@@ -677,9 +688,8 @@ sub _target_prereqs
   my $target = shift;
   my $cache  = shift;
 
-  return
-    map { _find_target $_, $cache }
-    ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
+  return map { _find_target $_, $cache }
+      ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
 }
 
 sub _target_prereqs_were_installed
@@ -968,22 +978,9 @@ sub _should_install
 
 sub _source_translate
 {
-  my $target = shift;
+  my $src_name = shift;
   my $opts   = shift;
-
   my $sources = $opts->{source};
-
-
-  my $src_name = $target;
-  if ( ref $target eq 'ARRAY' )
-  {
-    $src_name = $target->[0];
-  }
-
-  if ( ref $target eq 'HASH' )
-  {
-    $src_name = $target->{src_name};
-  }
 
   my $new_src;
 
@@ -1026,12 +1023,13 @@ sub _complete
         if $ver eq $Module::CoreList::version{$]}{$module};
   }
 
-  if ( !defined $target->{inital_version} )
+  if ( exists $target->{inital_version}
+    && !defined $target->{inital_version} )
   {
     # If the module was initally not installed but now is, we probbaly
     # installed it by another package name, so mark it as was_installed
     $target->{was_installed} = 1
-      if defined _get_mod_ver($target->{module});
+        if defined _get_mod_ver( $target->{module} );
   }
 
   return;
