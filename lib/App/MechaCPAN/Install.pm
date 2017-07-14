@@ -58,10 +58,10 @@ sub go
     $opts->{'skip-tests-for'} = [];
   }
   $opts->{'skip-tests-for'}
-      = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
+    = { map { $_ => 1 } @{ $opts->{'skip-tests-for'} } };
 
   my $unsafe_inc
-      = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
+    = exists $ENV{PERL_USE_UNSAFE_INC} ? $ENV{PERL_USE_UNSAFE_INC} : 1;
 
   # trick AutoInstall
   local $ENV{PERL5_CPAN_IS_RUNNING}     = $$;
@@ -79,7 +79,7 @@ sub go
   if ( !$opts->{'install-man'} )
   {
     $ENV{PERL_MM_OPT}
-        .= " " . join( " ", "INSTALLMAN1DIR=none", "INSTALLMAN3DIR=none" );
+      .= " " . join( " ", "INSTALLMAN1DIR=none", "INSTALLMAN3DIR=none" );
     $ENV{PERL_MB_OPT} .= " " . join(
       " ",                            "--config installman1dir=",
       "--config installsiteman1dir=", "--config installman3dir=",
@@ -99,7 +99,7 @@ sub go
     my $source = $opts->{source}->{$source_key};
 
     my $target = _create_target( $source_key, $cache );
-    if (defined $source)
+    if ( defined $source )
     {
       _alias_target( $target, $source, $cache );
     }
@@ -141,9 +141,9 @@ TARGET:
 
     chdir $orig_dir;
     chdir $target->{dir}
-        if exists $target->{dir};
+      if exists $target->{dir};
 
-    my $line = _target_line( $target, $state_desc[ $target->{state} ]);
+    my $line = _target_line( $target, $state_desc[ $target->{state} ] );
     info( $target->{src_name}, $line );
     my $method = $states[ $target->{state} ];
 
@@ -173,7 +173,7 @@ TARGET:
     }
 
     $target->{state}++
-        if $target->{state} ne $COMPLETE;
+      if $target->{state} ne $COMPLETE;
 
     if ( $target->{state} eq scalar @states )
     {
@@ -185,8 +185,8 @@ TARGET:
 
   chdir $orig_dir;
 
-  my %attempted = map { $_->{name} => $_ } values %{ $cache->{targets} };
-  my @failed = grep { $_->{state} eq $FAILED } values %attempted;
+  my %attempted = map  { $_->{name} => $_ } values %{ $cache->{targets} };
+  my @failed    = grep { $_->{state} eq $FAILED } values %attempted;
   my @installed = grep { $_->{was_installed} } values %attempted;
 
   success "\tsuccess", "Installed " . scalar @installed . " modules";
@@ -207,7 +207,7 @@ sub _resolve
 
   # Verify we need to install it
   return
-      if !_should_install($target);
+    if !_should_install($target);
 
   my $src_name = $target->{src_name};
 
@@ -217,7 +217,7 @@ sub _resolve
   my $src_tgz = _get_targz($target);
 
   return
-      if !_should_install($target);
+    if !_should_install($target);
 
   my $src_dir = inflate_archive($src_tgz);
 
@@ -248,10 +248,7 @@ sub _config_prereq
   my $meta = $target->{meta};
 
   return $target
-      if !defined $meta;
-
-  #printf "testing requirements for %s version %s\n", $meta->name,
-  #    $meta->version;
+    if !defined $meta;
 
   my @config_deps = _phase_prereq( $target, $cache, 'configure' );
 
@@ -267,7 +264,7 @@ sub _configure
   my $meta   = $target->{meta};
 
   state $mb_deps = { map { $_ => 1 }
-        qw/version ExtUtils-ParseXS ExtUtils-Install ExtUtilsManifest/ };
+      qw/version ExtUtils-ParseXS ExtUtils-Install ExtUtilsManifest/ };
 
   # meta may not be defined, so wrap it in an eval
   my $is_mb_dep = eval { exists $mb_deps->{ $meta->name } };
@@ -278,7 +275,7 @@ sub _configure
     run( $^X, 'Build.PL' );
     my $configured = -e -f 'Build';
     die 'Unable to configure Buid.PL for ' . $target->{src_name}
-        unless $configured;
+      unless $configured;
     $maker = 'mb';
   }
 
@@ -287,12 +284,12 @@ sub _configure
     run( $^X, 'Makefile.PL' );
     my $configured = -e 'Makefile';
     die 'Unable to configure Makefile.PL for ' . $target->{src_name}
-        unless $configured;
+      unless $configured;
     $maker = 'mm';
   }
 
   die 'Unable to configure ' . $target->{src_name}
-      if !defined $maker;
+    if !defined $maker;
 
   $target->{maker} = $maker;
   return $target;
@@ -385,7 +382,7 @@ sub _prereq_verify
     my $line = 'Unmet dependencies for: ' . $target->{src_name};
     error $target->{src_name}, $line;
     logmsg "Missing requirements: "
-        . join( ", ", map { $_->{src_name} } @incomplete_deps );
+      . join( ", ", map { $_->{src_name} } @incomplete_deps );
     die 'Error with prerequisites';
   }
 
@@ -462,13 +459,13 @@ sub _install
 
   if ( $target->{maker} eq 'mb' )
   {
-    run( $^X, './Build', 'install');
+    run( $^X, './Build', 'install' );
     return $target;
   }
 
   if ( $target->{maker} eq 'mm' )
   {
-    run($make, 'install' );
+    run( $make, 'install' );
     return $target;
   }
 
@@ -532,6 +529,7 @@ sub _escape
 }
 
 my $ident_re = qr/^ \p{ID_Start} (?: :: | \p{ID_Continue} )* $/xms;
+
 sub _src_normalize
 {
   my $target = shift;
@@ -557,8 +555,8 @@ sub _src_normalize
   }
 
   return {
-      src_name   => $target->{src_name},
-      constraint => $target->{constraint},
+    src_name   => $target->{src_name},
+    constraint => $target->{constraint},
   };
 }
 
@@ -595,7 +593,7 @@ sub _find_target
   my $target = shift;
   my $cache  = shift;
 
-  my $src = _src_normalize($target);
+  my $src      = _src_normalize($target);
   my $src_name = $src->{src_name};
 
   return $cache->{targets}->{$src_name};
@@ -623,10 +621,9 @@ sub _alias_target
   my $alias  = shift;
   my $cache  = shift;
 
-  #return _find_cache_target( $target, $cache );
   my $target = _find_target( $target, $cache );
 
-  if ($alias =~ $ident_re)
+  if ( $alias =~ $ident_re )
   {
     $target->{modules}->{$alias} = {
       inital_version => _get_mod_ver($alias),
@@ -645,7 +642,7 @@ sub _create_target
   my $src = _src_normalize($target);
   my $cached_target = _find_target( $target, $cache );
 
-  if (!defined $cached_target)
+  if ( !defined $cached_target )
   {
     my $src_name = $src->{src_name};
 
@@ -671,11 +668,10 @@ sub _create_target
       {
         _alias_target( $cached_target, $altname, $cache );
       }
-      #$target = $cache->{targets}->{$altname};
     }
   }
 
-  if ($src->{src_name} =~ $ident_re)
+  if ( $src->{src_name} =~ $ident_re )
   {
     $cached_target->{module} = $src->{src_name};
   }
@@ -688,8 +684,9 @@ sub _target_prereqs
   my $target = shift;
   my $cache  = shift;
 
-  return map { _find_target $_, $cache }
-      ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
+  return
+    map { _find_target $_, $cache }
+    ( @{ $target->{prereq} }, @{ $target->{configure_prereq} } );
 }
 
 sub _target_prereqs_were_installed
@@ -718,7 +715,7 @@ sub _search_metacpan
   state %seen;
 
   return $seen{$src}->{$constraint}
-      if exists $seen{$src}->{$constraint};
+    if exists $seen{$src}->{$constraint};
 
   # TODO mirrors
   my $dnld = 'https://fastapi.metacpan.org/download_url/' . _escape($src);
@@ -730,12 +727,12 @@ sub _search_metacpan
   local $File::Fetch::WARN;
   my $ff = File::Fetch->new( uri => $dnld );
   $ff->scheme('http')
-      if $ff->scheme eq 'https';
+    if $ff->scheme eq 'https';
   my $json_info = '';
   my $where = $ff->fetch( to => \$json_info );
 
   die "Could not find module $src on metacpan"
-      if !defined $where;
+    if !defined $where;
 
   my $result = JSON::PP::decode_json($json_info);
   $seen{$src}->{$constraint} = $result;
@@ -762,7 +759,7 @@ sub _get_targz
     my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
 
     my $dir
-        = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
+      = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
     my ( $fh, $file ) = tempfile(
       TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
       CLEANUP  => 1
@@ -827,10 +824,10 @@ sub _get_targz
     my $dest_dir = dest_dir() . "/pkgs";
 
     $ff->scheme('http')
-        if $ff->scheme eq 'https';
+      if $ff->scheme eq 'https';
     my $where = $ff->fetch( to => $dest_dir );
     die $ff->error || "Could not download $url"
-        if !defined $where;
+      if !defined $where;
 
     return $where;
   }
@@ -842,7 +839,7 @@ sub _get_mod_ver
 {
   my $module = shift;
   return $]
-      if $module eq 'perl';
+    if $module eq 'perl';
   local $@;
   my $ver = eval {
     my $file = _installed_file_for_module($module);
@@ -871,7 +868,7 @@ sub _load_meta
   {
     $meta = eval { CPAN::Meta->load_file($file) };
     last
-        if defined $meta;
+      if defined $meta;
   }
 
   return $meta;
@@ -899,7 +896,7 @@ sub _phase_prereq
     }
 
     push @result, [ $module, $reqs->{$module} ]
-        if $module ne 'perl' && !$is_core;
+      if $module ne 'perl' && !$is_core;
   }
 
   return @result;
@@ -917,11 +914,11 @@ sub _installed_file_for_module
   for my $dir (
     "$dest_lib/$archname",
     "$dest_lib",
-      )
+    )
   {
     my $tmp = File::Spec->catfile( $dir, $file );
     return $tmp
-        if -r $tmp;
+      if -r $tmp;
   }
 }
 
@@ -930,7 +927,7 @@ sub _should_install
   my $target = shift;
 
   return 1
-      unless defined $target->{module};
+    unless defined $target->{module};
 
   my $module = $target->{module};
   my $ver    = _get_mod_ver($module);
@@ -938,12 +935,12 @@ sub _should_install
   $target->{installed_version} = $ver;
 
   return 1
-      if !defined $ver;
+    if !defined $ver;
 
   my $msg = 'Up to date';
 
   $msg = 'Installed'
-      if $target->{was_installed};
+    if $target->{was_installed};
 
   if ( !$target->{update} )
   {
@@ -979,8 +976,8 @@ sub _should_install
 sub _source_translate
 {
   my $src_name = shift;
-  my $opts   = shift;
-  my $sources = $opts->{source};
+  my $opts     = shift;
+  my $sources  = $opts->{source};
 
   my $new_src;
 
@@ -1020,7 +1017,7 @@ sub _complete
     my $ver    = $target->{installed_version};
 
     $target->{was_installed} = 1
-        if $ver eq $Module::CoreList::version{$]}{$module};
+      if $ver eq $Module::CoreList::version{$]}{$module};
   }
 
   if ( exists $target->{inital_version}
@@ -1029,7 +1026,7 @@ sub _complete
     # If the module was initally not installed but now is, we probbaly
     # installed it by another package name, so mark it as was_installed
     $target->{was_installed} = 1
-        if defined _get_mod_ver( $target->{module} );
+      if defined _get_mod_ver( $target->{module} );
   }
 
   return;
@@ -1047,12 +1044,12 @@ sub _target_line
   my $target = shift;
   my $status = shift;
 
-    my $line = sprintf(
-      '%-13s %s', $status,
-      $target->{name} || $target->{module} || $target->{src_name}
-    );
+  my $line = sprintf(
+    '%-13s %s', $status,
+    $target->{name} || $target->{module} || $target->{src_name}
+  );
 
-    return $line;
+  return $line;
 }
 
 1;

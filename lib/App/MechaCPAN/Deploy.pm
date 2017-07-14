@@ -61,7 +61,7 @@ sub munge_args
       # options, plus the git config below, allow us to clone a git repo
       # without a clean current directory.
       run qw/git clone/, '--separate-git-dir=.git', '-n', '-o', $remote,
-          $git_url, $dir;
+        $git_url, $dir;
       run qw/git config --unset core.worktree/;
       $branch //= 'master';
       success 'git-clone', "Cloned $git_url";
@@ -137,7 +137,7 @@ sub go
         if ( exists $srcs{$provide} )
         {
           die
-              "Found dumplicate distributions ($src and $srcs{$provide}) that provides the same module ($provide)\n";
+            "Found dumplicate distributions ($src and $srcs{$provide}) that provides the same module ($provide)\n";
         }
         $srcs{$provide} = $src;
       }
@@ -152,10 +152,10 @@ sub go
     {
       %srcs = ( %srcs, %{ $opts->{source} } );
     }
-    $opts->{source} = { %reqs, %srcs };
-    $opts->{update} = 0;
+    $opts->{source}         = { %reqs, %srcs };
+    $opts->{update}         = 0;
     $opts->{'only-sources'} = 1;
-    $opts->{'smart-tests'} = 1
+    $opts->{'smart-tests'}  = 1
       if !defined $opts->{'smart-tests'};
   }
 
@@ -242,7 +242,7 @@ sub parse_cpanfile
   my $no_error = eval $sandbox;
 
   croak $@
-      unless $no_error;
+    unless $no_error;
 
   delete $result->{current};
 

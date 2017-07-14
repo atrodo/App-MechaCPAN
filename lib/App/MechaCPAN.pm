@@ -204,11 +204,11 @@ sub logmsg
 
   foreach my $line (@lines)
   {
-    if ($line !~ m/\n$/xms)
+    if ( $line !~ m/\n$/xms )
     {
       $line .= "\n";
     }
-    print $LOGFH $line
+    print $LOGFH $line;
   }
 
   return;
@@ -399,7 +399,7 @@ sub inflate_archive
 
   my $dir = tempdir(
     TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
-    CLEANUP  => 1
+    CLEANUP  => 1,
   );
   my $orig = cwd;
 
@@ -468,12 +468,14 @@ sub run
   }
 
   # If the output is asked for (non-void context), don't show it anywhere
+  #<<<
   if ($wantoutput)
   {
     undef $dest_out_fh; open $dest_out_fh, ">", \$out;
     undef $dest_err_fh; open $dest_err_fh, ">", \$err;
     undef $print_output;
   }
+  #>>>
 
   my ( $output, $output_chld ) = _genio;
   my ( $error,  $error_chld )  = _genio;
