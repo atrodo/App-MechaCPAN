@@ -1136,6 +1136,10 @@ Because to update is the default, the more useful option is false, or C<--no-upd
 
 B<Note> this option I<ONLY> affects CPAN modules listed by package name, prerequisites and modules given not by package name are not affected by this option.
 
+=head3 stop-on-error
+
+If an error is encountered while processing an install, the default is to continue processing any module that isn't affected. Using this option will stop processing after the first error and not continue.
+
 =head1 AUTHOR
 
 Jon Gentle E<lt>cpan@atrodo.orgE<gt>
