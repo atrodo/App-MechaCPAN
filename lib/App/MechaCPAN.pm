@@ -20,8 +20,12 @@ use Exporter qw/import/;
 
 BEGIN
 {
-  our @EXPORT_OK
-    = qw/url_re git_re logmsg info success error dest_dir inflate_archive run restart_script/;
+  our @EXPORT_OK = qw/
+    url_re git_re git_extract_re
+    logmsg info success error
+    dest_dir inflate_archive
+    run restart_script
+    /;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
@@ -193,6 +197,25 @@ sub git_re
     [.]git (?: @|$ )
   ]xmsi;
   return $git_re;
+}
+
+sub git_extract_re
+{
+  state $re = qr[
+    ^
+    (                   # git url capture
+      .* ://
+      (?: \w*@)?      # Might have an @ for user@url
+      .*?               # Capture the rest
+    )
+    (?:                 # git commit id capture
+      @
+      ([^@]*)           # Evertyhing after @ is a commit_id
+    )?
+    $
+  ]xmsi;
+
+  return $re;
 }
 
 sub logmsg

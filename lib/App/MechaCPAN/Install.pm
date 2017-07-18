@@ -755,7 +755,7 @@ sub _get_targz
   # git
   if ( $src =~ git_re )
   {
-    my ( $git_url, $commit ) = $src =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
+    my ( $git_url, $commit ) = $src =~ git_extract_re;
 
     my $dir
       = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
