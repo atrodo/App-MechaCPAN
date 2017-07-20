@@ -22,11 +22,10 @@ sub munge_args
 
   if ( $file =~ git_re )
   {
-    my ( $git_url, $branch ) = $file =~ m/^ (.*?) (?: @ ([^@]*) )? $/xms;
+    my ( $git_url, $branch ) = $file =~ git_extract_re;
 
     if ( !eval { run(qw/git --version/); 1; } )
     {
-      die eval { run(qw/git --version/); 1; };
       croak "Was given a git-looking URL, but could not run git";
     }
 
@@ -44,6 +43,11 @@ sub munge_args
         success "Found git checkout of of $git_url";
 
         $needs_clone = 0;
+      }
+      elsif ( -d '.git' )
+      {
+        # Only croak if there is a .git here which means we can't clone here
+        croak "Found git checkout but could not find remote URL $git_url";
       }
     }
 
