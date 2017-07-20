@@ -316,6 +316,7 @@ App::MechaCPAN::Deploy - Mechanize the deployment of CPAN things.
   # Install perl and everything from the cpanfile into local/
   # If cpanfile.snapshot exists, it will be consulted exclusivly
   user@host:~$ mechacpan deploy
+  user@host:~$ mechacpan deploy git://git@example.com/MyApp.git
   user@host:~$ zhuli do the thing
 
 =head1 DESCRIPTION
@@ -336,7 +337,11 @@ The option C<smart-tests> is enabled by default when there is a C<cpanfile.snaps
 
 =head3 go( \%opts, $cpanfile )
 
-This is the entry point into deployment. It will deploy perl and modules into the C<local> directory of the current directory. C<$cpanfile> is optional and does not have to provided. If it is provided, it needs to be either a path to a directory that contains a file named C<cpanfile> or the path to a file that can be used as a C<cpanfile>. The options available are listed below.
+This is the entry point into deployment. It will deploy perl and modules into the C<local> directory of the current directory. C<$cpanfile> is optional and does not have to provided. If it is provided, it needs to be either a path to a directory that contains a file named C<cpanfile> or the path to a file that can be used as a C<cpanfile>.
+
+C<$cpanfile> can also refer to a git repository. In this case, C<App:MechaCPAN::Deploy> will attempt to clone the repository if it's not already and checkout the branch specified branch if given. If there is a cpanfile in the checked out repository or inside a top-level directory, then that cpanfile and directory will be used.
+
+The options available are listed below.
 
 =head2 Arguments
 
