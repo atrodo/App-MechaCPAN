@@ -575,34 +575,6 @@ sub _src_normalize
   };
 }
 
-sub _find_cache_target
-{
-  my $target = shift;
-  my $cache  = shift;
-
-  my $src_name = $target->{src_name};
-  if ( exists $cache->{targets}->{$src_name} )
-  {
-    $target = $cache->{targets}->{$src_name};
-  }
-
-  for my $altkey (qw/distvname name/)
-  {
-    my $altname = $target->{$altkey};
-    if ( defined $altname )
-    {
-      if ( !exists $cache->{targets}->{$altname} )
-      {
-        $cache->{targets}->{$altname} = $target;
-      }
-      $target = $cache->{targets}->{$altname};
-    }
-  }
-
-  $cache->{targets}->{$src_name} = $target;
-  return $target;
-}
-
 sub _find_target
 {
   my $target = shift;
@@ -612,22 +584,6 @@ sub _find_target
   my $src_name = $src->{src_name};
 
   return $cache->{targets}->{$src_name};
-
-  for my $altkey (qw/distvname name/)
-  {
-    my $altname = $target->{$altkey};
-    if ( defined $altname )
-    {
-      if ( !exists $cache->{targets}->{$altname} )
-      {
-        $cache->{targets}->{$altname} = $target;
-      }
-      $target = $cache->{targets}->{$altname};
-    }
-  }
-
-  $cache->{targets}->{$src_name} = $target;
-  return $target;
 }
 
 sub _alias_target
