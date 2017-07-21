@@ -94,13 +94,28 @@ sub go
   #}
 
   my $cache = { opts => $opts };
+
+  # Prepopulate all of the sources as targets
   foreach my $source_key ( keys %{ $opts->{source} } )
   {
     my $source = $opts->{source}->{$source_key};
 
-    my $target = _create_target( $source_key, $cache );
-    if ( defined $source )
+    # If there is no source to translate to, continue
+    if ( !defined $source )
     {
+      _create_target( $source_key, $cache );
+      next;
+    }
+
+    # If we can find a target, reuse it, otherwise create a new one
+    my $target = _find_target( $source, $cache );
+    if ( defined $target )
+    {
+      _alias_target( $target, $source_key, $cache );
+    }
+    else
+    {
+      $target = _create_target( $source_key, $cache );
       _alias_target( $target, $source, $cache );
     }
   }
