@@ -144,7 +144,7 @@ TARGET:
       if exists $target->{dir};
 
     my $line = _target_line( $target, $state_desc[ $target->{state} ] );
-    info( $target->{src_name}, $line );
+    info( $target->{key}, $line );
     my $method = $states[ $target->{state} ];
 
     {
@@ -159,7 +159,7 @@ TARGET:
           "Could not install $target->{src_name}"
         );
 
-        error( $target->{src_name}, $line );
+        error( $target->{key}, $line );
 
         _failed($target);
 
@@ -179,7 +179,7 @@ TARGET:
     {
       _complete($target);
       $target->{was_installed} = 1;
-      success( $target->{src_name}, $line );
+      success( $target->{key}, $line );
     }
   }
 
@@ -380,7 +380,7 @@ sub _prereq_verify
   if ( @incomplete_deps > 0 )
   {
     my $line = 'Unmet dependencies for: ' . $target->{src_name};
-    error $target->{src_name}, $line;
+    error $target->{key}, $line;
     logmsg "Missing requirements: "
       . join( ", ", map { $_->{src_name} } @incomplete_deps );
     die 'Error with prerequisites';
@@ -648,6 +648,7 @@ sub _create_target
 
     $cached_target = { %$src, state => 0 };
     $cache->{targets}->{$src_name} = $cached_target;
+    $cached_target->{key} = $src_name;
   }
 
   if ( $cached_target->{state} eq $COMPLETE
@@ -951,7 +952,7 @@ sub _should_install
     if ( $req->accepts_module( $module, $ver ) )
     {
       success(
-        $target->{src_name},
+        $target->{key},
         _target_line( $target, $msg )
       );
       _complete($target);
@@ -962,7 +963,7 @@ sub _should_install
   if ( defined $target->{version} && $target->{version} eq $ver )
   {
     success(
-      $target->{src_name},
+      $target->{key},
       _target_line( $target, $msg )
     );
     _complete($target);
