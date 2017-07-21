@@ -156,7 +156,7 @@ TARGET:
       {
         my $line = sprintf(
           '%-13s %s', 'Error',
-          "Could not install $target->{src_name}"
+          "Could not install " . _name_target($target)
         );
 
         error( $target->{key}, $line );
@@ -1039,15 +1039,18 @@ sub _failed
   return;
 }
 
+sub _name_target
+{
+  my $target = shift;
+  return $target->{name} || $target->{module} || $target->{src_name};
+}
+
 sub _target_line
 {
   my $target = shift;
   my $status = shift;
 
-  my $line = sprintf(
-    '%-13s %s', $status,
-    $target->{name} || $target->{module} || $target->{src_name}
-  );
+  my $line = sprintf( '%-13s %s', $status, _name_target($target) );
 
   return $line;
 }
