@@ -29,7 +29,7 @@ BEGIN
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 require App::MechaCPAN::Perl;
 require App::MechaCPAN::Install;

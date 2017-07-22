@@ -1,6 +1,8 @@
 Revision history for App-MechaCPAN
 
 {{$NEXT}}
+
+0.20  2017-07-21 22:28:41 EDT
   - Improve the speed and reliability of installing a module. Much of this
     releases work went into this, which in turn makes deploy more dependable
   - Add --smart-tests as an alternative to --skip-tests
