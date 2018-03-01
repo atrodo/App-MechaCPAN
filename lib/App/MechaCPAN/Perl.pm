@@ -99,15 +99,14 @@ sub go
     chdir $files[0];
   }
 
-  my $local_dir = [ @orig_dir, qw/lib perl5/ ];
-  my $lib_dir = [ @orig_dir[ 0 .. $orig_len - 1 ], qw/lib perl5/ ];
+  my $local_dir = File::Spec->catdir( @orig_dir, qw/lib perl5/ );
+  my $lib_dir
+    = File::Spec->catdir( @orig_dir[ 0 .. $orig_len - 1 ], qw/lib/ );
 
   my @otherlib = (
-    !$opts->{skip_local} ? () : $local_dir,
-    !$opts->{skip_lib} && -d $lib_dir ? $lib_dir : (),
+    !$opts->{'skip-local'} ? $local_dir : (),
+    !$opts->{'skip-lib'} && -d $lib_dir ? $lib_dir : (),
   );
-
-  @otherlib = map { File::Spec->catdir(@$_) } @otherlib;
 
   my @config = (
     q[-des],
