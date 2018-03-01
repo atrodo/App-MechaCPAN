@@ -728,6 +728,13 @@ sub _get_targz
   # git
   if ( $src =~ git_re )
   {
+    my $min_git_ver = min_git_ver;
+    croak "System has git version < $min_git_ver, cannot retrieve git URL"
+      unless has_updated_git;
+
+    croak "System does not have git, cannot retrieve git URL"
+      unless has_git;
+
     my ( $git_url, $commit ) = $src =~ git_extract_re;
 
     my $dir
