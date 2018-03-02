@@ -117,7 +117,7 @@ This means that any END and DESTROY blocks **WILL NOT RUN**. Anything created wi
 
 # AUTHOR
 
-Jon Gentle <cpan@atrodo.org>
+Jon Gentle &lt;cpan@atrodo.org>
 
 # COPYRIGHT
 
