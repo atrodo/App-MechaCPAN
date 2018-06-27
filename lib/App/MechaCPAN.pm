@@ -767,7 +767,7 @@ App::MechaCPAN focuses on the aspects of these tools needed for deploying packag
 
 =head2 Should I use App::MechaCPAN instead of <tool>
 
-Probably not, no. It can be used in place of some tools, but it's focus is not on the features a developer needs. If your needs are very simple and you don't need many options, you might be able to get away with only using C<App::MechaCPAN>. However be prepared to run into limitations quickly.
+Probably not, no. It can be used in place of some tools, but its focus is not on the features a developer needs. If your needs are very simple and you don't need many options, you might be able to get away with only using C<App::MechaCPAN>. However be prepared to run into limitations quickly.
 
 =head1 USING FOR DEPLOYMENTS
 
