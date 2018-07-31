@@ -4,6 +4,7 @@ use v5.14;
 use autodie;
 use Config;
 use File::Fetch qw//;
+use FindBin;
 use App::MechaCPAN qw/:go/;
 
 our @args = (
@@ -13,6 +14,7 @@ our @args = (
   'skip-lib!',
   'smart-tests!',
   'devel!',
+  'shared-lib!',
 );
 
 my $perl5_ver_re = qr/v? 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )?/xms;
@@ -120,6 +122,11 @@ sub go
     push @config, '-Dusethreads';
   }
 
+  if ( $opts->{'shared-lib'} )
+  {
+    push @config, '-Duseshrplib';
+  }
+
   if ( $opts->{devel} )
   {
     push @config, '-Dusedevel';
@@ -159,6 +166,19 @@ sub go
   _run_make('install');
 
   success "Installed $verstr";
+
+  # We need to copy ourselves into the new local/perl tree so this script will keep working.
+  # NOTE: find the location of the currently running APP::MechaCPAN code and copy the files into the $dest_dir/ path. 
+  my $path_to_mecha_cpan_file = $INC{"App/MechaCPAN.pm"};
+  info "Current App::MechaCPAN is installed at '$path_to_mecha_cpan_file'...";
+  (my $path_to_mecha_cpan = $path_to_mecha_cpan_file) =~ s/\.pm$//;
+  info "Copying $path_to_mecha_cpan* to $dest_dir/lib/$version/App/...";
+  print `/bin/mkdir -vp $dest_dir/lib/$version/App`;
+  print `/bin/cp -av $path_to_mecha_cpan* $dest_dir/lib/$version/App/`;
+  if (-e "$FindBin::Bin/mechacpan")
+  {
+    print `/bin/cp -av $FindBin::Bin/mechacpan $dest_dir/bin/`;
+  }
 
   chdir $orig_dir;
 
@@ -326,6 +346,10 @@ C<$version> is either 0 or 1 parameter:
 =head3 threads
 
 By default, perl is compiled without threads. If you'd like to enable threads, use this argument.
+
+=head3 shared-lib
+
+By default, perl will generate a libperl.a file.  If you need libperl.so, then use this argument.
 
 =head3 skip-tests
 
