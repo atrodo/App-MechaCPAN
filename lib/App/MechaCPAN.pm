@@ -166,6 +166,7 @@ sub main
 
     my $log_path;
     ( $LOGFH, $log_path ) = tempfile( "$log_dir/log.$$.XXXX", UNLINK => 0 );
+    print "logging to '$log_path'...\n";
   }
 
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
