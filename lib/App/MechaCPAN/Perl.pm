@@ -167,22 +167,9 @@ sub go
 
   success "Installed $verstr";
 
-  # We need to copy ourselves into the new local/perl tree so this script will keep working.
-  # NOTE: find the location of the currently running APP::MechaCPAN code and copy the files into the $dest_dir/ path. 
-  my $path_to_mecha_cpan_file = $INC{"App/MechaCPAN.pm"};
-  info "Current App::MechaCPAN is installed at '$path_to_mecha_cpan_file'...";
-  (my $path_to_mecha_cpan = $path_to_mecha_cpan_file) =~ s/\.pm$//;
-  info "Copying $path_to_mecha_cpan* to $dest_dir/lib/$version/App/...";
-  print `/bin/mkdir -vp $dest_dir/lib/$version/App`;
-  print `/bin/cp -av $path_to_mecha_cpan* $dest_dir/lib/$version/App/`;
-  if (-e "$FindBin::Bin/mechacpan")
-  {
-    print `/bin/cp -av $FindBin::Bin/mechacpan $dest_dir/bin/`;
-  }
+  &restart_script();
 
   chdir $orig_dir;
-
-  &restart_script();
 
   return 0;
 }

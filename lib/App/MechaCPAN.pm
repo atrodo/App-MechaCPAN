@@ -42,7 +42,6 @@ my $is_restarted_process = delete $ENV{$restarted_key};
 INIT
 {
   $loaded_at_compile = 1;
-  &restart_script();
 }
 
 $loaded_at_compile //= 0;
@@ -120,6 +119,10 @@ sub main
     }
     chdir $options->{directory};
   }
+
+  # Once we've established the project directory, we need to attempt to
+  # restart the script.
+  &restart_script();
 
   local $LOGFH;
   local $VERBOSE = $options->{verbose} // $VERBOSE;
@@ -650,11 +653,113 @@ sub run
   return $out;
 }
 
+# Install App::MechaCPAN into a local perl, either by ::Install or copy
+sub _inc_pkg
+{
+  my $inc_name = ( shift || __PACKAGE__ ) . '.pm';
+  $inc_name =~ s{::}{/}g;
+  return $inc_name;
+}
+
+my $starting_cwd;
+BEGIN { $starting_cwd = cwd }
+
+sub _mk_starting_abs
+{
+  my $f = shift;
+
+  $f = File::Spec->rel2abs( $f, $starting_cwd )
+    unless File::Spec->file_name_is_absolute($f);
+
+  return $f;
+}
+
+sub self_install
+{
+  my $real0 = shift;
+
+  my $dest_dir = &dest_dir;
+  my $dest_lib = File::Spec->catdir( "$dest_dir", qw/lib perl5/ );
+  my $dest_app = File::Spec->catdir( "$dest_dir", qw/bin/ );
+  my $inc_name = _inc_pkg;
+
+  return
+    if !-d $dest_dir;
+
+  # Return if there's already a copy
+  return
+    if -e File::Spec->catdir( $dest_lib, $inc_name );
+
+  use File::Copy qw/copy/;
+  use File::Path qw/make_path/;
+  use Fatal qw/copy/;
+
+  make_path $dest_lib, $dest_app;
+
+  if ( defined $real0 && -e $real0 )
+  {
+    # Attempt to find the full path to this file.
+    my $mecha_path;
+
+    foreach my $lib (@INC)
+    {
+      my $mecha_file
+        = _mk_starting_abs( File::Spec->catdir( $lib, $inc_name ) );
+      if ( -e $mecha_file )
+      {
+        $mecha_path = _mk_starting_abs $lib;
+        last;
+      }
+    }
+
+    if ( defined $mecha_path )
+    {
+      $inc_name =~ s/[.]pm$//;
+      my %copy_list;
+      foreach my $k ( grep {m/$inc_name/} keys %INC )
+      {
+        my $src = File::Spec->catdir( $mecha_path, $k );
+        my $dst = File::Spec->catdir( $dest_lib,   $k );
+
+        my $dst_path
+          = File::Spec->catpath( ( File::Spec->splitpath($dst) )[ 0 .. 1 ] );
+        make_path $dst_path;
+
+        if ( !-e $src )
+        {
+          %copy_list = ();
+          last;
+        }
+        $copy_list{$src} = $dst;
+      }
+
+      if ( keys %copy_list )
+      {
+        while ( my ( $src, $dst ) = each %copy_list )
+        {
+          copy $src => $dst;
+        }
+        copy $real0 => $dest_app;
+        return;
+      }
+    }
+  }
+
+  # We don't check the result because we are going to continue even if
+  # the install fails
+  die;
+  info "Installing " . __PACKAGE__;
+  App::MechaCPAN::Install->go( {}, __PACKAGE__ );
+  return;
+}
+
 sub restart_script
 {
   my $dest_dir   = &dest_dir;
   my $local_perl = File::Spec->canonpath("$dest_dir/perl/bin/perl");
   my $this_perl  = File::Spec->canonpath($^X);
+  my $cwd        = cwd;
+
   if ( $^O ne 'VMS' )
   {
     $this_perl .= $Config{_exe}
@@ -663,18 +768,23 @@ sub restart_script
       unless $local_perl =~ m/$Config{_exe}$/i;
   }
 
-  state $orig_cwd = cwd;
-  state $orig_0   = $0;
+  return
+    if $local_perl eq $this_perl;
 
-  my $current_cwd = cwd;
-  chdir $orig_cwd;
+  my $real0 = _mk_starting_abs $0;
+
+  if ( !-e -r $real0 )
+  {
+    logmsg "Could not find '$0', not in '$starting_cwd' nor pwd '$cwd'";
+    info "Could not find '$0' in order to restart script";
+    return;
+  }
 
   if (
-    $loaded_at_compile              # IF we were loaded during compile-time
-    && -e -x $local_perl            # AND the local perl is there
-    && $this_perl ne $local_perl    # AND if we're not running it
-    && -e -f -r $0                  # AND we are a readable file
-    && !$^P                         # AND we're not debugging
+    $loaded_at_compile      # IF we were loaded during compile-time
+    && -e -x $local_perl    # AND the local perl is there
+    && -e -f -r $real0      # AND we are a readable file
+    && !$^P                 # AND we're not debugging
     )
   {
     # ReExecute using the local perl
@@ -693,6 +803,13 @@ sub restart_script
       $site_inc{"$lib/$Config{archname}"} = 1;
     }
 
+    # If we are not a self-contained script, we should call self_install to
+    # make sure we are installed, by hook or by crook
+    if ( $INC{&_inc_pkg} =~ m/MechaCPAN[.]pm/ )
+    {
+      self_install($real0);
+    }
+
     foreach my $lib (@INC)
     {
       push( @inc_add, $lib )
@@ -705,16 +822,16 @@ sub restart_script
     undef @ENV{qw/PERL_LOCAL_LIB_ROOT PERL5LIB/};
 
     # If we've running, inform the new us that they are a restarted process
-    $ENV{$restarted_key} = 1
+    local $ENV{$restarted_key} = 1
       if ${^GLOBAL_PHASE} eq 'RUN';
 
     # Cleanup any files opened already. They arn't useful after we exec
     File::Temp::cleanup();
 
-    exec( $local_perl, map( {"-I$_"} @inc_add ), $0, @ARGV );
+    info "Restarting to local perl\n";
+    info( join( " ", $local_perl, map( {"-I$_"} @inc_add ), $real0, @ARGV ) );
+    exec( $local_perl, map( {"-I$_"} @inc_add ), $real0, @ARGV );
   }
-
-  chdir $current_cwd;
 }
 
 1;
