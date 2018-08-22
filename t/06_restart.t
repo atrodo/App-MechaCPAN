@@ -29,9 +29,6 @@ sub run_restart
   local *App::MechaCPAN::self_install = sub { $last_ran_self_install = 1 };
 
   App::MechaCPAN::restart_script;
-
-  use Data::Dumper;
-  warn Data::Dumper::Dumper( \@last_ran_params, $last_ran_self_install );
 }
 
 # --directory
