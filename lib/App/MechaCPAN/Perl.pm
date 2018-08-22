@@ -167,9 +167,9 @@ sub go
 
   success "Installed $verstr";
 
-  &restart_script();
-
   chdir $orig_dir;
+
+  &restart_script();
 
   return 0;
 }
