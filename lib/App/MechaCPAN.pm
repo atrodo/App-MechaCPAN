@@ -60,6 +60,7 @@ our $VERBOSE;    # Print output from sub commands to STDERR
 our $QUIET;      # Do not print any progress to STDERR
 our $LOGFH;      # File handle to send the logs to
 our $LOG_ON = 1; # Default if to log or not
+our $PROJ_DIR;   # The directory given with -d or pwd if not provided
 
 sub main
 {
@@ -416,6 +417,11 @@ sub status
 END  { print STDERR "\n" unless $QUIET; }
 INIT { print STDERR "\n" unless $QUIET; }
 
+sub get_project_dir
+{
+  return $PROJ_DIR // cwd;
+}
+
 package MechaCPAN::DestGuard
 {
   use Cwd qw/cwd/;
@@ -428,7 +434,7 @@ package MechaCPAN::DestGuard
     my $result = $dest_dir;
     if ( !defined $result )
     {
-      my $pwd = cwd;
+      my $pwd = App::MechaCPAN::get_project_dir;
       $dest_dir = \"$pwd/local";
       bless $dest_dir;
       $result = $dest_dir;
@@ -747,7 +753,6 @@ sub self_install
 
   # We don't check the result because we are going to continue even if
   # the install fails
-  die;
   info "Installing " . __PACKAGE__;
   App::MechaCPAN::Install->go( {}, __PACKAGE__ );
   return;
