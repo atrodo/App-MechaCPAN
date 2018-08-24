@@ -24,7 +24,7 @@ BEGIN
     url_re git_re git_extract_re
     has_git has_updated_git min_git_ver
     logmsg info success error
-    dest_dir inflate_archive
+    dest_dir get_project_dir inflate_archive
     run restart_script
     /;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
@@ -125,6 +125,7 @@ sub main
   # restart the script.
   &restart_script();
 
+  local $PROJ_DIR = cwd;
   local $LOGFH;
   local $VERBOSE = $options->{verbose} // $VERBOSE;
   local $QUIET   = $options->{quiet}   // $QUIET;
