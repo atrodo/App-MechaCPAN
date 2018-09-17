@@ -12,6 +12,7 @@ use IPC::Open3;
 use IO::Select;
 use List::Util qw/first/;
 use File::Temp qw/tempfile tempdir/;
+use File::Fetch;
 use File::Spec qw//;
 use Archive::Tar;
 use Getopt::Long qw//;
@@ -24,7 +25,8 @@ BEGIN
     url_re git_re git_extract_re
     has_git has_updated_git min_git_ver
     logmsg info success error
-    dest_dir get_project_dir inflate_archive
+    dest_dir get_project_dir
+    fetch_file inflate_archive
     run restart_script
     /;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
@@ -161,18 +163,8 @@ sub main
     mkdir $dest_dir;
   }
 
-  unless ( $options->{'no-log'} )
-  {
-    my $log_dir = "$dest_dir/logs";
-    if ( !-d $log_dir )
-    {
-      mkdir $log_dir;
-    }
-
-    my $log_path;
-    ( $LOGFH, $log_path ) = tempfile( "$log_dir/log.$$.XXXX", UNLINK => 0 );
-    print "logging to '$log_path'...\n";
-  }
+  _setup_log($dest_dir)
+    unless $options->{'no-log'};
 
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
   chdir $orig_dir;
@@ -279,6 +271,20 @@ sub humane_tmpname
   );
 
   return "mechacpan_$descr.$now.XXXX";
+}
+
+sub _setup_log
+{
+  my $dest_dir = shift;
+
+  my $log_dir = "$dest_dir/logs";
+  mkdir $log_dir
+    unless -d $log_dir;
+
+  my $template = File::Spec->catdir( $log_dir, humane_tmpname('log') );
+  my $log_path;
+  ( $LOGFH, $log_path ) = tempfile( $template, UNLINK => 0 );
+  info("logging to '$log_path'...\n");
 }
 
 sub logmsg
@@ -455,6 +461,10 @@ package MechaCPAN::DestGuard
       $result = $dest_dir;
       weaken $dest_dir;
     }
+
+    mkdir $dest_dir
+      unless -d $dest_dir;
+
     return $dest_dir;
   }
 
@@ -470,9 +480,94 @@ sub dest_dir
   return $result;
 }
 
+sub fetch_file
+{
+  my $url = shift;
+  my $to  = shift;
+
+  use File::Copy qw/copy/;
+  use Fatal qw/copy/;
+
+  my $proj_dir = &dest_dir;
+  my $slurp;
+
+  local $File::Fetch::WARN;
+  local $@;
+
+  my $ff = File::Fetch->new( uri => $url );
+  $ff->scheme('http')
+    if $ff->scheme eq 'https';
+
+  if ( ref $to eq 'SCALAR' )
+  {
+    $slurp = $to;
+    undef $to;
+  }
+
+  my ( $dst_path, $dst_file, $result );
+  if ( !defined $to )
+  {
+    my $tmp_dir = "$proj_dir/tmp";
+    mkdir $tmp_dir
+      unless -d $tmp_dir;
+
+    my $template
+      = File::Spec->catdir( $tmp_dir, humane_tmpname( $ff->file ) );
+    $result = File::Temp->new($template);
+
+    my @splitpath = File::Spec->splitpath( $result->filename );
+    $dst_path = File::Spec->catpath( @splitpath[ 0 .. 1 ] );
+    $dst_file = $splitpath[2];
+  }
+  else
+  {
+    if ( $to =~ m[/$] )
+    {
+      $dst_path = $to;
+      $dst_file = $ff->file;
+    }
+    else
+    {
+      my @splitpath = File::Spec->splitpath("$to");
+      $dst_path = File::Spec->catpath( @splitpath[ 0 .. 1 ] );
+      $dst_file = $splitpath[2];
+    }
+
+    $dst_path = File::Spec->rel2abs( $dst_path, "$proj_dir" )
+      unless File::Spec->file_name_is_absolute($dst_path);
+    $result = File::Spec->catdir( $dst_path, $dst_file );
+  }
+
+  mkdir $dst_path
+    unless -d $dst_path;
+
+  my $where = $ff->fetch( to => $dst_path );
+  die $ff->error || "Could not download $url"
+    if !defined $where;
+
+  if ( $where ne $result )
+  {
+    copy( $where, $result );
+    $result->seek( 0, 0 )
+      if fileno $result;
+    unlink $where;
+  }
+
+  if ( defined $slurp )
+  {
+    open my $slurp_fh, '<', $result;
+    $$slurp = do { local $/; <$slurp_fh> };
+    $result->seek( 0, 0 )
+      if fileno $result;
+  }
+
+  return $result;
+}
+
 sub inflate_archive
 {
   my $src = shift;
+  my $dir = shift;
 
   # $src can be a file path or a URL.
   if ( !-e $src )
@@ -488,10 +583,17 @@ sub inflate_archive
     $src = $where;
   }
 
-  my $dir = tempdir(
-    TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
-    CLEANUP  => 1,
-  );
+  if ( !defined $dir )
+  {
+    $dir = tempdir(
+      TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
+      CLEANUP  => 1,
+    );
+  }
+
+  die "Could not find destination directory: $dir"
+    if !-d $dir;
+
   my $orig = cwd;
 
   my $error_free = eval {
