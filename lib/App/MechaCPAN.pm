@@ -267,6 +267,20 @@ sub git_extract_re
   return $re;
 }
 
+sub humane_tmpname
+{
+  my $descr = shift;
+
+  my @localtime = localtime;
+  my $now       = sprintf(
+    "%04d%02d%02d_%02d%02d%02d",
+    $localtime[5] + 1900,
+    @localtime[ 4, 3, 2, 1, 0 ]
+  );
+
+  return "mechacpan_$descr.$now.XXXX";
+}
+
 sub logmsg
 {
   my @lines = @_;
