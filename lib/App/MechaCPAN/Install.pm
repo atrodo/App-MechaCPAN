@@ -11,7 +11,6 @@ use File::Path qw//;
 use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
 use CPAN::Meta::Prereqs qw//;
-use File::Fetch qw//;
 use Module::CoreList;
 use ExtUtils::MakeMaker qw//;
 use App::MechaCPAN qw/:go/;
@@ -696,15 +695,8 @@ sub _search_metacpan
     $dnld .= '?version=' . _escape($constraint);
   }
 
-  local $File::Fetch::WARN;
-  my $ff = File::Fetch->new( uri => $dnld );
-  $ff->scheme('http')
-    if $ff->scheme eq 'https';
   my $json_info = '';
-  my $where = $ff->fetch( to => \$json_info );
-
-  croak "Could not find module $src on metacpan"
-    if !defined $where;
+  fetch_file($dnld => \$json_info);
 
   my $result = JSON::PP::decode_json($json_info);
   $seen{$src}->{$constraint} = $result;
@@ -798,17 +790,7 @@ sub _get_targz
       $target->{distvname} = $package;
     }
 
-    local $File::Fetch::WARN;
-    my $ff = File::Fetch->new( uri => $url );
-    my $dest_dir = dest_dir() . "/pkgs";
-
-    $ff->scheme('http')
-      if $ff->scheme eq 'https';
-    my $where = $ff->fetch( to => $dest_dir );
-    croak $ff->error || "Could not download $url"
-      if !defined $where;
-
-    return $where;
+    return fetch_file($url);
   }
 
   croak "Cannot find $src\n";

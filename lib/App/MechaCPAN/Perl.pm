@@ -3,7 +3,6 @@ package App::MechaCPAN::Perl;
 use v5.14;
 use autodie;
 use Config;
-use File::Fetch qw//;
 use FindBin;
 use App::MechaCPAN qw/:go/;
 
@@ -195,14 +194,12 @@ sub _dnld_url
   my $minor   = shift;
   my $mirror  = 'http://www.cpan.org/src/5.0';
 
-  return "$mirror/perl-5.$version.$minor.tar.bz2";
+  return "$mirror/perl-5.$version.$minor.tar.gz";
 }
 
 sub _get_targz
 {
   my $src = shift;
-
-  local $File::Fetch::WARN;
 
   # If there's no src, find the newest version.
   if ( !defined $src )
@@ -218,9 +215,8 @@ sub _get_targz
     # Verify our guess
     {
       my $dnld = _dnld_url( $major, 0 ) . ".md5.txt";
-      my $ff       = File::Fetch->new( uri => $dnld );
       my $contents = '';
-      my $where    = $ff->fetch( to => \$contents );
+      my $where    = eval { fetch_file( $dnld => \$contents ) };
 
       if ( !defined $where && $major > 12 )
       {
@@ -263,9 +259,8 @@ sub _get_targz
         my $i = int( @possible / 2 );
         $minor = $possible[$i];
         my $dnld = _dnld_url( $version, $minor ) . ".md5.txt";
-        my $ff       = File::Fetch->new( uri => $dnld );
         my $contents = '';
-        my $where    = $ff->fetch( to => \$contents );
+        my $where    = eval { fetch_file( $dnld => \$contents ) };
 
         if ( defined $where )
         {
