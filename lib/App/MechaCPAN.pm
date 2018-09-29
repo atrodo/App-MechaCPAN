@@ -14,7 +14,6 @@ use List::Util qw/first/;
 use File::Temp qw/tempfile tempdir/;
 use File::Fetch;
 use File::Spec qw//;
-use Archive::Tar;
 use Getopt::Long qw//;
 
 use Exporter qw/import/;
@@ -564,6 +563,48 @@ sub fetch_file
   return $result;
 }
 
+my @inflate = (
+
+  # System tar
+  sub
+  {
+    my $src = shift;
+
+    return
+      unless $src =~ m{ [.]tar[.] (?: gz | bz2 | xz ) $}xms;
+
+    state $tar;
+    if ( !defined $tar )
+    {
+      my $tar_version_str = eval { run(qw/tar --version/); };
+      $tar = defined $tar_version_str;
+    }
+
+    return
+      unless $tar;
+
+    my $unzip = $src =~ m/gz$/ ? 'gzip' : $src =~ m/bz2/ ? 'bzip2' : 'xz';
+
+    run("$unzip -dc $src | tar xf -");
+    return 1;
+  },
+
+  # Archive::Tar
+  sub
+  {
+    my $src = shift;
+
+    require Archive::Tar;
+    my $tar = Archive::Tar->new;
+    $tar->error(1);
+
+    my $ret = $tar->read( "$src", 1, { extract => 1 } );
+
+    die $tar->error
+      unless $ret;
+  },
+);
+
 sub inflate_archive
 {
   my $src = shift;
@@ -588,21 +629,35 @@ sub inflate_archive
 
   my $orig = cwd;
 
-  my $error_free = eval {
-    chdir $dir;
-    my $tar = Archive::Tar->new;
-    $tar->error(1);
-    my $ret = $tar->read( "$src", 1, { extract => 1 } );
-    die $tar->error
-      unless $ret;
-    1;
-  };
-  my $err = $@;
+  my $is_complete;
+  foreach my $inflate_sub (@inflate)
+  {
+    local $@;
+    my $success;
+    my $error_free = eval {
+      chdir $dir;
+      $success = $inflate_sub->($src);
+      1;
+    };
 
-  chdir $orig;
+    my $err = $@;
 
-  die $err
-    unless $error_free;
+    chdir $orig;
+
+    logmsg $err
+      unless $error_free;
+
+    if ($success)
+    {
+      $is_complete = 1;
+      last;
+    }
+  }
+
+  if ( !$is_complete )
+  {
+    carp "Could not unpack archive: $src\n";
+  }
 
   return $dir;
 }
