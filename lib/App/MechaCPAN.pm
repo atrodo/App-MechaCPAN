@@ -572,15 +572,7 @@ sub inflate_archive
   # $src can be a file path or a URL.
   if ( !-e $src )
   {
-    local $File::Fetch::WARN;
-    my $ff = File::Fetch->new( uri => $src );
-    $ff->scheme('http')
-      if $ff->scheme eq 'https';
-    my $content = '';
-    my $where = $ff->fetch( to => \$content );
-    die $ff->error || "Could not download $src"
-      if !defined $where;
-    $src = $where;
+    $src = fetch_file($src);
   }
 
   if ( !defined $dir )
