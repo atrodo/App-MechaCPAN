@@ -94,7 +94,7 @@ sub go
   if ( !-e 'Configure' )
   {
     my @files = glob('*');
-    if ( @files > 1 )
+    if ( @files != 1 )
     {
       die 'Could not find perl to configure';
     }
