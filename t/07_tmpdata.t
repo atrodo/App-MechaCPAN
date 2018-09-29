@@ -14,9 +14,9 @@ my $dir = cwd;
 my $test_filename  = 'v0.24.zip';
 my $test_url       = "https://github.com/p5sagit/Try-Tiny/archive/$test_filename";
 my $type           = join( '', map { ( 'a' .. 'z' )[ int rand 26 ] } ( 1 .. 4 ) );
-my $humane_pattern = qr{ mechacpan_ .*? [.] [\d_]* [.] [^.]* }xms;
-my $type_pattern   = qr{ mechacpan_$type [.] [\d_]* [.] X* }xms;
-my $log_pattern    = qr{ mechacpan_log [.] [\d_]* [.] }xms;
+my $humane_pattern = qr{ mecha_ .*? [.] [\d_]* [.] [^.]* }xms;
+my $type_pattern   = qr{ mecha_$type [.] [\d_]* [.] X* }xms;
+my $log_pattern    = qr{ mecha_log [.] [\d_]* [.] }xms;
 
 like( App::MechaCPAN::humane_tmpname($type), qr/^$type_pattern$/, 'Humane name is maintained' );
 

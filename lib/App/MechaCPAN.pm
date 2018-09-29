@@ -270,7 +270,7 @@ sub humane_tmpname
     @localtime[ 4, 3, 2, 1, 0 ]
   );
 
-  return "mechacpan_$descr.$now.XXXX";
+  return "mecha_$descr.$now.XXXX";
 }
 
 sub _setup_log
