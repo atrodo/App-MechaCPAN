@@ -439,7 +439,16 @@ INIT { print STDERR "\n" unless $QUIET; }
 
 sub get_project_dir
 {
-  return $PROJ_DIR // cwd;
+  my $result = $PROJ_DIR;
+
+  if (!defined $result )
+  {
+    $result = cwd;
+
+    $result =~ s{ / local /? $}{}xms;
+  }
+
+  return $result;
 }
 
 package MechaCPAN::DestGuard
