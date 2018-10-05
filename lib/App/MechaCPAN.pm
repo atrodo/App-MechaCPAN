@@ -586,8 +586,16 @@ sub fetch_file
     unless -d $dst_path;
 
   my $where = $ff->fetch( to => $dst_path );
-  die $ff->error || "Could not download $url"
-    if !defined $where;
+
+  if ( !defined $where )
+  {
+    my $tmpfile = File::Spec->catdir( $dst_path, $ff->file );
+    if ( -e $tmpfile && !-s )
+    {
+      unlink $tmpfile;
+    }
+    die $ff->error || "Could not download $url";
+  }
 
   if ( $where ne $result )
   {
