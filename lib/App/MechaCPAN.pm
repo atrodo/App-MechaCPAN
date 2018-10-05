@@ -11,6 +11,7 @@ use Term::ANSIColor qw//;
 use IPC::Open3;
 use IO::Select;
 use List::Util qw/first/;
+use Scalar::Util qw/blessed/;
 use File::Temp qw/tempfile tempdir/;
 use File::Fetch;
 use File::Spec qw//;
@@ -26,6 +27,7 @@ BEGIN
     logmsg info success error
     dest_dir get_project_dir
     fetch_file inflate_archive
+    humane_tmpname humane_tmpfile humane_tmpdir
     run restart_script
     /;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
@@ -272,6 +274,39 @@ sub humane_tmpname
   return "mecha_$descr.$now.XXXX";
 }
 
+sub _mktmpdir
+{
+  my $proj_dir = _get_project_dir();
+  my $tmp_dir
+    = defined $proj_dir ? "$proj_dir/local/tmp" : File::Spec->tmpdir;
+
+  mkdir $tmp_dir
+    unless -d $tmp_dir;
+
+  return $tmp_dir;
+}
+
+sub humane_tmpfile
+{
+  my $descr   = shift;
+  my $tmp_dir = _mktmpdir;
+
+  my $template = File::Spec->catdir( $tmp_dir, humane_tmpname($descr) );
+  return File::Temp->new($template);
+}
+
+sub humane_tmpdir
+{
+  my $descr   = shift;
+  my $tmp_dir = _mktmpdir;
+
+  my $template = File::Spec->catdir( $tmp_dir, humane_tmpname($descr) );
+  return tempdir(
+    TEMPLATE => $template,
+    CLEANUP  => 1,
+  );
+}
+
 sub _setup_log
 {
   my $dest_dir = shift;
@@ -437,11 +472,18 @@ sub status
 END  { print STDERR "\n" unless $QUIET; }
 INIT { print STDERR "\n" unless $QUIET; }
 
-sub get_project_dir
+sub _get_project_dir
 {
   my $result = $PROJ_DIR;
 
-  if (!defined $result )
+  return $result;
+}
+
+sub get_project_dir
+{
+  my $result = _get_project_dir;
+
+  if ( !defined $result )
   {
     $result = cwd;
 
@@ -515,13 +557,7 @@ sub fetch_file
   my ( $dst_path, $dst_file, $result );
   if ( !defined $to )
   {
-    my $tmp_dir = "$proj_dir/tmp";
-    mkdir $tmp_dir
-      unless -d $tmp_dir;
-
-    my $template
-      = File::Spec->catdir( $tmp_dir, humane_tmpname( $ff->file ) );
-    $result = File::Temp->new($template);
+    $result = humane_tmpfile( $ff->file );
 
     my @splitpath = File::Spec->splitpath( $result->filename );
     $dst_path = File::Spec->catpath( @splitpath[ 0 .. 1 ] );
@@ -627,10 +663,8 @@ sub inflate_archive
 
   if ( !defined $dir )
   {
-    $dir = tempdir(
-      TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX',
-      CLEANUP  => 1,
-    );
+    my $descr = ( File::Spec->splitpath($src) )[2];
+    $dir = humane_tmpdir($descr);
   }
 
   die "Could not find destination directory: $dir"
@@ -710,7 +744,7 @@ sub run
   my $print_output = $VERBOSE;
   my $wantoutput   = defined wantarray;
 
-  if ( ref $cmd eq 'GLOB' )
+  if ( ref $cmd eq 'GLOB' || ( blessed $cmd && $cmd->isa('IO::Handle') ) )
   {
     $dest_out_fh = $cmd;
     $cmd         = shift @args;

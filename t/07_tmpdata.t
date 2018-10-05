@@ -8,6 +8,7 @@ require q[./t/helper.pm];
 
 my $pwd = cwd;
 my $tmpdir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", CLEANUP => 1 );
+local $App::MechaCPAN::PROJ_DIR = $tmpdir;
 chdir $tmpdir;
 my $dir = cwd;
 

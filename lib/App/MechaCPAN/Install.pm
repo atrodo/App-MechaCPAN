@@ -8,7 +8,6 @@ use Cwd qw/cwd/;
 use JSON::PP qw//;
 use File::Spec qw//;
 use File::Path qw//;
-use File::Temp qw/tempdir tempfile/;
 use CPAN::Meta qw//;
 use CPAN::Meta::Prereqs qw//;
 use Module::CoreList;
@@ -728,13 +727,11 @@ sub _get_targz
       unless has_git;
 
     my ( $git_url, $commit ) = $src =~ git_extract_re;
+    my ($descr) = $git_url =~ m{ ([^/]*) $}xms;
 
-    my $dir
-      = tempdir( TEMPLATE => File::Spec->tmpdir . '/mechacpan_XXXXXXXX' );
-    my ( $fh, $file ) = tempfile(
-      TEMPLATE => File::Spec->tmpdir . '/mechacpan_tar.gz_XXXXXXXX',
-      CLEANUP  => 1
-    );
+    my $dir  = humane_tmpdir($descr);
+    my $fh   = humane_tmpfile($descr);
+    my $file = $fh->filename;
 
     run( 'git', 'clone', '--bare', $git_url, $dir );
     run(
@@ -742,7 +739,7 @@ sub _get_targz
       $commit || 'master'
     );
     close $fh;
-    return $file;
+    return $fh;
   }
 
   # URL
