@@ -695,7 +695,7 @@ sub _search_metacpan
   }
 
   my $json_info = '';
-  fetch_file($dnld => \$json_info);
+  fetch_file( $dnld => \$json_info );
 
   my $result = JSON::PP::decode_json($json_info);
   $seen{$src}->{$constraint} = $result;

@@ -214,7 +214,7 @@ sub _get_targz
 
     # Verify our guess
     {
-      my $dnld = _dnld_url( $major, 0 ) . ".md5.txt";
+      my $dnld     = _dnld_url( $major, 0 ) . ".md5.txt";
       my $contents = '';
       my $where    = eval { fetch_file( $dnld => \$contents ) };
 
@@ -258,7 +258,7 @@ sub _get_targz
       {
         my $i = int( @possible / 2 );
         $minor = $possible[$i];
-        my $dnld = _dnld_url( $version, $minor ) . ".md5.txt";
+        my $dnld     = _dnld_url( $version, $minor ) . ".md5.txt";
         my $contents = '';
         my $where    = eval { fetch_file( $dnld => \$contents ) };
 
