@@ -1173,7 +1173,7 @@ A log is normally outputted into the C<local/logs> directory. This option will p
 
 =head2 --directory=<path>
 
-Changes to a specified directory before any processing is done. This allows you to specify what directory you want C<local/> to be in.
+Changes to a specified directory before any processing is done. This allows you to specify what directory you want C<local/> to be in. If this isn't provided, the current working directory is used instead.
 
 =head2 C<$ENV{MECHACPAN_TIMEOUT}>
 
@@ -1181,7 +1181,7 @@ Every command that C<App::MechaCPAN> runs is given an idle timeout before it is 
 
 =head1 SCRIPT RESTART WARNING
 
-This module B<WILL> restart the running script B<IF> it's used as a module (e.g. with C<use>) and the perl that is running is not the version installed in C<local/>. It does this at two points: First right before run-time and Second right after a perl is installed into C<local/>.
+This module B<WILL> restart the running script B<IF> it's used as a module (e.g. with C<use>) and the perl that is running is not the version installed in C<local/>. It does this at two points: First right before run-time and Second right after a perl is installed into C<local/>. During restart, C<App::MechaCPAN> will attempt to install itself into C<local/> unless it was invoked as a fully-contained version of C<mechacpan>.
 
 The scripts and modules that come with C<App::MechaCPAN> are prepared to handle this. If you use C<App::MechaCPAN> as a module, you should to be prepared to handle it as well.
 
