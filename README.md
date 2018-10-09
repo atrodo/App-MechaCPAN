@@ -101,7 +101,7 @@ A log is normally outputted into the `local/logs` directory. This option will pr
 
 ## --directory=&lt;path>
 
-Changes to a specified directory before any processing is done. This allows you to specify what directory you want `local/` to be in.
+Changes to a specified directory before any processing is done. This allows you to specify what directory you want `local/` to be in. If this isn't provided, the current working directory is used instead.
 
 ## `$ENV{MECHACPAN_TIMEOUT}`
 
@@ -109,7 +109,7 @@ Every command that `App::MechaCPAN` runs is given an idle timeout before it is k
 
 # SCRIPT RESTART WARNING
 
-This module **WILL** restart the running script **IF** it's used as a module (e.g. with `use`) and the perl that is running is not the version installed in `local/`. It does this at two points: First right before run-time and Second right after a perl is installed into `local/`.
+This module **WILL** restart the running script **IF** it's used as a module (e.g. with `use`) and the perl that is running is not the version installed in `local/`. It does this at two points: First right before run-time and Second right after a perl is installed into `local/`. During restart, `App::MechaCPAN` will attempt to install itself into `local/` unless it was invoked as a fully-contained version of `mechacpan`.
 
 The scripts and modules that come with `App::MechaCPAN` are prepared to handle this. If you use `App::MechaCPAN` as a module, you should to be prepared to handle it as well.
 
@@ -117,7 +117,7 @@ This means that any END and DESTROY blocks **WILL NOT RUN**. Anything created wi
 
 # AUTHOR
 
-Jon Gentle &lt;cpan@atrodo.org>
+Jon Gentle <cpan@atrodo.org>
 
 # COPYRIGHT
 
