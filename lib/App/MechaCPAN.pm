@@ -692,13 +692,14 @@ sub inflate_archive
     };
 
     my $err = $@;
+    my @glob = glob('*');
 
     chdir $orig;
 
     logmsg $err
       unless $error_free;
 
-    if ($success)
+    if ($success && @glob > 0)
     {
       $is_complete = 1;
       last;
