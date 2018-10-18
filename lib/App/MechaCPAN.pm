@@ -557,7 +557,7 @@ sub fetch_file
   my ( $dst_path, $dst_file, $result );
   if ( !defined $to )
   {
-    $result = humane_tmpfile( $ff->file );
+    $result = humane_tmpfile( $ff->output_file );
 
     my @splitpath = File::Spec->splitpath( $result->filename );
     $dst_path = File::Spec->catpath( @splitpath[ 0 .. 1 ] );
@@ -568,7 +568,7 @@ sub fetch_file
     if ( $to =~ m[/$] )
     {
       $dst_path = $to;
-      $dst_file = $ff->file;
+      $dst_file = $ff->output_file;
     }
     else
     {
@@ -589,7 +589,7 @@ sub fetch_file
 
   if ( !defined $where )
   {
-    my $tmpfile = File::Spec->catdir( $dst_path, $ff->file );
+    my $tmpfile = File::Spec->catdir( $dst_path, $ff->output_file );
     if ( -e $tmpfile && !-s )
     {
       unlink $tmpfile;
