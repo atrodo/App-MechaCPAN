@@ -20,6 +20,7 @@ my $dir = cwd;
 # --no-update
 {
   my $dist = 'Test::More';
+  local $Module::CoreList::version{$]}{$dist} = 0;
   no strict 'refs';
   no warnings 'redefine';
   my $ran_configure = 0;
