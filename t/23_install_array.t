@@ -18,7 +18,8 @@ my $tmpdir = tempdir( TEMPLATE => File::Spec->tmpdir . "/mechacpan_t_XXXXXXXX", 
 chdir $tmpdir;
 my $dir = cwd;
 
-local $Module::CoreList::version{$]}{'Test::More'} = 0;
+local $Module::CoreList::version{$]}{'Test::More'} = 0
+    if $] >= 5.028000;
 
 is(
   App::MechaCPAN::Install->go( {}, keys %pkgs ), 0,
