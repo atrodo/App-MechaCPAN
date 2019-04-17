@@ -315,9 +315,11 @@ sub _setup_log
   mkdir $log_dir
     unless -d $log_dir;
 
+  my $proj_dir = &_get_project_dir;
   my $template = File::Spec->catdir( $log_dir, humane_tmpname('log') );
   my $log_path;
   ( $LOGFH, $log_path ) = tempfile( $template, UNLINK => 0 );
+  $log_path =~ s[^\Q$proj_dir\E/?][];
   info("logging to '$log_path'...\n");
 }
 
