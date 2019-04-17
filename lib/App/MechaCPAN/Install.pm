@@ -173,6 +173,7 @@ TARGET:
           "Could not install " . _name_target($target)
         );
 
+        logmsg( $target->{key}, $err );
         error( $target->{key}, $line );
 
         _failed($target);
@@ -302,8 +303,12 @@ sub _configure
     $maker = 'mm';
   }
 
-  croak 'Unable to configure ' . $target->{src_name}
-    if !defined $maker;
+  if ( !defined $maker )
+  {
+    croak 'Unable to configure '
+      . $target->{src_name}
+      . ' (Could not locate either Makefile.PL or Build.PL)';
+  }
 
   $target->{maker} = $maker;
   return $target;
