@@ -664,7 +664,7 @@ sub inflate_archive
   my $dir = shift;
 
   # $src can be a file path or a URL.
-  if ( !-e $src )
+  if ( !-e "$src" )
   {
     $src = fetch_file($src);
   }
