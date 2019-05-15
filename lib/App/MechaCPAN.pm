@@ -759,7 +759,7 @@ sub run
   {
     $dest_out_fh = $cmd;
     $cmd         = shift @args;
-    $wantoutput  = 1;
+    undef $print_output;
   }
 
   # If the output is asked for (non-void context), don't show it anywhere
