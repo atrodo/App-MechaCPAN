@@ -268,7 +268,8 @@ sub humane_tmpname
   my $now       = sprintf(
     "%04d%02d%02d_%02d%02d%02d",
     $localtime[5] + 1900,
-    @localtime[ 4, 3, 2, 1, 0 ]
+    $localtime[4] + 1,
+    @localtime[ 3, 2, 1, 0 ]
   );
 
   return "mecha_$descr.$now.XXXX";
