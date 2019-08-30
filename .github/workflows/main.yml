@@ -9,7 +9,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        perl-version: [5.28, 5.30]
+        perl-version: ['5.28', '5.30']
 
     steps:
     - uses: actions/checkout@v1
