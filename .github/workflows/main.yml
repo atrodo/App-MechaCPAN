@@ -18,11 +18,10 @@ jobs:
         curl https://get.mechacpan.us/ > mechacpan
     - name: Set up Perl ${{ matrix.perl-version }}
       run: |
-        mechacpan perl ${{ matrix.perl-version }}
-        pip install -r requirements.txt
+        ./mechacpan perl ${{ matrix.perl-version }}
     - name: Install dependencies
       run: |
-        mechacpan deploy
-    - name: Test with pytest
+        ./mechacpan deploy
+    - name: Test with mechacpan
       run: |
-        mechacpan install .
+        ./mechacpan install .
