@@ -8,20 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
-      matrix:
-        perl-version: ['5.28', '5.30']
 
     steps:
     - uses: actions/checkout@v1
-    - name: Setup App::MechaCPAN
+    - name: Test
       run: |
-        curl https://get.mechacpan.us/ > mechacpan
-    - name: Set up Perl ${{ matrix.perl-version }}
-      run: |
-        perl mechacpan perl ${{ matrix.perl-version }}
-    - name: Install dependencies
-      run: |
-        perl mechacpan deploy
-    - name: Test with mechacpan
-      run: |
-        perl mechacpan install .
+        perl Makefile.PL
+        make
+        make test
