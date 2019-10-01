@@ -24,6 +24,7 @@ BEGIN
   our @EXPORT_OK = qw/
     url_re git_re git_extract_re
     has_git has_updated_git min_git_ver
+    can_http
     logmsg info success error
     dest_dir get_project_dir
     fetch_file inflate_archive
@@ -219,6 +220,35 @@ sub has_updated_git
 sub has_git
 {
   return _git_str && has_updated_git;
+}
+
+sub can_https
+{
+  state $can_https;
+
+  # track the blacklist for testing
+  state $ff_blacklist;
+  undef $can_https
+    if $File::Fetch::BLACKLIST ne $ff_blacklist;
+
+  if ( !defined $can_https )
+  {
+    my $test_url = 'https://www.cpan.org/';
+    my $test_str = '';
+
+    local $File::Fetch::WARN;
+    local $@;
+
+    my $ff = File::Fetch->new( uri => $test_url );
+    return 0
+      if !defined $ff;
+
+    $ff->scheme('http');
+    $can_https = defined $ff->fetch( to => \$test_str );
+    $ff_blacklist = $File::Fetch::BLACKLIST;
+  }
+
+  return $can_https;
 }
 
 sub url_re
