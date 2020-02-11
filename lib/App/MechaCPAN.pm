@@ -24,7 +24,7 @@ BEGIN
   our @EXPORT_OK = qw/
     url_re git_re git_extract_re
     has_git has_updated_git min_git_ver
-    can_http
+    can_https
     logmsg info success error
     dest_dir get_project_dir
     fetch_file inflate_archive
