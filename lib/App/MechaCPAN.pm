@@ -669,7 +669,10 @@ my @inflate = (
     return
       unless $tar;
 
-    my $unzip = $src =~ m/gz$/ ? 'gzip' : $src =~ m/bz2/ ? 'bzip2' : 'xz';
+    my $unzip
+      = $src =~ m/gz$/          ? 'gzip'
+      : $src =~ m/(bz2|bzip2)$/ ? 'bzip2'
+      :                           'xz';
 
     run("$unzip -dc $src | tar xf -");
     return 1;
