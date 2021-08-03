@@ -236,12 +236,6 @@ sub _resolve
 
   my $src_dir = inflate_archive($src_tgz);
 
-  my @files = glob( $src_dir . '/*' );
-  if ( @files == 1 )
-  {
-    $src_dir = $files[0];
-  }
-
   @{$target}{qw/src_tgz dir was_installed/} = ( $src_tgz, $src_dir, 0 );
   return $target;
 }

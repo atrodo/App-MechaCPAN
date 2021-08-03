@@ -747,6 +747,13 @@ sub inflate_archive
     carp "Could not unpack archive: $src\n";
   }
 
+  # If there's only 1 file and it's a directory, go ahead and chdir into it
+  my @files = glob("$dir/*");
+  if ( @files == 1 && -d $files[0] )
+  {
+    $dir = $files[0];
+  }
+
   return $dir;
 }
 
