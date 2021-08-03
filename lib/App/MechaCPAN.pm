@@ -744,7 +744,7 @@ sub inflate_archive
 
   if ( !$is_complete )
   {
-    carp "Could not unpack archive: $src\n";
+    croak "Could not unpack archive: $src\n";
   }
 
   # If there's only 1 file and it's a directory, go ahead and chdir into it
