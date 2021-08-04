@@ -30,6 +30,7 @@ BEGIN
     fetch_file inflate_archive
     humane_tmpname humane_tmpfile humane_tmpdir
     run restart_script
+    rel_start_to_abs
     /;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
@@ -930,7 +931,7 @@ sub _inc_pkg
 my $starting_cwd;
 BEGIN { $starting_cwd = cwd }
 
-sub _mk_starting_abs
+sub rel_start_to_abs
 {
   my $f = shift;
 
@@ -970,10 +971,10 @@ sub self_install
     foreach my $lib (@INC)
     {
       my $mecha_file
-        = _mk_starting_abs( File::Spec->catdir( $lib, $inc_name ) );
+        = rel_start_to_abs( File::Spec->catdir( $lib, $inc_name ) );
       if ( -e $mecha_file )
       {
-        $mecha_path = _mk_starting_abs $lib;
+        $mecha_path = rel_start_to_abs $lib;
         last;
       }
     }
@@ -1036,7 +1037,7 @@ sub restart_script
   return
     if $local_perl eq $this_perl;
 
-  my $real0 = _mk_starting_abs $0;
+  my $real0 = rel_start_to_abs $0;
 
   if ( !-e -r $real0 )
   {

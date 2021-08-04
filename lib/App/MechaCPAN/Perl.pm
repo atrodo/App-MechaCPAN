@@ -232,7 +232,7 @@ sub _get_targz
 
   if ( -e $src )
   {
-    return ( $src, '' );
+    return ( rel_start_to_abs($src), '' );
   }
 
   my $url;
