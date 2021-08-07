@@ -4,6 +4,7 @@ use v5.14;
 use autodie;
 use Config;
 use FindBin;
+use File::Spec;
 use App::MechaCPAN qw/:go/;
 
 our @args = (
@@ -14,6 +15,7 @@ our @args = (
   'smart-tests!',
   'devel!',
   'shared-lib!',
+  'build-reusable!',
 );
 
 my $perl5_ver_re = qr/v? 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )?/xms;
@@ -64,6 +66,11 @@ sub go
     info("Looks like $src_tz is perl $version, assuming that's true");
   }
 
+  if ( $opts->{'build-reusable'} )
+  {
+    return build_reusable( $version, $perl_dir, $src_tz, $opts );
+  }
+
   if ( -e -x "$perl_dir/bin/perl" )
   {
     unless ( $opts->{is_restarted_process} )
@@ -107,32 +114,17 @@ sub go
     = File::Spec->catdir( @dest_dir[ 0 .. $dest_len - 1 ], qw/lib/ );
 
   my @otherlib = (
-    !$opts->{'skip-local'} ? $local_dir : (),
-    !$opts->{'skip-lib'} && -d $lib_dir ? $lib_dir : (),
+    !$opts->{'skip-local'}              ? $local_dir : (),
+    !$opts->{'skip-lib'} && -d $lib_dir ? $lib_dir   : (),
   );
 
   my @config = (
-    q[-des],
-    qq[-Dprefix=$perl_dir],
+    _build_configure( $perl_dir, $opts ),
     q[-Accflags=-DAPPLLIB_EXP=\"] . join( ":", @otherlib ) . q[\"],
     qq[-A'eval:scriptdir=$perl_dir/bin'],
   );
 
-  if ( $opts->{threads} )
-  {
-    push @config, '-Dusethreads';
-  }
-
-  if ( $opts->{'shared-lib'} )
-  {
-    push @config, '-Duseshrplib';
-  }
-
-  if ( $opts->{devel} )
-  {
-    push @config, '-Dusedevel';
-  }
-
+  local %ENV = %ENV;
   delete @ENV{qw(PERL5LIB PERL5OPT)};
 
   # Make sure no tomfoolery is happening with perl, like plenv shims
@@ -176,6 +168,35 @@ sub go
 }
 
 # These are split out mostly so we can control testing
+
+sub _build_configure
+{
+  my $perl_dir = shift;
+  my $opts     = shift;
+
+  my @config = (
+    q[-des],
+    qq[-Dprefix=$perl_dir],
+  );
+
+  if ( $opts->{threads} )
+  {
+    push @config, '-Dusethreads';
+  }
+
+  if ( $opts->{'shared-lib'} )
+  {
+    push @config, '-Duseshrplib';
+  }
+
+  if ( $opts->{devel} )
+  {
+    push @config, '-Dusedevel';
+  }
+
+  return @config;
+}
+
 sub _run_configure
 {
   my @config = @_;
@@ -186,7 +207,176 @@ sub _run_make
 {
   my @cmd = @_;
   state $make = $Config{make};
+
+  # Give perl more time to be silent during the make process than normal
+  local $App::MechaCPAN::TIMEOUT = $App::MechaCPAN::TIMEOUT * 10;
+
   run $make, @cmd;
+}
+
+sub slugline
+{
+  my $perl = shift || File::Spec->canonpath($^X);
+
+  my $script = <<'EOD';
+  use strict;
+  use Config;
+  my $libcname = 'unknown';
+  my $libcver  = 'ukn';
+  my $archname = ( split '-', $Config{archname} )[0];
+  my $osname   = $Config{osname};
+  my $threads  = $Config{usethreads} ? 'threads-' : '';
+
+  if ( $Config{gnulibc_version} )
+  {
+    $libcname = 'glibc';
+    $libcver  = $Config{gnulibc_version};
+  }
+  else
+  {
+    my $libc_re         = qr/libc (\W|$)/xms;
+    my ($libc_basename) = grep {m/$libc_re/} split( / /, $Config{libsfiles} );
+    my ($libc_path) = grep {m/$libc_basename/} split / /, $Config{libsfound};
+    my $libc_so     = $libc_path;
+    $libc_so =~ s/[.]a([\d.]*)$/.so$1/;
+    if ( -x $libc_so )
+    {
+      my $help = run($libc_so);
+      if ( $help =~ m/^ musl \s libc .* Version \s* ([0-9.]+)/xms )
+      {
+        $libcname = 'musl';
+        $libcver  = $1;
+      }
+    }
+  }
+  print "perl-$^V-$archname-$osname-$threads$libcname-$libcver";
+EOD
+
+  my $script_file = humane_tmpfile;
+  $script_file->print($script);
+  $script_file->close;
+
+  my $slugline = run( $perl, "$script_file" );
+  chomp $slugline;
+
+  return $slugline;
+}
+
+sub _check_perl_binary
+{
+  my $perl_bin = shift;
+
+  # We include POSIX, that's a good litmus that libc is not completely broken
+  # and we use crypt to test that the crypt lib is loadable. This is simply
+  # a bare minimum check and it may change in the future
+  my @check = qw/-MPOSIX -e crypt('00','test')/;
+
+  return eval { run "$perl_bin", @check; 1 };
+}
+
+sub build_reusable
+{
+  my $version  = shift;
+  my $perl_dir = shift;
+  my $src_tz   = shift;
+  my $opts     = shift;
+
+  # Determine what to compress it with
+  my $compress
+    = eval  { run(qw/xz --version/);    'xz' }
+    // eval { run(qw/bzip2 --version/); 'bzip2' }
+    // eval { run(qw/gzip --version/);  'gzip' }
+    // die 'Cannot find anything to compress with';
+
+  # Make sure we can call tar before we get too far
+  die 'Cannot find tar to create an archive'
+    if !( eval { run(qw/tar --version/) } );
+
+  $perl_dir = humane_tmpdir("perl-$version");
+  my $verstr = "perl $version";
+  info $verstr, "Fetching $verstr";
+
+  my $src_dir = inflate_archive($src_tz);
+
+  my @src_dirs = File::Spec->splitdir("$src_dir");
+  chdir $src_dir;
+
+  if ( !-e 'Configure' )
+  {
+    my @files = glob('*');
+    if ( @files != 1 )
+    {
+      die qq{Could not find perl to configure.}
+        . qq{Inflated to "$src_dir" extracted from $src_tz};
+    }
+    chdir $files[0];
+  }
+
+  my $local_dir = File::Spec->catdir(qw/... .. lib perl5/);
+  my $lib_dir   = File::Spec->catdir(qw/... .. .. lib/);
+
+  my @otherlib = (
+    !$opts->{'skip-local'} ? $local_dir : (),
+    !$opts->{'skip-lib'}   ? $lib_dir   : (),
+  );
+
+  my @config = (
+    _build_configure( $perl_dir, $opts ),
+    q[-Accflags=-DAPPLLIB_EXP=\"] . join( ":", @otherlib ) . q[\"],
+    q{-Dstartperl='#!/usr/bin/env\ perl'},
+    q{-Dperlpath='/usr/bin/env\ perl'},
+    qq{-Dinstallprefix=/v$version},
+    qq{-Dprefix=/v$version},
+    q{-Dman1dir=.../../man/man1},
+    q{-Dman3dir=.../../man/man3},
+    q{-Duserelocatableinc},
+  );
+
+  local %ENV = %ENV;
+  delete @ENV{qw(PERL5LIB PERL5OPT)};
+  $ENV{DESTDIR} = $perl_dir;
+
+  # Make sure no tomfoolery is happening with perl, like plenv shims
+  $ENV{PATH} = $Config{binexp} . ":$ENV{PATH}";
+
+  eval {
+    require Devel::PatchPerl;
+    info $verstr, "Patching $verstr";
+    Devel::PatchPerl->patch_source();
+  };
+
+  info $verstr, "Configuring $verstr";
+  _run_configure(@config);
+
+  info $verstr, "Building $verstr";
+  _run_make();
+
+  my $skip_tests = $opts->{'skip-tests'} // $opts->{'smart-tests'};
+
+  if ( !$skip_tests )
+  {
+    info $verstr, "Testing $verstr";
+    _run_make('test_harness');
+  }
+
+  info $verstr, "Installing $verstr";
+  _run_make('install');
+
+  # Verify that the relocatable bits worked
+  if ( !_check_perl_binary( "$perl_dir/v$version/bin/perl" ) )
+  {
+    die "The built relocatable binary appears broken";
+  }
+
+  my $slugline = slugline("$perl_dir/v$version/bin/perl");
+  my $orig_dir = &get_project_dir;
+  my $output   = "$slugline.tar.$compress";
+  chdir $perl_dir;
+  run("tar cf - v$version/ | $compress > $orig_dir/$output");
+
+  success $verstr, "Created $verstr: $output";
+
+  return 0;
 }
 
 sub _dnld_url
@@ -334,6 +524,12 @@ By default, perl is compiled without threads. If you'd like to enable threads, u
 =head3 shared-lib
 
 By default, perl will generate a libperl.a file.  If you need libperl.so, then use this argument.
+
+=head3 build-reusable
+
+Giving this options will change the mode of operation from installing L<perl> into C<local/> to generating a reusable, relocatable L<perl> archive. This uses the same parameters (i.e. L</devel> and L</threads>) to generate the binary, although do note that the C<lib/> directory is always included unless L</skip-lib> is provided. The archive name will generally reflect what systems it can run on. Because of the nature of how L<perl> builds binaries, it cannot guarantee that it will work on any given system, but if will have the best luck if you use it on the same version of a distribution.
+
+Once you have a reusable binary archive, C<App::MechaCPAN::Perl> can use that archive as a source file and install the binaries into the local directory. This can be handy if you are building a lot of identical systems and only want to build L<perl> once.
 
 =head3 skip-tests
 
