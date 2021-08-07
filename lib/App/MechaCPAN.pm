@@ -425,8 +425,13 @@ sub _show_line
   my $color = shift;
   my $line  = shift;
 
-  # Clean up the line
-  $line =~ s/\n/ /xmsg;
+  # If the color starts with red, it's an error and we should not touch it,
+  # otherwise, we should clean up the line
+  state $ERR_COLOR = Term::ANSIColor::color('RED');
+  if ( $color !~ m/^\Q$ERR_COLOR/ )
+  {
+    $line =~ s/\n/ /xmsg;
+  }
 
   state @key_lines;
 
@@ -789,8 +794,11 @@ sub run
   my $cmd  = shift;
   my @args = @_;
 
+  my $max_lines = 15;
   my $out = "";
   my $err = "";
+  my @err_tail;
+  my @out_tail;
 
   my $dest_out_fh  = $LOGFH;
   my $dest_err_fh  = $LOGFH;
@@ -861,16 +869,26 @@ sub run
         {
           print $dest_out_fh $line
             if defined $dest_out_fh;
-          $out .= $line
-            unless $wantoutput;
+          if ( !$wantoutput )
+          {
+            $out .= $line;
+            unshift @out_tail, $line;
+            $#out_tail = $max_lines
+              if $#out_tail > $max_lines;
+          }
         }
 
         if ( $fh eq $error )
         {
           print $dest_err_fh $line
             if defined $dest_err_fh;
-          $err .= $line
-            unless $wantoutput;
+          if ( !$wantoutput )
+          {
+            $err .= $line;
+            unshift @err_tail, $line;
+            $#err_tail = $max_lines
+              if $#err_tail > $max_lines;
+          }
         }
 
       }
@@ -891,8 +909,19 @@ sub run
   if ($?)
   {
     my $code = qq/Exit Code: / . ( $? >> 8 );
-    my $sig = ( $? & 127 ) ? qq/Signal: / . ( $? & 127 ) : '';
-    my $core = $? & 128 ? 'Core Dumped' : '';
+    my $sig  = ( $? & 127 ) ? qq/Signal: / . ( $? & 127 ) : '';
+    my $core = $? & 128     ? 'Core Dumped'               : '';
+
+    # There could be a lot of output, ignore all but the very end
+    @out_tail[-1] = "...SKIPPED\n"
+      if scalar @out_tail > $max_lines;
+    my $out_tail = join( '', reverse @out_tail );
+    chomp $out_tail;
+
+    @err_tail[-1] = "...SKIPPED\n"
+      if scalar @err_tail > $max_lines;
+    my $err_tail = join( '', reverse @err_tail );
+    chomp $err_tail;
 
     croak ""
       . Term::ANSIColor::color('RED')
@@ -903,9 +932,9 @@ sub run
       . qq/\t$sig/
       . qq/\t$core/
       . Term::ANSIColor::color('GREEN')
-      . qq/\n$out/
+      . qq/\n$out_tail/
       . Term::ANSIColor::color('YELLOW')
-      . qq/\n$err/
+      . qq/\n$err_tail/
       . Term::ANSIColor::color('RESET') . "\n";
   }
 
