@@ -96,7 +96,13 @@ sub go
 
   my $src_dir = inflate_archive($src_tz);
 
+  my @src_dirs = File::Spec->splitdir("$src_dir");
   chdir $src_dir;
+
+  if ( -e -x File::Spec->catdir( @src_dirs, qw/bin perl/ ) )
+  {
+    return _install_binary( File::Spec->catdir(@src_dirs), $version );
+  }
 
   if ( !-e 'Configure' )
   {
@@ -379,6 +385,44 @@ sub build_reusable
   return 0;
 }
 
+sub _install_binary
+{
+  my $src_dir  = shift;
+  my $version  = shift;
+  my @src_dirs = File::Spec->splitdir("$src_dir");
+  my $dest_dir = &dest_dir;
+  my $perl_dir = File::Spec->catdir( $dest_dir, 'perl' );
+
+  info $version, "Installing $version";
+
+  use File::Copy qw/copy move/;
+  use File::Path qw/make_path/;
+  use Fatal qw/copy move/;
+
+  chdir $dest_dir;
+  my $output = eval { run "$src_dir/bin/perl", '-e', 'print $^V' };
+  chomp $output;
+
+  if ( $output ne "v$version" )
+  {
+    die qq{Binary versions mismatch expectations: }
+      . qq{"$output" (found) ne "$version" (expected)};
+  }
+
+  # Attempt to run something more rigorous
+  if ( !_check_perl_binary( "$src_dir/bin/perl" ) )
+  {
+    die qq{Binary does not appear to be usable};
+  }
+
+  make_path($perl_dir);
+  move( $src_dir, $perl_dir );
+
+  success "Installed binary $version";
+
+  return 0;
+}
+
 sub _dnld_url
 {
   my $version = shift;
@@ -510,6 +554,8 @@ C<$version> is either 0 or 1 parameter:
 =item If the parameter is a minor version (5.XX.X), it will attempt to download and install that exact version.
 
 =item If the parameter is a file, it will try to use that file as a perl source tarball.
+
+=item If the parameter is a file, and it contains an executable "bin/perl", it will try to install that file as a binary perl tarball.
 
 =item If the parameter looks like a URL, it will fetch that URL and try to use it as a perl source tarball.
 
