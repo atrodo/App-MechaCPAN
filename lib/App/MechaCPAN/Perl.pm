@@ -9,6 +9,7 @@ use App::MechaCPAN qw/:go/;
 
 our @args = (
   'threads!',
+  'jobs=i',
   'skip-tests!',
   'skip-local!',
   'skip-lib!',
@@ -20,6 +21,8 @@ our @args = (
 
 my $perl5_ver_re = qr/v? 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )?/xms;
 my $perl5_re     = qr/^ $perl5_ver_re $/xms;
+
+our $JOBS = 2;    # The number of jobs to run with make
 
 sub go
 {
@@ -65,6 +68,8 @@ sub go
     $version = "5.$major.$minor";
     info("Looks like $src_tz is perl $version, assuming that's true");
   }
+
+  local $JOBS = $opts->{jobs} // $JOBS;
 
   if ( $opts->{'build-reusable'} )
   {
@@ -213,11 +218,29 @@ sub _run_make
 {
   my @cmd = @_;
   state $make = $Config{make};
+  state $can_jobs;
+
+  if ( !defined $can_jobs )
+  {
+    $can_jobs = '';
+    my $make_help = run( $make, '-h' );
+
+    if ( $make_help =~ m/^\s*-j\s+/xms )
+    {
+      $can_jobs = '-j';
+    }
+  }
+
+  my @jobs_cmd;
+  if ( $JOBS > 1 && $can_jobs )
+  {
+    @jobs_cmd = ( $can_jobs, $JOBS );
+  }
 
   # Give perl more time to be silent during the make process than normal
   local $App::MechaCPAN::TIMEOUT = $App::MechaCPAN::TIMEOUT * 10;
 
-  run $make, @cmd;
+  run $make, @jobs_cmd, @cmd;
 }
 
 sub slugline
@@ -576,6 +599,10 @@ By default, perl will generate a libperl.a file.  If you need libperl.so, then u
 Giving this options will change the mode of operation from installing L<perl> into C<local/> to generating a reusable, relocatable L<perl> archive. This uses the same parameters (i.e. L</devel> and L</threads>) to generate the binary, although do note that the C<lib/> directory is always included unless L</skip-lib> is provided. The archive name will generally reflect what systems it can run on. Because of the nature of how L<perl> builds binaries, it cannot guarantee that it will work on any given system, but if will have the best luck if you use it on the same version of a distribution.
 
 Once you have a reusable binary archive, C<App::MechaCPAN::Perl> can use that archive as a source file and install the binaries into the local directory. This can be handy if you are building a lot of identical systems and only want to build L<perl> once.
+
+=head3 jobs
+
+How many make jobs to use when running make. The code must guess if make supports running multiple jobs, and as such, it may not work for all versions of make. Defaults to 2.
 
 =head3 skip-tests
 
