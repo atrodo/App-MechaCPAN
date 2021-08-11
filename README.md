@@ -69,19 +69,19 @@ That command will do 2 things:
 
     user@host:~$ mechacpan perl 5.24
 
-The [perl](https://metacpan.org/pod/App::MechaCPAN::Perl) command is used to install [perl](https://metacpan.org/pod/perl) into `local/`. This removes the packages dependency on the operating system perl. By default, it tries to be helpful and include `lib/` and `local/` into `@INC` automatically, but this feature can be disabled. See [App::MechaCPAN::Perl](https://metacpan.org/pod/App::MechaCPAN::Perl) for more details.
+The [perl](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3APerl) command is used to install [perl](https://metacpan.org/pod/perl) into `local/`. This removes the packages dependency on the operating system perl. By default, it tries to be helpful and include `lib/` and `local/` into `@INC` automatically, but this feature can be disabled. See [App::MechaCPAN::Perl](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3APerl) for more details.
 
 ## Install
 
     user@host:~$ mechacpan install Catalyst
 
-The [install](https://metacpan.org/pod/App::MechaCPAN::Install) command is used for installing specific modules. All modules are installed into the `local/` directory. See See [App::MechaCPAN::Install](https://metacpan.org/pod/App::MechaCPAN::Install) for more details.
+The [install](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3AInstall) command is used for installing specific modules. All modules are installed into the `local/` directory. See See [App::MechaCPAN::Install](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3AInstall) for more details.
 
 ## Deploy
 
     user@host:~$ mechacpan deploy
 
-The [deploy](https://metacpan.org/pod/App::MechaCPAN::Deploy) command is used for automating a deployment. It will install both [perl](https://metacpan.org/pod/perl) and all the modules specified from the `cpanfile`. If there is a `cpanfile.snapshot` that was created by [Carton](https://metacpan.org/pod/Carton), `deploy` will treat the modules lised in the snapshot file as the only modules available to install. See [App::MechaCPAN::Deploy](https://metacpan.org/pod/App::MechaCPAN::Deploy) for more details.
+The [deploy](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3ADeploy) command is used for automating a deployment. It will install both [perl](https://metacpan.org/pod/perl) and all the modules specified from the `cpanfile`. If there is a `cpanfile.snapshot` that was created by [Carton](https://metacpan.org/pod/Carton), `deploy` will treat the modules lised in the snapshot file as the only modules available to install. See [App::MechaCPAN::Deploy](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3ADeploy) for more details.
 
 # OPTIONS
 
@@ -129,9 +129,9 @@ This is free software. You may redistribute copies of it under the terms of the 
 
 # SEE ALSO
 
-- [App::cpanminus](https://metacpan.org/pod/App::cpanminus)
-- [local::lib](https://metacpan.org/pod/local::lib)
+- [App::cpanminus](https://metacpan.org/pod/App%3A%3Acpanminus)
+- [local::lib](https://metacpan.org/pod/local%3A%3Alib)
 - [Carton](https://metacpan.org/pod/Carton)
 - [CPAN](https://metacpan.org/pod/CPAN)
 - [plenv](https://github.com/tokuhirom/plenv)
-- [App::perlbrew](https://metacpan.org/pod/App::perlbrew)
+- [App::perlbrew](https://metacpan.org/pod/App%3A%3Aperlbrew)
