@@ -223,11 +223,16 @@ sub _run_make
   if ( !defined $can_jobs )
   {
     $can_jobs = '';
-    my $make_help = run( $make, '-h' );
+    my $make_help
+      = eval { run( $make, '-h' ) } // eval { run( $make, '--help' ) } // '';
 
     if ( $make_help =~ m/^\s*-j\s+/xms )
     {
       $can_jobs = '-j';
+    }
+    elsif ( $make_help =~ m/^\s*--jobs\s+/xms )
+    {
+      $can_jobs = '--jobs';
     }
   }
 
