@@ -275,7 +275,7 @@ sub slugline
     $libc_so =~ s/[.]a([\d.]*)$/.so$1/;
     if ( -x $libc_so )
     {
-      my $help = run($libc_so);
+      my $help = `$libc_so 2>&1`;
       if ( $help =~ m/^ musl \s libc .* Version \s* ([0-9.]+)/xms )
       {
         $libcname = 'musl';
