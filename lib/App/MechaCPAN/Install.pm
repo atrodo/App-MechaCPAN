@@ -952,10 +952,10 @@ sub _should_install
   my $module = $target->{module};
   my $ver    = _get_mod_ver($module);
 
-  $target->{installed_version} = $ver;
-
   return 1
     if !defined $ver;
+
+  $target->{installed_version} = $ver;
 
   my $msg = 'Up to date';
 

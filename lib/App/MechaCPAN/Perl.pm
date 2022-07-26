@@ -303,6 +303,7 @@ sub _check_perl_binary
   # We include POSIX, that's a good litmus that libc is not completely broken
   # and we use crypt to test that the crypt lib is loadable. This is simply
   # a bare minimum check and it may change in the future
+  no warnings 'qw';
   my @check = qw/-MPOSIX -e crypt('00','test')/;
 
   run "$perl_bin", @check;
