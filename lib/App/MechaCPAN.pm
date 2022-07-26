@@ -11,7 +11,7 @@ use Term::ANSIColor qw//;
 use IPC::Open3;
 use IO::Select;
 use List::Util qw/first/;
-use Scalar::Util qw/blessed/;
+use Scalar::Util qw/blessed openhandle/;
 use File::Temp qw/tempfile tempdir/;
 use File::Fetch;
 use File::Spec qw//;
@@ -29,6 +29,7 @@ BEGIN
     dest_dir get_project_dir
     fetch_file inflate_archive
     humane_tmpname humane_tmpfile humane_tmpdir
+    parse_cpanfile
     run restart_script
     rel_start_to_abs
     /;
@@ -289,6 +290,85 @@ sub git_extract_re
   ]xmsi;
 
   return $re;
+}
+
+sub parse_cpanfile
+{
+  my $file = shift;
+
+  state $sandbox_num = 1;
+
+  my $result = { runtime => {} };
+
+  $result->{current} = $result->{runtime};
+
+  my $methods = {
+    on => sub
+    {
+      my ( $phase, $code ) = @_;
+      local $result->{current} = $result->{$phase} //= {};
+      $code->();
+    },
+    feature => sub {...},
+  };
+
+  foreach my $type (qw/requires recommends suggests conflicts/)
+  {
+    $methods->{$type} = sub
+    {
+      my ( $module, $ver ) = @_;
+      if ( $module eq 'perl' )
+      {
+        $result->{perl} = $ver;
+        return;
+      }
+      $result->{current}->{$type}->{$module} = $ver;
+    };
+  }
+
+  foreach my $phase (qw/configure build test author/)
+  {
+    $methods->{ $phase . '_requires' } = sub
+    {
+      my ( $module, $ver ) = @_;
+      $result->{$phase}->{requires}->{$module} = $ver;
+    };
+  }
+
+  my $code_fh;
+  if ( !($code_fh = openhandle($file) ) )
+  {
+    open $code_fh, '<', $file;
+  }
+  my $code = do { local $/; <$code_fh> };
+
+  my $pkg = __PACKAGE__ . "::Sandbox$sandbox_num";
+  $sandbox_num++;
+
+  foreach my $method ( keys %$methods )
+  {
+    no strict 'refs';
+    *{"${pkg}::${method}"} = $methods->{$method};
+  }
+
+  local $@;
+  my $sandbox = join(
+    "\n",
+    qq[package $pkg;],
+    qq[no warnings;],
+    qq[# line 1 "$file"],
+    qq[$code],
+    qq[return 1;],
+  );
+
+  my $no_error = eval $sandbox;
+
+  croak $@
+    unless $no_error;
+
+  delete $result->{current};
+
+  return $result;
 }
 
 sub humane_tmpname
