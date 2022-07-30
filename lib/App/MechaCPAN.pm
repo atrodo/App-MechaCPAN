@@ -371,6 +371,20 @@ sub parse_cpanfile
   return $result;
 }
 
+sub humane_qr
+{
+  state $humane_re = qr[
+    [.]
+    \d{4} \d{2} \d{2}
+    _
+    \d{2} \d{2} \d{2}
+    [.]
+    \w{4}
+  ]xmsi;
+
+  return $humane_re;
+}
+
 sub humane_tmpname
 {
   my $descr = shift;
@@ -742,8 +756,9 @@ my @inflate = (
   {
     my $src = shift;
 
+    my $humane_qr = humane_qr;
     return
-      unless $src =~ m{ [.]tar[.] (?: gz | bz2 | xz ) $}xms;
+      unless $src =~ m{ [.]tar[.] (?: gz | bz2 | xz ) $humane_qr? $}xms;
 
     state $tar;
     if ( !defined $tar )
@@ -756,13 +771,13 @@ my @inflate = (
       unless $tar;
 
     my $unzip
-      = $src =~ m/gz$/          ? 'gzip'
-      : $src =~ m/(bz2|bzip2)$/ ? 'bzip2'
-      :                           'xz';
+      = $src =~ m/gz $humane_qr? $/xms          ? 'gzip'
+      : $src =~ m/(bz2|bzip2) $humane_qr? $/xms ? 'bzip2'
+      :                                           'xz';
 
     run("$unzip -dc $src | tar xf -");
     return 1;
-  },
+    },
 
   # Archive::Tar
   sub
