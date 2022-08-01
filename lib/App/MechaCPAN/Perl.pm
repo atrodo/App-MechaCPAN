@@ -17,6 +17,7 @@ our @args = (
   'devel!',
   'shared-lib!',
   'build-reusable!',
+  'source-only',
 );
 
 my $perl5_ver_re = qr/v? 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )?/xms;
@@ -57,7 +58,12 @@ sub go
     }
   }
 
-  my ( $src_tz, $version ) = _get_targz( $src // $pv_ver );
+  my ( $src_tz, $version ) = _get_targz( $src // $pv_ver, $opts );
+  my $bin_tz;
+  if ( ref $src_tz eq 'ARRAY' )
+  {
+    ( $bin_tz, $src_tz ) = @$src_tz;
+  }
 
   # If _get_targz couldn't find a version, guess based on the file
   if ( !$version && $src_tz =~ m($perl5_ver_re [^/]* $)xms )
@@ -99,6 +105,29 @@ sub go
   my $verstr = "perl $version";
   info $verstr, "Fetching $verstr";
 
+  if ( defined $bin_tz && !$opts->{'source-only'} )
+  {
+    my $src_dir = inflate_archive($bin_tz);
+
+    my @src_dirs = File::Spec->splitdir("$src_dir");
+    chdir $src_dir;
+
+    if ( -e -x File::Spec->catdir( @src_dirs, qw/bin perl/ ) )
+    {
+      local $@;
+      my $success
+        = eval { _install_binary( File::Spec->catdir(@src_dirs), $version ) };
+      my $error = $@;
+      if ($error)
+      {
+        logmsg "Binary in $bin_tz does not appear to be usable: $error";
+      }
+      return 0
+        if $success == 0;
+    }
+    logmsg "$bin_tz did not have a perl binary";
+  }
+
   my $src_dir = inflate_archive($src_tz);
 
   my @src_dirs = File::Spec->splitdir("$src_dir");
@@ -106,6 +135,8 @@ sub go
 
   if ( -e -x File::Spec->catdir( @src_dirs, qw/bin perl/ ) )
   {
+    die "Binary archive provided, but source-only was requested"
+      if $opts->{'source-only'};
     return _install_binary( File::Spec->catdir(@src_dirs), $version );
   }
 
@@ -250,16 +281,20 @@ sub _run_make
 
 sub slugline
 {
-  my $perl = shift || File::Spec->canonpath($^X);
+  my $perl        = shift || File::Spec->canonpath($^X);
+  my $version     = shift || '';
+  my $use_threads = shift;
 
   my $script = <<'EOD';
   use strict;
   use Config;
-  my $libcname = 'unknown';
-  my $libcver  = 'ukn';
-  my $archname = ( split '-', $Config{archname} )[0];
-  my $osname   = $Config{osname};
-  my $threads  = $Config{usethreads} ? 'threads-' : '';
+  my $version    = $ARGV[0] || $^V;
+  my $usethreads = defined $ARGV[1] ? $ARGV[1] : 0;
+  my $libcname   = 'unknown';
+  my $libcver    = 'ukn';
+  my $archname   = ( split '-', $Config{archname} )[0];
+  my $osname     = $Config{osname};
+  my $threads    = $usethreads ? 'threads-' : '';
 
   if ( $Config{gnulibc_version} )
   {
@@ -283,14 +318,19 @@ sub slugline
       }
     }
   }
-  print "perl-$^V-$archname-$osname-$threads$libcname-$libcver";
+  print "perl-$version-$archname-$osname-$threads$libcname-$libcver";
 EOD
 
   my $script_file = humane_tmpfile;
   $script_file->print($script);
   $script_file->close;
 
-  my $slugline = run( $perl, "$script_file" );
+  my $slugline = run(
+    $perl,
+    "$script_file",
+    $version,
+    ( defined $use_threads ? ($use_threads) : () )
+  );
   chomp $slugline;
 
   return $slugline;
@@ -457,18 +497,33 @@ sub _install_binary
   return 0;
 }
 
+our $source_mirror = 'https://www.cpan.org/src/5.0';
+our $binary_mirror = 'https://dnld.mechacpan.us/dist';
+
 sub _dnld_url
 {
   my $version = shift;
   my $minor   = shift;
-  my $mirror  = 'http://www.cpan.org/src/5.0';
 
-  return "$mirror/perl-5.$version.$minor.tar.gz";
+  return "$source_mirror/perl-5.$version.$minor.tar.gz";
+}
+
+sub _bin_url
+{
+  my $version = shift;
+  my $minor   = shift;
+  my $opts    = shift;
+
+  my $fullver  = "v5.$version.$minor";
+  my $slugline = slugline( undef, $fullver, $opts->{threads} );
+
+  return "$binary_mirror/$slugline.tar.xz";
 }
 
 sub _get_targz
 {
-  my $src = shift;
+  my $src  = shift;
+  my $opts = shift;
 
   # If there's no src, find the newest version.
   if ( !defined $src )
@@ -497,7 +552,6 @@ sub _get_targz
   }
 
   # file
-
   if ( -e $src )
   {
     return ( rel_start_to_abs($src), '' );
@@ -545,7 +599,13 @@ sub _get_targz
       $minor = $possible[0];
     }
 
-    return ( _dnld_url( $version, $minor ), "5.$version.$minor" );
+    return (
+      [
+        _bin_url( $version, $minor ),
+        _dnld_url( $version, $minor, $opts ),
+      ],
+      "5.$version.$minor"
+    );
   }
 
   die "Cannot find $src\n";
