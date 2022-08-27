@@ -388,8 +388,8 @@ sub build_reusable
     chdir $files[0];
   }
 
-  my $local_dir = File::Spec->catdir(qw/... .. lib perl5/);
-  my $lib_dir   = File::Spec->catdir(qw/... .. .. lib/);
+  my $local_dir = File::Spec->catdir(qw/... .. .. lib perl5/);
+  my $lib_dir   = File::Spec->catdir(qw/... .. .. .. lib/);
 
   my @otherlib = (
     !$opts->{'skip-local'} ? $local_dir : (),
