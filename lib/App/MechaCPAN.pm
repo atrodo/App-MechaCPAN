@@ -285,7 +285,7 @@ sub url_re
 sub git_re
 {
   state $git_re = qr[
-    ^ (?: git | ssh ) :
+    ^ (?: git | ssh ) : [^:]
     |
     [.]git (?: @|$ )
   ]xmsi;
