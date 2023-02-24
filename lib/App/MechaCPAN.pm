@@ -224,6 +224,22 @@ sub has_git
   return _git_str && has_updated_git;
 }
 
+# Give a list of https-incapable File::Fetch methods when https is unavailable
+sub _https_blacklist
+{
+  require Module::Load::Conditional;
+
+  state $can_https
+    = Module::Load::Conditional::can_load( modules => 'IO::Socket::SSL' );
+
+  if ( !$can_https )
+  {
+    return qw/lwp httptiny httplite/;
+  }
+
+  return ();
+}
+
 sub can_https
 {
   state $can_https;
@@ -235,7 +251,7 @@ sub can_https
 
   if ( !defined $can_https )
   {
-    my $test_url = 'https://www.cpan.org/';
+    my $test_url = 'https://get.mechacpan.us/latest';
     my $test_str = '';
 
     local $File::Fetch::WARN;
@@ -245,9 +261,12 @@ sub can_https
     return 0
       if !defined $ff;
 
+    $ff_blacklist = $File::Fetch::BLACKLIST;
+
+    # Make sure not to use methods that can't handle https
+    local $File::Fetch::BLACKLIST = [ @$ff_blacklist, _https_blacklist ];
     $ff->scheme('http');
     $can_https = defined $ff->fetch( to => \$test_str );
-    $ff_blacklist = $File::Fetch::BLACKLIST;
   }
 
   return $can_https;
