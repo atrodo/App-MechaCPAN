@@ -170,6 +170,7 @@ sub main
   _setup_log($dest_dir)
     unless $options->{'no-log'};
 
+  local $@;
   my $ret = eval { $pkg->$action( $options, @argv ) || 0; };
   chdir $orig_dir;
 

@@ -439,9 +439,10 @@ sub build_reusable
   _run_make('install');
 
   # Verify that the relocatable bits worked
-  eval { _check_perl_binary( "$perl_dir/v$version/bin/perl" ) };
+  local $@;
+  eval { _check_perl_binary("$perl_dir/v$version/bin/perl") };
   my $error = $@;
-  if ( $error )
+  if ($error)
   {
     die "The built relocatable binary appears broken: $error\n";
   }
@@ -482,9 +483,10 @@ sub _install_binary
   }
 
   # Attempt to run something more rigorous
-  eval { _check_perl_binary( "$src_dir/bin/perl" ) };
+  local $@;
+  eval { _check_perl_binary("$src_dir/bin/perl") };
   my $error = $@;
-  if ( $error )
+  if ($error)
   {
     die "Binary does not appear to be usable: $error";
   }
