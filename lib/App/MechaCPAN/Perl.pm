@@ -408,6 +408,11 @@ sub build_reusable
     q{-Duserelocatableinc},
   );
 
+  if ( $opts->{threads} )
+  {
+    push @config, '-Dusethreads';
+  }
+
   local %ENV = %ENV;
   delete @ENV{qw(PERL5LIB PERL5OPT)};
   $ENV{DESTDIR} = $perl_dir;
@@ -447,7 +452,7 @@ sub build_reusable
     die "The built relocatable binary appears broken: $error\n";
   }
 
-  my $slugline = slugline("$perl_dir/v$version/bin/perl");
+  my $slugline = slugline("$perl_dir/v$version/bin/perl", undef, $opts->{threads});
   my $orig_dir = &get_project_dir;
   my $output   = "$slugline.tar.$compress";
   chdir $perl_dir;
