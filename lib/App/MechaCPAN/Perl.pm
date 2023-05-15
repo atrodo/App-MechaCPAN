@@ -107,25 +107,9 @@ sub go
 
   if ( defined $bin_tz && !$opts->{'source-only'} )
   {
-    my $src_dir = inflate_archive($bin_tz);
-
-    my @src_dirs = File::Spec->splitdir("$src_dir");
-    chdir $src_dir;
-
-    if ( -e -x File::Spec->catdir( @src_dirs, qw/bin perl/ ) )
-    {
-      local $@;
-      my $success
-        = eval { _install_binary( File::Spec->catdir(@src_dirs), $version ) };
-      my $error = $@;
-      if ($error)
-      {
-        logmsg "Binary in $bin_tz does not appear to be usable: $error";
-      }
-      return 0
-        if $success == 0;
-    }
-    logmsg "$bin_tz did not have a perl binary";
+    my $success = _handle_bin_tz( $bin_tz, $version );
+    return 0
+      if $success;
   }
 
   my $src_dir = inflate_archive($src_tz);
@@ -137,7 +121,8 @@ sub go
   {
     die "Binary archive provided, but source-only was requested"
       if $opts->{'source-only'};
-    return _install_binary( File::Spec->catdir(@src_dirs), $version );
+    my $success = _install_binary( File::Spec->catdir(@src_dirs), $version );
+    return $success ? 0 : 1;
   }
 
   if ( !-e 'Configure' )
@@ -463,6 +448,42 @@ sub build_reusable
   return 0;
 }
 
+sub _handle_bin_tz
+{
+  my $bin_tz  = shift;
+  my $version = shift;
+
+  local $@;
+  my $src_dir = eval { inflate_archive($bin_tz) };
+
+  if ( !$src_dir )
+  {
+    info "Could not find binary $version: $@";
+    return;
+  }
+
+  my @src_dirs = File::Spec->splitdir("$src_dir");
+  chdir $src_dir;
+
+  if ( -e -x File::Spec->catdir( @src_dirs, qw/bin perl/ ) )
+  {
+    local $@;
+    my $success
+      = eval { _install_binary( File::Spec->catdir(@src_dirs), $version ) };
+
+    my $error = $@;
+    if ($error)
+    {
+      info "Binary in $bin_tz does not appear to be usable: $error";
+    }
+
+    return $success;
+  }
+
+  logmsg "$bin_tz did not have a perl binary";
+  return 1;
+}
+
 sub _install_binary
 {
   my $src_dir  = shift;
@@ -501,7 +522,7 @@ sub _install_binary
 
   success "Installed binary $version";
 
-  return 0;
+  return 1;
 }
 
 our $source_mirror = 'https://www.cpan.org/src/5.0';

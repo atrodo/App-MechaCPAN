@@ -747,7 +747,8 @@ sub fetch_file
     {
       unlink $tmpfile;
     }
-    die $ff->error || "Could not download $url";
+    my $error = $ff->error || "Could not download $url";
+    die "$error\n";
   }
 
   if ( $where ne $result )
