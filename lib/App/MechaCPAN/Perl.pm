@@ -273,6 +273,10 @@ sub slugline
   my $script = <<'EOD';
   use strict;
   use Config;
+  use Digest::SHA qw/sha1_base64/;
+  use File::Basename qw/basename/;
+  use ExtUtils::Liblist;
+
   my $version    = $ARGV[0] || $^V;
   my $usethreads = defined $ARGV[1] ? $ARGV[1] : 0;
   my $libcname   = 'unknown';
@@ -303,7 +307,20 @@ sub slugline
       }
     }
   }
-  print "perl-$version-$archname-$osname-$threads$libcname-$libcver";
+
+  # Get the name of each libsfiles found with Liblist and produce a SHA1
+  my @ld_libs;
+  foreach my $libs ( split ' ', $Config{libs} )
+  {
+    my @ext = ExtUtils::Liblist->ext( "$libs", 0, 1 );
+    push @ld_libs, map { basename $_ } @{ $ext[4] };
+  }
+
+  my $digest = sha1_base64( join( "\t", @ld_libs ) );
+  $digest =~ tr{+/}{-_};
+  $digest = substr $digest, 0, 10;
+
+  print "perl-$version-$archname-$osname-$threads$libcname-$libcver-$digest";
 EOD
 
   my $script_file = humane_tmpfile;
