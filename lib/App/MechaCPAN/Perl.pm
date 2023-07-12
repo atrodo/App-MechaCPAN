@@ -312,9 +312,11 @@ sub slugline
   my @libs;
 
   my %rename = (
+
     # c, m and dl are assumed to be part of libc, which we already handle
-    '-lc'  => '', '-lm'  => '',
-    '-ldl' => '', '-lld' => '',
+    '-lc'       => '', '-lm'  => '',
+    '-ldl'      => '', '-lld' => '',
+    '-lpthread' => '',
 
     # Commonly found libraries can be shortened
     '-lsocket' => 's',  '-linet'  => 'i',
@@ -341,7 +343,6 @@ sub slugline
       }
       next;
     }
-    print "$n$ver\n";
     push @libs, "$n$ver";
   }
 
