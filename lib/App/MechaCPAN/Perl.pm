@@ -273,7 +273,6 @@ sub slugline
   my $script = <<'EOD';
   use strict;
   use Config;
-  use Digest::SHA qw/sha1_base64/;
   use File::Basename qw/basename/;
   use ExtUtils::Liblist;
 
@@ -308,19 +307,46 @@ sub slugline
     }
   }
 
-  # Get the name of each libsfiles found with Liblist and produce a SHA1
-  my @ld_libs;
-  foreach my $libs ( split ' ', $Config{libs} )
+  # Add the name of each lib found with Liblist
+  my @short_libs;
+  my @libs;
+
+  my %rename = (
+    # c, m and dl are assumed to be part of libc, which we already handle
+    '-lc'  => '', '-lm'  => '',
+    '-ldl' => '', '-lld' => '',
+
+    # Commonly found libraries can be shortened
+    '-lsocket' => 's',  '-linet'  => 'i',
+    '-lnsl'    => 'n',  '-lcrypt' => 'y',
+    '-lutil'   => 'u',  '-lposix' => 'p',
+    '-lgdbm'   => 'gd', '-ldbm'   => 'd',
+  );
+
+  foreach my $libs ( sort split ' ', $Config{libs} )
   {
     my @ext = ExtUtils::Liblist->ext( "$libs", 0, 1 );
-    push @ld_libs, map { basename $_ } @{ $ext[4] };
+    my $n = $libs;
+    my $ver = $ext[4]->[0];
+
+    $n =~ s/^-l/lib/;
+    $ver =~ s/^.*$n[.]so[.]//;
+    $ver =~ s/^(\d+([.]\d+)?)([.]\d+)?$/$1/;
+
+    if ( exists $rename{$libs} )
+    {
+      if ( $rename{$libs} )
+      {
+        push @short_libs, "$rename{$libs}$ver";
+      }
+      next;
+    }
+    print "$n$ver\n";
+    push @libs, "$n$ver";
   }
 
-  my $digest = sha1_base64( join( "\t", @ld_libs ) );
-  $digest =~ tr{+/}{-_};
-  $digest = substr $digest, 0, 10;
-
-  print "perl-$version-$archname-$osname-$threads$libcname-$libcver-$digest";
+  my $libsver = join('', @short_libs, @libs);
+  print "perl-$version-$archname-$osname-$threads$libcname-$libcver-$libsver";
 EOD
 
   my $script_file = humane_tmpfile;
