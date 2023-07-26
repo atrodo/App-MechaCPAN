@@ -587,7 +587,7 @@ sub _alias_target
   my $alias  = shift;
   my $cache  = shift;
 
-  my $target = _find_target( $target, $cache );
+  $target = _find_target( $target, $cache );
 
   if ( $alias =~ $ident_re )
   {

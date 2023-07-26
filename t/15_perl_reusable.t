@@ -11,7 +11,7 @@ if ( $^O eq 'MSWin32' )
   plan skip_all => 'Cannot build perl on Win32';
 }
 
-if ( !eval { run(qw/tar --version/) } )
+if ( !eval { App::MechaCPAN::run(qw/tar --version/) } )
 {
   plan skip_all => 'Skipping without a usable tar command';
 }

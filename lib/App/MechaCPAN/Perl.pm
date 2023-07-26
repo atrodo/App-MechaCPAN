@@ -17,7 +17,7 @@ our @args = (
   'devel!',
   'shared-lib!',
   'build-reusable!',
-  'source-only',
+  'source-only!',
 );
 
 my $perl5_ver_re = qr/v? 5 [.] (\d{1,2}) (?: [.] (\d{1,2}) )?/xms;
@@ -497,6 +497,7 @@ sub _handle_bin_tz
   my $bin_tz  = shift;
   my $version = shift;
 
+  info "Binary URL: $bin_tz";
   local $@;
   my $src_dir = eval { inflate_archive($bin_tz) };
 
@@ -673,7 +674,7 @@ sub _get_targz
 
     return (
       [
-        _bin_url( $version, $minor ),
+        _bin_url( $version, $minor, $opts ),
         _dnld_url( $version, $minor, $opts ),
       ],
       "5.$version.$minor"
