@@ -704,7 +704,7 @@ App::MechaCPAN::Perl - Mechanize the installation of Perl.
 
 =head1 DESCRIPTION
 
-The C<perl> command is used to install L<perl> into C<local/>. This removes the packages dependency on the operating system perl.
+The C<perl> command is used to install L<perl> into C<local/>. This removes the package's dependency on the operating system perl. It will do this by either downloading a binary archive or by building from a L<perl> source archive.
 
 =head2 Methods
 
@@ -716,23 +716,29 @@ C<$version> is either 0 or 1 parameter:
 
 =over
 
-=item If 0 parameters are given and there is a .perl-version file, it will try and use that as the version to install.
+=item * If 0 parameters are given and there is a .perl-version file, it will try and use that as the version to install.
 
-=item Otherwise, if 0 parameters are given, it will attempt to find and install the newest, stable version of perl.
+=item * Otherwise, if 0 parameters are given, it will attempt to find and install the newest, stable version of perl.
 
-=item If the parameter is a major version (5.XX), it will attempt to find and install the newest minor version of that major version.
+=item * If the parameter is a file, it will try to use that file as an archive to install perl.
 
-=item If the parameter is a minor version (5.XX.X), it will attempt to download and install that exact version.
+=item * If the parameter looks like a URL, it will fetch that URL and try to use it as an archive to install perl.
 
-=item If the parameter is a file, it will try to use that file as a perl source tarball.
+=item * If the parameter is a major version (5.XX), it will attempt to download and install the newest minor version of that major version.
 
-=item If the parameter is a file, and it contains an executable "bin/perl", it will try to install that file as a binary perl tarball.
-
-=item If the parameter looks like a URL, it will fetch that URL and try to use it as a perl source tarball.
+=item * If the parameter is a minor version (5.XX.X), it will attempt to download and install that exact version.
 
 =back
 
+In the cases where a version is given, and the C<--no-source-only> option is given, C<App::MechaCPAN::Perl> will attempt to download a binary archive prebuilt for the operating system. This guess is made by looking at how the currently executing L<perl> was built. Binary archives are fetched from https://dnld.mechacpan.us/dist. Source archives are fetched from https://www.cpan.org/src/5.0.
+
+After an archive is retrieved, it will be checked to see if it is a binary or source package. This is accomplished by checking for an executable C<bin/perl> file in the archive. Basic tests are ran to make sure the binary is usable, notably by running a script that includes L<POSIX>.
+
 =head2 Arguments
+
+=head3 source-only
+
+By default a source archive is attempted to be retreived and installed. If you want it to attempt to also retrieve a binary archive, you can use C<--no-source-only>. If you do not want C<App::MechaCPAN::Perl> to even attempt to use a binary archive, use this option. The default behavior of this option will change in a future version.
 
 =head3 threads
 
@@ -740,17 +746,39 @@ By default, perl is compiled without threads. If you'd like to enable threads, u
 
 =head3 shared-lib
 
-By default, perl will generate a libperl.a file.  If you need libperl.so, then use this argument.
+By default, perl will not generate a libperl.a file.  If you need libperl.so, then use this argument.
 
 =head3 build-reusable
 
-Giving this options will change the mode of operation from installing L<perl> into C<local/> to generating a reusable, relocatable L<perl> archive. This uses the same parameters (i.e. L</devel> and L</threads>) to generate the binary, although do note that the C<lib/> directory is always included unless L</skip-lib> is provided. The archive name will generally reflect what systems it can run on. Because of the nature of how L<perl> builds binaries, it cannot guarantee that it will work on any given system, but if will have the best luck if you use it on the same version of a distribution.
+Giving this options will change the mode of operation from installing L<perl> into C<local/> to generating a reusable, relocatable L<perl> archive. This uses the same parameters (i.e. L</devel> and L</threads>) to generate the binary, although do note that the C<lib/> directory is always included unless L</skip-lib> is provided. The archive name will generally reflect what systems it can run on. Because of the nature of how L<perl> builds binaries, it cannot guarantee that it will work on any given system, but it will have the best luck if you use it on the same version of a distribution.
 
 Once you have a reusable binary archive, C<App::MechaCPAN::Perl> can use that archive as a source file and install the binaries into the local directory. This can be handy if you are building a lot of identical systems and only want to build L<perl> once.
 
+The exact parameters included in the archive name are:
+
+=over
+
+=item * The version built
+
+=item * The architecture name, as found in the first piece of $Config{archname}
+
+=item * The Operating System, as found in $Config{osname}
+
+=item * Optionally notes if it was built with threads
+
+=item * The name of the libc used
+
+=item * The version of the libc used
+
+=item * The C<so> version of libraries used, with common libaries being abbreviated
+
+=back
+
+An example archive name would be C<perl-v5.36.0-x86_64-linux-glibc-2.35-y1.1n2.0u1.tar.xz>
+
 =head3 jobs
 
-How many make jobs to use when running make. The code must guess if make supports running multiple jobs, and as such, it may not work for all versions of make. Defaults to 2.
+How many make jobs to use when running make. The code will guess if C<make> supports running multiple jobs, and as such, it may not work for all versions of make. Defaults to 2.
 
 =head3 skip-tests
 
@@ -776,7 +804,7 @@ By default, perl will not compile a development version without -Dusedevel passe
 
 =head1 WIN32 LIMITATION
 
-Building perl from scratch on Win32 is nothing like building it on other platforms. At this point, the perl command does not work on Win32.
+Building perl from scratch on Win32 is nothing like building it on other platforms. At this point, the C<perl> command does not work on Win32.
 
 =head1 AUTHOR
 
