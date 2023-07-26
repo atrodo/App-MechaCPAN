@@ -45,6 +45,10 @@ sub go
   my $perl_dir = "$dest_dir/perl";
   my $pv_ver;    # Version in .perl-version file
 
+  # source-only currently defaults to true, downloading binaries currently
+  # will only happen if no-source-only is given
+  $opts->{'source-only'} //= 0;
+
   # Attempt to find the perl version if none was given
   if ( -f '.perl-version' )
   {
