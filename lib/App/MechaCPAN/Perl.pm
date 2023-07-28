@@ -16,7 +16,6 @@ our @args = (
   'smart-tests!',
   'devel!',
   'shared-lib!',
-  'build-reusable!',
   'source-only!',
 );
 
@@ -747,34 +746,6 @@ By default, perl is compiled without threads. If you'd like to enable threads, u
 =head3 shared-lib
 
 By default, perl will not generate a libperl.a file.  If you need libperl.so, then use this argument.
-
-=head3 build-reusable
-
-Giving this options will change the mode of operation from installing L<perl> into C<local/> to generating a reusable, relocatable L<perl> archive. This uses the same parameters (i.e. L</devel> and L</threads>) to generate the binary, although do note that the C<lib/> directory is always included unless L</skip-lib> is provided. The archive name will generally reflect what systems it can run on. Because of the nature of how L<perl> builds binaries, it cannot guarantee that it will work on any given system, but it will have the best luck if you use it on the same version of a distribution.
-
-Once you have a reusable binary archive, C<App::MechaCPAN::Perl> can use that archive as a source file and install the binaries into the local directory. This can be handy if you are building a lot of identical systems and only want to build L<perl> once.
-
-The exact parameters included in the archive name are:
-
-=over
-
-=item * The version built
-
-=item * The architecture name, as found in the first piece of $Config{archname}
-
-=item * The Operating System, as found in $Config{osname}
-
-=item * Optionally notes if it was built with threads
-
-=item * The name of the libc used
-
-=item * The version of the libc used
-
-=item * The C<so> version of libraries used, with common libaries being abbreviated
-
-=back
-
-An example archive name would be C<perl-v5.36.0-x86_64-linux-glibc-2.35-y1.1n2.0u1.tar.xz>
 
 =head3 jobs
 

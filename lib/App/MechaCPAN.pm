@@ -58,6 +58,7 @@ our @args = (
   'quiet|q!',
   'no-log!',
   'directory|d=s',
+  'build-reusable-perl!',
 );
 
 # Timeout when there's no output in seconds
@@ -136,7 +137,15 @@ sub main
   local $VERBOSE = $options->{verbose} // $VERBOSE;
   local $QUIET   = $options->{quiet}   // $QUIET;
 
-  my $cmd    = ucfirst lc shift @argv;
+  my $cmd;
+
+  if ( $options->{'build-reusable-perl'} )
+  {
+    $cmd = 'Perl';
+    $options->{'build-reusable'} = delete $options->{'build-reusable-perl'};
+  }
+
+  my $cmd    = $cmd // ucfirst lc shift @argv;
   my $pkg    = join( '::', __PACKAGE__, $cmd );
   my $action = eval { $pkg->can('go') };
   my $munge  = eval { $pkg->can('munge_args') };
@@ -1365,6 +1374,34 @@ A log is normally outputted into the C<local/logs> directory. This option will p
 =head2 --directory=<path>
 
 Changes to a specified directory before any processing is done. This allows you to specify what directory you want C<local/> to be in. If this isn't provided, the current working directory is used instead.
+
+=head2 --build-reusable-perl
+
+Giving this options will override the mode of operation and generate a reusable, relocatable L<perl> archive. This accepts the same parameters as the L<Perl|App::MechaCPAN::Perl> command (i.e. L</devel> and L</threads>) to generate the binary. Note that the C<lib/> directory is always included unless the L<--skip-lib|App::MechaCPAN::Perl/skip-lib> option is included. The archive name will generally reflect what systems the resuling archive can run on. Because of the nature of how L<perl> builds binaries, it cannot guarantee that it will work on any given system. This option will have the best luck if you use it with the same version of a distribution.
+
+Once you have a reusable binary archive, L<App::MechaCPAN::Perl> can use that archive as a source file and install the binaries into the local directory. This can be handy if you are building a lot of identical systems and only want to build L<perl> once.
+
+The exact parameters included in the archive name are:
+
+=over
+
+=item * The version built
+
+=item * The architecture name, as found in the first piece of $Config{archname}
+
+=item * The Operating System, as found in $Config{osname}
+
+=item * Optionally notes if it was built with threads
+
+=item * The name of the libc used
+
+=item * The version of the libc used
+
+=item * The C<so> version of libraries used, with common libaries being abbreviated
+
+=back
+
+An example archive name would be C<perl-v5.36.0-x86_64-linux-glibc-2.35-y1.1n2.0u1.tar.xz>
 
 =head2 C<$ENV{MECHACPAN_TIMEOUT}>
 
