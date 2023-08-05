@@ -143,6 +143,11 @@ sub main
   {
     $cmd = 'Perl';
     $options->{'build-reusable'} = delete $options->{'build-reusable-perl'};
+    if ( lc $argv[0] eq 'perl' )
+    {
+      info("Option build-reusable-perl implies the perl command, it can be omitted");
+      shift @argv;
+    }
   }
 
   my $cmd    = $cmd // ucfirst lc shift @argv;

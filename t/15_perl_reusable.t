@@ -35,5 +35,15 @@ is(
   'Can install "relocatable perl" from a tar.gz'
 );
 
+is(
+  App::MechaCPAN::main(
+    '--build-reusable-perl',
+    'perl',
+    "$FindBin::Bin/../test_dists/FakePerl-5.12.0.tar.gz"
+  ),
+  0,
+  'Can also give the perl command without issue'
+);
+
 chdir $pwd;
 done_testing;
