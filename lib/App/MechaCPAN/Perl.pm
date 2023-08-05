@@ -331,10 +331,14 @@ sub slugline
   foreach my $libs ( sort split ' ', $Config{libs} )
   {
     my @ext = ExtUtils::Liblist->ext( "$libs", 0, 1 );
-    my $n = $libs;
-    my $ver = $ext[4]->[0];
+    my $n   = $libs;
+    my $ver = basename $ext[4]->[0];
 
-    $n =~ s/^-l/lib/;
+    # Static libraries (.a) don't matter
+    next
+      if $ver =~ m/[.]a$/xms;
+
+    $n   =~ s/^-l/lib/;
     $ver =~ s/^.*$n[.]so[.]//;
     $ver =~ s/^(\d+([.]\d+)?)([.]\d+)?$/$1/;
 
@@ -350,7 +354,11 @@ sub slugline
   }
 
   my $libsver = join('', @short_libs, @libs);
-  print "perl-$version-$archname-$osname-$threads$libcname-$libcver-$libsver";
+  if ($libsver)
+  {
+    $libsver = "-$libsver";
+  }
+  print "perl-$version-$archname-$osname-$threads$libcname-$libcver$libsver";
 EOD
 
   my $script_file = humane_tmpfile;
