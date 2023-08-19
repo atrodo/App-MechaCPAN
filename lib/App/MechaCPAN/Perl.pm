@@ -332,6 +332,10 @@ sub slugline
   {
     my @ext = ExtUtils::Liblist->ext( "$libs", 0, 1 );
     my $n   = $libs;
+
+    next
+      unless $ext[4]->[0];
+
     my $ver = basename $ext[4]->[0];
 
     # Static libraries (.a) don't matter
