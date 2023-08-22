@@ -343,8 +343,9 @@ sub slugline
       if $ver =~ m/[.]a$/xms;
 
     $n   =~ s/^-l/lib/;
-    $ver =~ s/^.*$n[.]so[.]//;
+    $ver =~ s/^.*$n([.]so[.]?)?//;
     $ver =~ s/^(\d+([.]\d+)?)([.]\d+)?$/$1/;
+    $ver ||= '.';
 
     if ( exists $rename{$libs} )
     {
