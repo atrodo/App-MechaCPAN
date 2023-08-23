@@ -33,7 +33,7 @@ MechaCPAN was created because installation of a self-contained deployment requir
 
 In development these tools are invaluable, but when deploying a package, installing at least 4 packages from github, CPAN and the web just for a small portion of each tool is more than needed. App::MechaCPAN aims to be a single tool that can be used for deploying packages in a automated fashion.
 
-App::MechaCPAN focuses on the aspects of these tools needed for deploying packages to a system. For instance, it will read and use carton's `cpanfile.snapshot` files, but cannot create them. To create `cpanfile.snapshot files`, you must use carton.
+App::MechaCPAN focuses on the aspects of these tools needed for deploying packages to a system. For instance, it will read and use carton's `cpanfile.snapshot` files, but cannot create them. To create `cpanfile.snapshot` files, you must use carton.
 
 ## Should I use App::MechaCPAN instead of &lt;tool>
 
@@ -102,6 +102,24 @@ A log is normally outputted into the `local/logs` directory. This option will pr
 ## --directory=&lt;path>
 
 Changes to a specified directory before any processing is done. This allows you to specify what directory you want `local/` to be in. If this isn't provided, the current working directory is used instead.
+
+## --build-reusable-perl
+
+Giving this options will override the mode of operation and generate a reusable, relocatable [perl](https://metacpan.org/pod/perl) archive. This accepts the same parameters as the [Perl](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3APerl) command (i.e. ["devel"](#devel) and ["threads"](#threads)) to generate the binary. Note that the `lib/` directory is always included unless the [--skip-lib](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3APerl#skip-lib) option is included. The archive name will generally reflect what systems the resuling archive can run on. Because of the nature of how [perl](https://metacpan.org/pod/perl) builds binaries, it cannot guarantee that it will work on any given system. This option will have the best luck if you use it with the same version of a distribution.
+
+Once you have a reusable binary archive, [App::MechaCPAN::Perl](https://metacpan.org/pod/App%3A%3AMechaCPAN%3A%3APerl) can use that archive as a source file and install the binaries into the local directory. This can be handy if you are building a lot of identical systems and only want to build [perl](https://metacpan.org/pod/perl) once.
+
+The exact parameters included in the archive name are:
+
+- The version built
+- The architecture name, as found in the first piece of $Config{archname}
+- The Operating System, as found in $Config{osname}
+- Optionally notes if it was built with threads
+- The name of the libc used
+- The version of the libc used
+- The `so` version of libraries used, with common libaries being abbreviated
+
+An example archive name would be `perl-v5.36.0-x86_64-linux-glibc-2.35-y1.1n2.0u1.tar.xz`
 
 ## `$ENV{MECHACPAN_TIMEOUT}`
 
