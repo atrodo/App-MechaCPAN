@@ -1,0 +1,18 @@
+name: Perl package
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Test
+      run: |
+        perl Makefile.PL
+        make
+        make test
