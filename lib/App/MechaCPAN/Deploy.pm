@@ -188,10 +188,9 @@ sub parse_snapshot
 
   open my $snap_fh, '<', $file;
 
-  if ( my $line = <$snap_fh> !~ $snapshot_re )
-  {
-    die "File doesn't looks like a carton snapshot: $file";
-  }
+  my $header = <$snap_fh> // '';
+  die "File doesn't looks like a carton snapshot: $file"
+    if $header !~ $snapshot_re;
 
   my @stack  = ($result);
   my $prefix = '';
