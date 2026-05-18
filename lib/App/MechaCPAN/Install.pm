@@ -334,12 +334,12 @@ sub _prereq
   return @deps, $target;
 }
 
+# Determine if the target should be tested. If so, pull in the test-prereq
 sub _test_prereq
 {
   my $target = shift;
   my $cache  = shift;
 
-  my $meta = $target->{meta};
   my $opts = $cache->{opts};
 
   my $skip_tests = $opts->{'skip-tests'};
@@ -350,7 +350,8 @@ sub _test_prereq
 
     if ( !$skip_tests && defined $target->{modules} )
     {
-      foreach my $module ( %{ $target->{modules} } )
+      # Check if any of the modules in the package are in the list to skip
+      foreach my $module ( keys %{ $target->{modules} } )
       {
         if ( $skips->{$module} )
         {
