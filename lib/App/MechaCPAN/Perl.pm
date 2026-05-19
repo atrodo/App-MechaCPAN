@@ -501,7 +501,15 @@ sub build_reusable
   my $orig_dir = &get_project_dir;
   my $output   = "$slugline.tar.$compress";
   chdir $perl_dir;
-  run("tar cf - v$version/ | $compress > $orig_dir/$output");
+
+  # Instead of relying on a shell to pipe contents from tar to $compress, both
+  # gnutar and bsdtar accept the use-compress-program option
+  run(
+    'tar',
+    '--use-compress-program', $compress,
+    '-cf',                    "$orig_dir/$output",
+    "v$version/"
+  );
 
   success $verstr, "Created $verstr: $output";
 

@@ -793,7 +793,7 @@ my @inflate = (
 
     my $humane_qr = humane_qr;
     return
-      unless $src =~ m{ [.]tar[.] (?: gz | bz2 | xz ) $humane_qr? $}xms;
+      unless $src =~ m{ [.]tar[.] (?: xz | gz | bz2|bzip2 ) $humane_qr? $}xms;
 
     state $tar;
     if ( !defined $tar )
@@ -810,9 +810,13 @@ my @inflate = (
       : $src =~ m/(bz2|bzip2) $humane_qr? $/xms ? 'bzip2'
       :                                           'xz';
 
-    run("$unzip -dc $src | tar xf -");
+    # Instead of relying on a shell to pipe contents from unzip to tar, both
+    # gnutar and bsdtar accept the use-compress-program option. bsdtar needs
+    # the -d option so it will decompress, while gnutar automatically adds it
+    # but it is harmless to add.
+    run( 'tar', '--use-compress-program', "$unzip -d", '-xf', $src );
     return 1;
-    },
+  },
 
   # Archive::Tar
   sub
