@@ -11,6 +11,8 @@ use App::MechaCPAN qw/:go/;
 our @args = (
   'skip-perl!',
   'update!',
+  'skip-recommends!',
+  'skip-suggests!',
 );
 
 sub munge_args
@@ -115,7 +117,13 @@ sub go
     croak "cpanfile must be a regular file";
   }
 
-  my $prereq = parse_cpanfile($file);
+  my @types = (
+    'requires',
+    $opts->{'skip-recommends'} ? () : 'recommends',
+    $opts->{'skip-suggests'}   ? () : 'suggests',
+  );
+
+  my $prereq = parse_cpanfile( $file, @types );
   my @phases = qw/configure build test runtime/;
 
   my @acc = map {%$_} map { values %{ $prereq->{$_} } } @phases;

@@ -328,9 +328,13 @@ sub git_extract_re
 
 sub parse_cpanfile
 {
-  my $file = shift;
+  my $file       = shift;
+  my @incl_types = @_;
 
   state $sandbox_num = 1;
+  state @phases;
+  @phases = qw/configure build test author/
+    if !@phases;
 
   my $result = { runtime => {} };
 
@@ -360,7 +364,7 @@ sub parse_cpanfile
     };
   }
 
-  foreach my $phase (qw/configure build test author/)
+  foreach my $phase (@phases)
   {
     $methods->{ $phase . '_requires' } = sub
     {
@@ -401,6 +405,25 @@ sub parse_cpanfile
     unless $no_error;
 
   delete $result->{current};
+
+  if (@incl_types)
+  {
+    my %incl = ( map { $_ => 1 } @incl_types );
+
+    foreach my $phase ( values %$result )
+    {
+      next
+        if ref $phase ne 'HASH';
+
+      foreach my $type ( keys %$phase )
+      {
+        if ( !$incl{$type} )
+        {
+          delete $phase->{$type};
+        }
+      }
+    }
+  }
 
   return $result;
 }

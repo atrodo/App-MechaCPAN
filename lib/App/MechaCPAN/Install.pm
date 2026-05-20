@@ -23,6 +23,8 @@ our @args = (
   'only-sources!',
   'update!',
   'stop-on-error!',
+  'skip-recommends!',
+  'skip-suggests!',
 );
 
 our $dest_lib;
@@ -613,7 +615,13 @@ sub _targets_from_cpanfile
     : "cpanfile $cpanfile";
   info "Reading $iname";
 
-  my $prereq = parse_cpanfile($cpanfile);
+  my @types = (
+    'requires',
+    $cache->{opts}->{'skip-recommends'} ? () : 'recommends',
+    $cache->{opts}->{'skip-suggests'}   ? () : 'suggests',
+  );
+
+  my $prereq = parse_cpanfile( $cpanfile, @types );
   my @phases = qw/configure build test runtime/;
 
   my @acc = map {%$_} map { values %{ $prereq->{$_} } } @phases;
