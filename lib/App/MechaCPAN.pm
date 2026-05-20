@@ -834,6 +834,62 @@ my @inflate = (
   },
 );
 
+sub _path_escapes_dir
+{
+  my $path = shift;
+
+  return 0
+    if !defined $path;
+  return 0
+    if !length $path;
+
+  return 1
+    if File::Spec->file_name_is_absolute($path);
+
+  for my $part ( File::Spec->splitdir($path) )
+  {
+    return 1
+      if $part eq '..';
+  }
+
+  return 0;
+}
+
+# Inspect a tar archive's header entries (no extraction). Returns a
+# human-readable reason if any entry would escape the destination dir
+# (absolute paths, '..' traversal in names, or symlink/hardlink targets
+# pointing outside). Returns undef if the archive is safe.
+sub _validate_archive_is_safe
+{
+  my $src = shift;
+
+  require Archive::Tar;
+
+  # Create a tar iterator. The magic 1 tells it to decompress
+  my $iter = Archive::Tar->iter( "$src", 1 );
+
+  return "could not read archive: $src"
+    if !defined $iter;
+
+  while ( my $entry = $iter->() )
+  {
+    my $name = $entry->full_path;
+
+    return "unsafe entry name: '$name'"
+      if _path_escapes_dir($name);
+
+    if ( $entry->is_symlink || $entry->is_hardlink )
+    {
+      my $linkname = $entry->linkname;
+
+      return "unsafe link target: '$name' -> '$linkname'"
+        if _path_escapes_dir($linkname);
+    }
+  }
+
+  return;
+}
+
 sub inflate_archive
 {
   my $src = shift;
@@ -853,6 +909,11 @@ sub inflate_archive
 
   die "Could not find destination directory: $dir"
     if !-d $dir;
+
+  if ( my $reason = _validate_archive_is_safe($src) )
+  {
+    croak "Refusing to extract unsafe archive $src: $reason\n";
+  }
 
   my $orig = cwd;
 
