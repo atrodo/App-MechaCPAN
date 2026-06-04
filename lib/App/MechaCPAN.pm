@@ -28,6 +28,7 @@ BEGIN
     logmsg info success error
     dest_dir get_project_dir
     fetch_file inflate_archive
+    file_digest_chk
     humane_tmpname humane_tmpfile humane_tmpdir
     parse_cpanfile
     run restart_script
@@ -807,6 +808,22 @@ sub fetch_file
   return $result;
 }
 
+sub file_digest_chk
+{
+  my ( $path, $expected ) = @_;
+
+  require Digest::SHA;
+  my $actual = Digest::SHA->new('sha256')->addfile( "$path", 'b' )->hexdigest;
+
+  $expected = uc $expected;
+  $actual   = uc $actual;
+
+  die "Expected and Actual Digest differs: $actual ne $expected"
+    if $expected ne $actual;
+
+  return;
+}
+
 my @inflate = (
 
   # System tar
@@ -918,10 +935,31 @@ sub inflate_archive
   my $src = shift;
   my $dir = shift;
 
+  my $sha256;
+
+  if ( ref $src eq 'HASH' )
+  {
+    $sha256 = delete $src->{sha256};
+
+    # Technically the error is wrong, it can have an optional sha256 key,
+    # but it gets people here to see that the error is that there is a
+    # narrow requirement for the hashref version of inflate_archive
+    die "Hashref for inflate_archive must be only the 'src' key"
+      if scalar( keys %$src ) != 1 || !exists $src->{src};
+
+    $src = $src->{src};
+  }
+
   # $src can be a file path or a URL.
   if ( !-e "$src" )
   {
     $src = fetch_file($src);
+  }
+
+  if ($sha256)
+  {
+    file_digest_chk( $src, $sha256 );
+    logmsg "Digest passed: $src";
   }
 
   if ( !defined $dir )
