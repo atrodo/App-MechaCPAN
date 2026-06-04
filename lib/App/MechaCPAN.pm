@@ -31,7 +31,7 @@ BEGIN
     file_digest_chk
     humane_tmpname humane_tmpfile humane_tmpdir
     parse_cpanfile
-    run restart_script
+    run run_qvf restart_script
     rel_start_to_abs
     /;
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
@@ -1043,6 +1043,46 @@ sub _genio
   $read_hdl->autoflush(1);
 
   return ( $read_hdl, $write_hdl );
+}
+
+# Run a command and suppress the entire output unless there was an error
+sub run_qvf
+{
+  my @args = @_;
+  if ( $VERBOSE )
+  {
+    return run(@args);
+  }
+
+  my $qvf = '';
+  open my $fh, '>', \$qvf;
+
+  local $@;
+
+  my $result;
+  eval {
+    local $LOGFH   = $fh;
+    defined wantarray ? $result = run(@args) : run(@args);
+  };
+
+  if ( $@ )
+  {
+    if ( $LOGFH )
+    {
+      print $LOGFH $qvf;
+    }
+    die $@;
+  }
+
+  return
+    if !defined wantarray;
+
+  if (wantarray)
+  {
+    return split( /\r?\n/, $result );
+  }
+
+  return $result;
 }
 
 sub run
