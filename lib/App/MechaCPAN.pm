@@ -1228,27 +1228,24 @@ sub get_cpan_checksums
   #   if possible, but won't throw errors if can't.
   # In both cases, the CHECKSUMS is used to validate the checksums of the
   #   downloaded file
-  # If $CHKSIGS is otherwise false, right now, none of this is checked
-  if ( $CHKSIGS || !defined $CHKSIGS )
+  # If $CHKSIGS is otherwise false, we already did an early return above
+  my $verify_fn = _resolve_verifier();
+
+  if ( !defined $verify_fn )
   {
-    my $verify_fn = _resolve_verifier();
+    die "Could not find verification program and verification was required"
+      if $CHKSIGS;
+    logmsg "CHECKSUMS signature not checked: PGP verifier not found";
+  }
+  else
+  {
+    my $keyring  = cpan_keyring();
+    my $chk_file = humane_tmpfile('CHECKSUMS');
 
-    if ( !defined $verify_fn )
-    {
-      die "Could not find verification program and verification was required"
-        if $CHKSIGS;
-    }
-
-    if ( defined $verify_fn )
-    {
-      my $keyring  = cpan_keyring();
-      my $chk_file = humane_tmpfile('CHECKSUMS');
-
-      $chk_file->print($checksums);
-      $chk_file->flush;
-      $verify_fn->( "$chk_file", $keyring );
-      logmsg "VALID: $url";
-    }
+    $chk_file->print($checksums);
+    $chk_file->flush;
+    $verify_fn->( "$chk_file", $keyring );
+    logmsg "VALID: $url";
   }
 
   my $result = do
