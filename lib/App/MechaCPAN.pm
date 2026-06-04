@@ -1990,9 +1990,29 @@ A log is normally outputted into the C<local/logs> directory. This option will p
 
 =head2 --verify
 
-When C<--verify> is requested, then a verification of the CPAN C<CHECKSUMS> file is required. You can also disable C<CHECKSUMS> verification completely with C<--no-verify>. When neither option is provided, the verification is done if a verification program can be found, but no error is raised if no program could be found. An error is still raised if a verification program is found, but the C<CHECKSUMS> file could not be downloaded or if the verification fails.
+When C<--verify> is given, a verification of the CPAN C<CHECKSUMS> file during module install is required. This process includes three steps after downloading the C<CHECKSUMS> file from CPAN for the module.
 
-The list of verification programs are: L<gpgv|...>, sqv, gpg, sq, and rnp
+=over
+
+=item 1. Confirm the shape of CHECKSUMS
+
+C<CHECKSUMS> files contain all the files and the file checksums for a CPAN author's uploads. This file is compared against a rigid definition to ensure that it does not appear to be doing anything malicious.
+
+=item 2. Confirm the signature of CHECKSUMS
+
+Once the C<CHECKSUMS> structure has been examined, the embedded signature is verified. The C<CHECKSUMS> file is signed using the PAUSE Batch Signing Key (C<2E66 557A B97C 19C7 91AF  8E20 328D A867 450F 89EC>, accessible at L<https://www.cpan.org/modules/04pause.html>). This signature is checked with an external PGP signature verification program. See below for a list of usable external verification programs.
+
+=item 3. Compare the sha256 of the downloaded module to CHECKSUMS
+
+Once the CHECKSUMS file has been checked, the size, CPAN author path, and the C<sha256> value of the downloaded module archive are compared against the values from the CHECKSUMS file. These values must match.
+
+=back
+
+You can also disable C<CHECKSUMS> verification completely with C<--no-verify>. That will prevent all of these steps from running at all.
+
+When neither option is provided then the signature checking step is attempted, but will not produce an error if the external verification program could not be found. An error is still raised if any other part of the process finds a problem.
+
+The verification programs that can be used are: L<gpgv|https://www.gnupg.org/>, L<sqv|https://sequoia-pgp.org/>, L<gpg|https://www.gnupg.org/>, L<sq|https://sequoia-pgp.org/>, and L<rnp|https://www.rnpgp.org/>.
 
 =head2 --directory=<path>
 
