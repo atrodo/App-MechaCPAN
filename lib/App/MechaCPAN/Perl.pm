@@ -115,6 +115,16 @@ sub go
       if $success;
   }
 
+  # Ask inflate_archive to SHA confirm the file if its a CPAN url
+  if ( $src_tz =~ m/^ \Q$App::MechaCPAN::Perl::source_mirror\E /xms )
+  {
+    my $chksum_txt = '';
+    fetch_file( "$src_tz.sha256.txt" => \$chksum_txt );
+
+    my ($chksum) = $chksum_txt =~ m{\A([0-9a-fA-F]{64})\Z}xms;
+    $src_tz = { src => $src_tz, sha256 => $chksum };
+  }
+
   my $src_dir = inflate_archive($src_tz);
 
   my @src_dirs = File::Spec->splitdir("$src_dir");
@@ -416,6 +426,16 @@ sub build_reusable
   $perl_dir = humane_tmpdir("perl-$version");
   my $verstr = "perl $version";
   info $verstr, "Fetching $verstr";
+
+  # Ask inflate_archive to SHA confirm the file if its a CPAN url
+  if ( $src_tz =~ m/^ \Q$App::MechaCPAN::Perl::source_mirror\E /xms )
+  {
+    my $chksum_txt = '';
+    fetch_file( "$src_tz.sha256.txt" => \$chksum_txt );
+
+    my ($chksum) = $chksum_txt =~ m{\A([0-9a-fA-F]{64})\Z}xms;
+    $src_tz = { src => $src_tz, sha256 => $chksum };
+  }
 
   my $src_dir = inflate_archive($src_tz);
 
