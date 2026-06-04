@@ -28,7 +28,7 @@ BEGIN
     logmsg info success error
     dest_dir get_project_dir
     fetch_file inflate_archive
-    file_digest_chk
+    file_digest_chk get_cpan_checksums
     humane_tmpname humane_tmpfile humane_tmpdir
     parse_cpanfile
     run run_qvf restart_script
@@ -60,6 +60,7 @@ our @args = (
   'no-log!',
   'directory|d=s',
   'build-reusable-perl!',
+  'verify!',
 );
 
 # Timeout when there's no output in seconds
@@ -69,6 +70,7 @@ our $QUIET;      # Do not print any progress to STDERR
 our $LOGFH;      # File handle to send the logs to
 our $LOG_ON = 1; # Default if to log or not
 our $PROJ_DIR;   # The directory given with -d or pwd if not provided
+our $CHKSIGS;    # Check signatures on/off/best attempt (undef)
 
 sub main
 {
@@ -137,6 +139,7 @@ sub main
   local $LOGFH;
   local $VERBOSE = $options->{verbose} // $VERBOSE;
   local $QUIET   = $options->{quiet}   // $QUIET;
+  local $CHKSIGS = $options->{verify}  // $CHKSIGS;
 
   my $cmd;
 
@@ -822,6 +825,449 @@ sub file_digest_chk
     if $expected ne $actual;
 
   return;
+}
+
+sub _verify_checksums_body
+{
+  my $chksum_body = shift;
+
+  # CHECKSUMS has a very regular pattern. If it doesn't match, we must refuse
+  # loudly since it appears to be tampered with.
+
+  my @result;
+  my @content = split /\r?\n/, $chksum_body;
+
+  while ( @content && $content[0] eq '' )
+  {
+    shift @content;
+  }
+
+  while ( @content && $content[-1] eq '' )
+  {
+    pop @content;
+  }
+
+  # Check the file header and the PGP header
+  {
+    my $header     = shift @content;
+    my $pgp_header = shift @content;
+
+    # First line must be that the PGP is also valid perl
+    push @result, $header;
+    croak "CHECKSUMS file failed validation: header-line mismatch"
+      if $header ne q{0&&<<''; # this PGP-signed message is also valid perl};
+
+    # Second line MUST be the PGP signed message start
+    push @result, $pgp_header;
+    croak "CHECKSUMS file failed validation: PGP header mismatch"
+      if $pgp_header ne q{-----BEGIN PGP SIGNED MESSAGE-----};
+  }
+
+  # We're now safely in the PGP signed message. Grab all the PGP headers
+  while ( defined( my $pgp_line = shift @content ) )
+  {
+    push @result, $pgp_line;
+    last
+      if $pgp_line eq '';
+  }
+
+  # Now read the perl hash header start, which is any number of comments
+  # followed by a hash definition
+  while ( defined( my $perl_intro = shift @content ) )
+  {
+    push @result, $perl_intro;
+    last
+      if $perl_intro eq '$cksum = {';    # } This confuses vim and annoys me
+
+    next
+      if $perl_intro =~ m/^[#]/xms;
+
+    my $linenum = scalar @result;
+    croak "CHECKSUMS file failed validation: Unexpected perl code $linenum";
+  }
+
+  my ($indent) = $content[0] =~ m/^(\s+)/;
+
+  croak "CHECKSUMS file failed validation: missing indentation"
+    if !defined $indent;
+
+  # Definition lines can only be `'Key' => {` or `'Key' => 'Value'`
+  while ( defined( my $perl_line = shift @content ) )
+  {
+    push @result, $perl_line;
+    last
+      if $perl_line =~ m/^};$/xms;
+
+    next
+      if $perl_line =~ m/^ \Q$indent\E '[^' ]+' \s+ => \s+ {$/xms;
+
+    next
+      if $perl_line
+      =~ m/^ \Q$indent\E \s+ '[\w-]+' \s+ => \s+ ('[^' ]+' | \d+) ,? $/xms;
+
+    next
+      if $perl_line =~ m/^ \Q$indent\E},?/xms;
+
+    my $linenum = scalar @result;
+    croak "CHECKSUMS file failed validation: Unexpected perl code $linenum";
+  }
+
+  {
+    my $perl_footer = shift @content;
+
+    if ( $perl_footer ne '__END__' )
+    {
+      my $linenum = scalar @result;
+      croak "CHECKSUMS file failed validation: Unexpected footer $linenum";
+    }
+    push @result, $perl_footer;
+  }
+
+  # We now have no content that perl will read, which means all we should have is the PGP signature
+  {
+    my $pgp_header = shift @content;
+    push @result, $pgp_header;
+
+    if ( $pgp_header ne '-----BEGIN PGP SIGNATURE-----' )
+    {
+      my $linenum = scalar @result;
+      croak
+        "CHECKSUMS file failed validation: Unexpected PGP header $linenum";
+    }
+
+    while ( defined( my $pgp_line = shift @content ) )
+    {
+      push @result, $pgp_line;
+
+      last
+        if $pgp_line eq '-----END PGP SIGNATURE-----';
+
+      next
+        if $pgp_line =~ m{^[A-Za-z0-9+/=]*$}x;
+
+      my $linenum = scalar @result;
+      croak "CHECKSUMS file failed validation: Unexpected pgp line $linenum";
+    }
+  }
+
+  croak "CHECKSUMS file failed validation: missing PGP signature end"
+    if $result[-1] ne '-----END PGP SIGNATURE-----';
+
+  croak "CHECKSUMS file failed validation: Unexpected data after end"
+    if @content;
+
+  return join( "\n", @result );
+}
+
+my $cpan_fingerprint = '2E66 557A B97C 19C7 91AF  8E20 328D A867 450F 89EC';
+my $keyserve         = 'https://www.cpan.org/modules/04pause.html';
+my $search           = '';
+
+sub _cpan_key_chk
+{
+  my $keyring = shift;    # Expects the binary public key data
+
+  require Digest::SHA;
+
+  # Parse the packet header (RFC 9580) and make sure its a Public Key
+  # (type 6). We also require it to be the new packet format
+  my $body_len;
+  my $type;
+  my ( $header_octet, $remaining ) = unpack 'Ca*', $keyring;
+
+  die "not an OpenPGP packet"
+    if !( $header_octet & 0x80 );
+
+  if ( !( $header_octet & 0x40 ) )
+  {
+    $type = ( $header_octet >> 2 ) & 0x0F;
+    my $len_type = $header_octet & 0x03;
+
+    ( $body_len, $remaining )
+      = $len_type == 0 ? unpack( 'Ca*', $remaining )
+      : $len_type == 1 ? unpack( 'na*', $remaining )
+      : $len_type == 2 ? unpack( 'Na*', $remaining )
+      :   die "indeterminate-length packet in primary key position";
+  }
+
+  if ( $header_octet & 0x40 )
+  {
+    $type = $header_octet & 0x3F;
+
+    my ($enc_len) = unpack 'C', $remaining;
+
+    if ( $enc_len < 192 )
+    {
+      ( $body_len, $remaining ) = unpack 'Ca*', $remaining;
+    }
+    elsif ( $enc_len < 224 )
+    {
+      my $extra;
+      ( $enc_len, $extra, $remaining ) = unpack 'CCa*', $remaining;
+      $body_len = ( ( $enc_len - 192 ) << 8 ) + $extra + 192;
+    }
+    elsif ( $enc_len == 255 )
+    {
+      ( $enc_len, $body_len, $remaining ) = unpack 'CNa*', $remaining;
+    }
+    else { die "partial-length packet in primary key position" }
+  }
+
+  die "first packet is type $type, not a public key (type 6)"
+    unless $type == 6;
+
+  my $body = substr( $remaining, 0, $body_len );
+  die "truncated key packet"
+    if length($body) != $body_len;
+
+  my $version = unpack 'C', $body;
+  die "not a v4 key (got version $version)"
+    if $version != 4;
+
+  # v4 fingerprint = SHA-1( 0x99 || 2-byte BE length || packet body )
+  my $to_hash  = "\x99" . pack( 'n', $body_len ) . $body;
+  my $actual   = uc( Digest::SHA::sha1_hex($to_hash) );
+  my $expected = $cpan_fingerprint;
+  $expected =~ s/\s//g;
+
+  die
+    "Downloaded CPAN Public key does not match expected fingerprint ( $actual ne $expected )"
+    if $actual ne $expected;
+
+  return;
+}
+
+sub cpan_keyring
+{
+  state $keyring_path;
+  state $cache_path;
+
+  if ( !defined $cache_path )
+  {
+    my $dest_dir  = &dest_dir;
+    my $cache_dir = File::Spec->catdir( "$dest_dir", 'cache' );
+    mkdir $cache_dir
+      unless -d $cache_dir;
+
+    $cache_path = File::Spec->catfile( "$cache_dir", 'cpan_keyring.pgp' );
+  }
+
+  if ( !defined $keyring_path && -e $cache_path )
+  {
+    my $mtime = ( stat $cache_path )[9];
+    if ( defined $mtime && time - $mtime < 24 * 60 * 60 )
+    {
+      open my $keyring_fh, '<', $cache_path;
+      my $keyring = do { local $/; <$keyring_fh> };
+
+      # Verify that this is the CPAN key by checking the primary key.
+      local $@;
+      eval { _cpan_key_chk($keyring) };
+      my $error = $@;
+
+      if ($error)
+      {
+        logmsg "Existing CPAN Public Key on disk could not be used: $error";
+        unlink $cache_path;
+      }
+      else
+      {
+        $keyring_path = $cache_path;
+      }
+    }
+  }
+
+  if ( !defined $keyring_path )
+  {
+    # Always download the freshest, even if we leave it in local/
+    my $keyring = '';
+    fetch_file( "$keyserve$search", \$keyring );
+
+    # Strip the armor around the base64 string
+    $keyring =~ s/\r//xmsg;
+    $keyring =~ s{
+      \A
+      .*?                                        # Everything before the armor
+      (?: \Q$cpan_fingerprint\E [^\n]* \n )      # require fingerprint on prior line
+      \Q-----BEGIN PGP PUBLIC KEY BLOCK-----\E\n
+      (?: [^\n]+ \n)* \n                         # The headers
+      (
+        (?: [A-Za-z0-9+/]* =* \n )*              # The base64 content
+      )
+      (?: =[A-Za-z0-9+\/]{4}\s*\n )?             # The optional checksum
+      \Q-----END PGP PUBLIC KEY BLOCK-----\E
+      .*                                         # Everything after the armor
+      \Z
+    }{$1}xms;
+
+    require MIME::Base64;
+
+    $keyring = MIME::Base64::decode_base64($keyring);
+
+    # Verify that this is the CPAN key by checking the primary key.
+    _cpan_key_chk($keyring);
+
+    open my $keyring_fh, '>', $cache_path;
+    print $keyring_fh $keyring;
+
+    $keyring_path = $cache_path;
+  }
+
+  return $keyring_path;
+}
+
+#gpgv, sqv, gpg, sq, and rnp
+my @verifier = (
+  sub
+  {
+    return
+      if !eval { run(qw/gpgv --version/); 1 };
+
+    return sub
+    {
+      my ( $file, $keyring ) = @_;
+      run_qvf( "gpgv", "--keyring", "$keyring", "$file" );
+    };
+  },
+  sub
+  {
+    my $out = eval { run(qw/sqv --version/) };
+    return
+      if !defined $out;
+    my ($major) = $out =~ m/(\d+)\.\d+(?:\.\d+)?/;
+    return
+      if !defined $major || $major < 1;
+
+    return sub
+    {
+      my ( $file, $keyring ) = @_;
+      run_qvf( "sqv", "--keyring", "$keyring", "$file" );
+    };
+  },
+  sub
+  {
+    return
+      if !eval { run(qw/gpg --version/); 1 };
+
+    return sub
+    {
+      my ( $file, $keyring ) = @_;
+      run_qvf( "gpg", "--no-default-keyring", "--keyring", "$keyring",
+        "--verify", "$file" );
+    };
+  },
+  sub
+  {
+    my $out = eval { run(qw/sq --version/) };
+    return
+      if !defined $out;
+    my ($major) = $out =~ m/(\d+)\.\d+(?:\.\d+)?/;
+    return
+      if !defined $major || $major < 1;
+
+    return sub
+    {
+      my ( $file, $keyring ) = @_;
+      run_qvf( "sq", "verify", "--signer-file", "$keyring", "$file" );
+    };
+  },
+  sub
+  {
+    return
+      if !eval { run(qw/rnp --version/); 1 };
+
+    return sub
+    {
+      my ( $file, $keyring ) = @_;
+      run_qvf( "rnp", "--keyfile", "$keyring", "--verify", "$file" );
+    };
+  },
+);
+
+sub _resolve_verifier
+{
+  state $verify_fn;
+
+  if ( !defined $verify_fn )
+  {
+    foreach my $verify (@verifier)
+    {
+      my $fn = $verify->();
+      if ( defined $fn )
+      {
+        $verify_fn = $fn;
+        last;
+      }
+    }
+  }
+
+  return $verify_fn;
+}
+
+sub get_cpan_checksums
+{
+  my $url = shift;
+
+  # If verify is off, don't check any part of the CHECKSUMS
+  return
+    if defined $CHKSIGS && !$CHKSIGS;
+
+  die "CHECKSUMS URL must be HTTPS, not '$url'"
+    unless $url =~ m{\Ahttps://}xmsi;
+
+  die "CHECKSUMS URL must end with CHECKSUMS, not '$url'"
+    unless $url =~ m{CHECKSUMS\z}xmsi;
+
+  # Even if verification is optional, not downloading the CHECKSUMS is fatal
+  my $checksums = '';
+  fetch_file( $url, \$checksums );
+  $checksums = App::MechaCPAN::_verify_checksums_body($checksums);
+
+  # If $CHKSIGS is true, we must verify that CHECKSUMS has a valid signature
+  # If $CHKSIGS is undef, we will verify that CHECKSUMS has a valid signature
+  #   if possible, but won't throw errors if can't.
+  # In both cases, the CHECKSUMS is used to validate the checksums of the
+  #   downloaded file
+  # If $CHKSIGS is otherwise false, right now, none of this is checked
+  if ( $CHKSIGS || !defined $CHKSIGS )
+  {
+    my $verify_fn = _resolve_verifier();
+
+    if ( !defined $verify_fn )
+    {
+      die "Could not find verification program and verification was required"
+        if $CHKSIGS;
+    }
+
+    if ( defined $verify_fn )
+    {
+      my $keyring  = cpan_keyring();
+      my $chk_file = humane_tmpfile('CHECKSUMS');
+
+      $chk_file->print($checksums);
+      $chk_file->flush;
+      $verify_fn->( "$chk_file", $keyring );
+      logmsg "VALID: $url";
+    }
+  }
+
+  my $result = do
+  {
+    require Safe;
+    my $safe = Safe->new("App::MechaCPAN::reval");
+
+    local $@;
+    my $chksum = $safe->reval($checksums);
+    die "Failed to parse CHECKSUMS: $@"
+      if $@;
+
+    die "Failed to get HASH from CHECKSUMS"
+      if ref $chksum ne 'HASH';
+
+    $chksum;
+  };
+
+  return $result;
 }
 
 my @inflate = (
@@ -1541,6 +1987,12 @@ Using quiet means that the normal information descriptions are hidden. Note that
 =head2 --no-log
 
 A log is normally outputted into the C<local/logs> directory. This option will prevent a log from being created.
+
+=head2 --verify
+
+When C<--verify> is requested, then a verification of the CPAN C<CHECKSUMS> file is required. You can also disable C<CHECKSUMS> verification completely with C<--no-verify>. When neither option is provided, the verification is done if a verification program can be found, but no error is raised if no program could be found. An error is still raised if a verification program is found, but the C<CHECKSUMS> file could not be downloaded or if the verification fails.
+
+The list of verification programs are: L<gpgv|...>, sqv, gpg, sq, and rnp
 
 =head2 --directory=<path>
 

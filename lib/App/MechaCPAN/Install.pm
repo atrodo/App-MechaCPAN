@@ -813,13 +813,14 @@ sub _get_targz
   }
 
   # PAUSE
+  my $cpan_url = 'https://cpan.metacpan.org/authors/id';
   if ( $src =~ $pause_re )
   {
     my $author  = $1;
     my $package = $2;
     $url = join(
       '/',
-      'https://cpan.metacpan.org/authors/id',
+      $cpan_url,
       substr( $author, 0, 1 ),
       substr( $author, 0, 2 ),
       $author,
@@ -846,12 +847,45 @@ sub _get_targz
     if ( $url =~ $full_pause_re )
     {
       my $package = $3;
-      $target->{pathname} = "$1/$2/$3";
+      $target->{pathname}  = "$1/$2/$3";
+      $target->{cpan_path} = "$1/$2";
+
+      my $chk_url = $url;
+      $chk_url =~ s/$package$/CHECKSUMS/;
+      $target->{checksums_url} = $chk_url;
+      $target->{filename}      = $package;
+
       $package =~ s/ (.*) [.] ( tar[.](gz|z|bz2) | zip | tgz) $/$1/xmsi;
       $target->{distvname} = $package;
     }
 
-    return fetch_file($url);
+    my $src_tgz = fetch_file($url);
+
+    if ( my $checksums_url = $target->{checksums_url} )
+    {
+      my $checksums = get_cpan_checksums($checksums_url);
+
+      if ( defined $checksums )
+      {
+        my $filename  = $target->{filename};
+        my $cpan_path = $target->{cpan_path};
+        my $entry     = $checksums->{$filename};
+
+        croak "No CHECKSUMS entry for $filename"
+          if !defined $entry;
+        croak "Mismatch 'cpan_path': $entry->{cpan_path} ne $cpan_path"
+          if $entry->{cpan_path} ne $cpan_path;
+        croak "Mismatch 'size': $entry->{size} != -s $src_tgz"
+          if $entry->{size} != -s $src_tgz;
+
+        $src_tgz = {
+          src    => $src_tgz,
+          sha256 => $entry->{sha256},
+        };
+      }
+    }
+
+    return $src_tgz;
   }
 
   croak "Cannot find $src\n";
