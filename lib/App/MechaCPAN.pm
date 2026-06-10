@@ -162,7 +162,8 @@ sub main
     }
   }
 
-  my $cmd    = $cmd // ucfirst lc shift @argv;
+  $cmd = $cmd // ucfirst lc shift @argv;
+
   my $pkg    = join( '::', __PACKAGE__, $cmd );
   my $action = eval { $pkg->can('go') };
   my $munge  = eval { $pkg->can('munge_args') };
@@ -1646,10 +1647,10 @@ sub run
     }
   };
 
-  my $error = $@;
+  my $eval_error = $@;
   alarm 0;
 
-  if ( $error eq $alrm_code )
+  if ( $eval_error eq $alrm_code )
   {
     info "Idle timeout (${TIMEOUT}s) exceeded, killing";
     kill "KILL", $pid;
