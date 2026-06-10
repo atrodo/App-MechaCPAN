@@ -610,6 +610,12 @@ sub _show_line
     $idx = -1;
   }
 
+  # When key is _, that means we're undoing the last line
+  if ( $key eq '_' )
+  {
+    $idx = 0;
+  }
+
   if ( !defined $idx )
   {
     unshift @key_lines, $key;
@@ -657,6 +663,13 @@ sub status
     $color = 'RESET';
   }
 
+  # The _ key means undo the last line, but only status can do that, so treat
+  # it the same as undef
+  if ( $key eq '_' )
+  {
+    undef $key;
+  }
+
   logmsg($line);
 
   return
@@ -674,7 +687,7 @@ sub status
 
   _show_line( $key, $color . $BOLD, $line );
 
-  @last_key = ( $key, $color, $line );
+  @last_key = ( $key // '_', $color, $line );
 }
 END  { print STDERR "\n" unless $QUIET; }
 INIT { print STDERR "\n" unless $QUIET; }
