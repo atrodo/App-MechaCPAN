@@ -199,7 +199,7 @@ TARGET:
 
   chdir $orig_dir;
 
-  my %attempted = map  { $_->{name} => $_ } values %{ $cache->{targets} };
+  my %attempted = map  { $_->{key} => $_ } values %{ $cache->{targets} };
   my @failed    = grep { $_->{state} eq $FAILED } values %attempted;
   my @installed = grep { $_->{was_installed} } values %attempted;
 
