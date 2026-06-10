@@ -765,8 +765,19 @@ sub fetch_file
   local $@;
 
   my $ff = File::Fetch->new( uri => $url );
-  $ff->scheme('http')
-    if $ff->scheme eq 'https';
+
+  if ( $File::Fetch::VERSION < 0.50 )
+  {
+    # File::Fetch < 0.50 (versions bundled with perl before 5.26) does not
+    # have an entry for https, so we have to convince it to use the http list
+    # by telling it that the scheme is http. This does *NOT* change what
+    # scheme the file is actually fetched with, only what client list will
+    # be used/attempted. So https URIs are still fetched over https. In modern
+    # versions of File::Fetch there is an https list, and that list does
+    # enforce https verification
+    $ff->scheme('http')
+      if $ff->scheme eq 'https';
+  }
 
   if ( ref $to eq 'SCALAR' )
   {
