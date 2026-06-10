@@ -1,7 +1,8 @@
 package App::MechaCPAN;
 
 use v5.14;
-use strict;
+use warnings;
+
 use Cwd qw/cwd/;
 use Carp;
 use Config;
@@ -72,12 +73,19 @@ our $LOG_ON = 1; # Default if to log or not
 our $PROJ_DIR;   # The directory given with -d or pwd if not provided
 our $CHKSIGS;    # Check signatures on/off/best attempt (undef)
 
+# In certain blocks, you may see `no warnings 'uninitialized'`. Several subs
+# end up doing a lot of work with comparisions that don't distinguish between
+# undef and the empty string, so these warnings create more noise than useful
+# feedback, and the code to silence them are not meaningfully better
+
 sub main
 {
   my @argv = @_;
 
   if ( $0 =~ m/zhuli/ )
   {
+    no warnings 'uninitialized';
+
     if ( $argv[0] =~ m/^do the thing/i )
     {
       success( "zhuli$$", 'Running deployment' )
@@ -448,7 +456,7 @@ sub humane_qr
 
 sub humane_tmpname
 {
-  my $descr = shift;
+  my $descr = shift // '';
 
   my @localtime = localtime;
   my $now       = sprintf(
@@ -580,6 +588,8 @@ sub _show_line
   my $color = shift;
   my $line  = shift;
 
+  no warnings 'uninitialized';
+
   # If the color starts with red, it's an error and we should not touch it,
   # otherwise, we should clean up the line
   state $ERR_COLOR = Term::ANSIColor::color('RED');
@@ -637,6 +647,8 @@ sub status
   my $key   = shift;
   my $color = shift;
   my $line  = shift;
+
+  no warnings 'uninitialized';
 
   if ( !defined $line )
   {
@@ -1829,9 +1841,10 @@ sub restart_script
       archlibexp privlibexp
       otherlibdirsexp
       /;
-    my %site_inc = map { $_ => 1 } @Config{@paths}, '.';
 
-    foreach my $lib ( split ':', $ENV{PERL5LIB} )
+    my %site_inc = map { defined $_ ? ( $_ => 1 ) : () } @Config{@paths}, '.';
+
+    foreach my $lib ( split ':', $ENV{PERL5LIB} // '')
     {
       $site_inc{$lib} = 1;
       $site_inc{"$lib/$Config{archname}"} = 1;
@@ -1852,6 +1865,7 @@ sub restart_script
 
     # Make sure anything from PERL5LIB and local::lib are removed since it's
     # most likely the wrong version as well.
+    $ENV{PERL_LOCAL_LIB_ROOT} //= '';
     @inc_add = grep { $_ !~ m/^$ENV{PERL_LOCAL_LIB_ROOT}/xms } @inc_add;
     undef @ENV{qw/PERL_LOCAL_LIB_ROOT PERL5LIB/};
 

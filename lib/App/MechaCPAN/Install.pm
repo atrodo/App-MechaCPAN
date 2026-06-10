@@ -744,7 +744,7 @@ sub _target_prereqs_were_installed
 sub _search_metacpan
 {
   my $src        = shift;
-  my $constraint = shift;
+  my $constraint = shift // '';
 
   state %seen;
 
@@ -753,7 +753,7 @@ sub _search_metacpan
 
   # TODO mirrors
   my $dnld = 'https://fastapi.metacpan.org/download_url/' . _escape($src);
-  if ( defined $constraint )
+  if ( $constraint )
   {
     $dnld .= '?version=' . _escape($constraint);
   }
@@ -1079,6 +1079,7 @@ sub _complete
     my $module = $target->{module};
     my $ver    = $target->{installed_version};
 
+    no warnings 'uninitialized';
     $target->{was_installed} = 1
       if $ver eq _get_core_ver($module);
   }
