@@ -613,7 +613,7 @@ sub _targets_from_cpanfile
     = $cpanfile =~ m{^(.[/\\])?cpanfile$}
     ? 'cpanfile'
     : "cpanfile $cpanfile";
-  info "Reading $iname";
+  info '_cpanfile', "Reading $iname";
 
   my @types = (
     'requires',
@@ -633,6 +633,8 @@ sub _targets_from_cpanfile
     $target->{update} = $update // 1;
     push @reqs, $target;
   }
+
+  success '_cpanfile', "Reading $iname";
 
   return @reqs;
 }
