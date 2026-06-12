@@ -186,14 +186,16 @@ TARGET:
       }
     }
 
-    $target->{state}++
-      if $target->{state} ne $COMPLETE;
-
-    if ( $target->{state} eq scalar @states )
+    if ( $target->{state} ne $COMPLETE )
     {
-      _complete($target);
-      $target->{was_installed} = 1;
-      success( $target->{key}, $line );
+      $target->{state}++;
+
+      if ( $target->{state} == scalar @states )
+      {
+        _complete($target);
+        $target->{was_installed} = 1;
+        success( $target->{key}, $line );
+      }
     }
   }
 
