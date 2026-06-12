@@ -1639,6 +1639,8 @@ sub run
           next;
         }
 
+        # All output goes to STDERR so it can be captured
+        # in verbose mode
         print STDERR $line if $print_output;
 
         if ( $fh eq $output )
@@ -1689,12 +1691,12 @@ sub run
     my $core = $? & 128     ? 'Core Dumped'               : '';
 
     # There could be a lot of output, ignore all but the very end
-    @out_tail[-1] = "...SKIPPED\n"
+    $out_tail[-1] = "...SKIPPED\n"
       if scalar @out_tail > $max_lines;
     my $out_tail = join( '', reverse @out_tail );
     chomp $out_tail;
 
-    @err_tail[-1] = "...SKIPPED\n"
+    $err_tail[-1] = "...SKIPPED\n"
       if scalar @err_tail > $max_lines;
     my $err_tail = join( '', reverse @err_tail );
     chomp $err_tail;
