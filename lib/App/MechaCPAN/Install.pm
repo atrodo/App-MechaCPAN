@@ -730,6 +730,15 @@ sub _target_prereqs_were_installed
   my $target = shift;
   my $cache  = shift;
 
+  return $target->{prereqs_was_installed}
+    if $target->{prereqs_was_installed};
+
+  state $cycle_key = '_cycle_target_prereqs_were_installed';
+  return 0
+    if $target->{$cycle_key};
+
+  local $target->{$cycle_key} = 1;
+
   foreach my $prereq ( _target_prereqs( $target, $cache ) )
   {
     _target_prereqs_were_installed( $prereq, $cache );
