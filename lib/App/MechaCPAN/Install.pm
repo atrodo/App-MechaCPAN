@@ -865,7 +865,9 @@ sub _get_targz
       $target->{cpan_path} = "$1/$2";
       $target->{filename}  = $package;
 
-      if ( !$target->{sha256} )
+      # If CHKSIGS is enabled, we always want to check CHECKSUMS. If we have
+      # a sha256 from metacpan, CHECKSUMS will take precedence
+      if ( !$target->{sha256} || $App::MechaCPAN::CHKSIGS )
       {
         my $chk_url = $url;
         $chk_url =~ s/$package$/CHECKSUMS/;
