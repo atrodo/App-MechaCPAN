@@ -2051,7 +2051,7 @@ A log is normally outputted into the C<local/logs> directory. This option will p
 
 =head2 --verify
 
-When C<--verify> is given, a verification of the CPAN C<CHECKSUMS> file during module install is required. This process includes three steps after downloading the C<CHECKSUMS> file from CPAN for the module.
+When C<--verify> is given, a verification of the CPAN C<CHECKSUMS> file during module install is required. Note that packages from L<BackPAN|https://backpan.perl.org/> will not verify when C<--verify> is given. This process includes three steps after downloading the C<CHECKSUMS> file from CPAN for the module.
 
 =over
 
@@ -2071,7 +2071,9 @@ Once the CHECKSUMS file has been checked, the size, CPAN author path, and the C<
 
 You can also disable C<CHECKSUMS> verification completely with C<--no-verify>. That will prevent all of these steps from running at all.
 
-When neither option is provided then the signature checking step is attempted, but will not produce an error if the external verification program could not be found. An error is still raised if any other part of the process finds a problem.
+When neither option is provided then the signature checking step is attempted, but will not produce an error if the external verification program could not be found, or the file is from backpan and has no corrisponding C<CHECKSUMS> entry. An error is still raised if any other parts of the process finds a problem.
+
+If L<MetaCPAN|https://metacpan.org> was used to find a module, the search will include the SHA256 of the package, which will be checked against the downloaded archive. This check cannot be disabled currently.
 
 The verification programs that can be used are: L<gpgv|https://www.gnupg.org/>, L<sqv|https://sequoia-pgp.org/>, L<gpg|https://www.gnupg.org/>, L<sq|https://sequoia-pgp.org/>, and L<rnp|https://www.rnpgp.org/>.
 
