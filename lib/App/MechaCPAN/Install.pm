@@ -852,6 +852,7 @@ sub _get_targz
 
     $target->{is_cpan} = 1;
     $target->{version} = version->parse( $json_data->{version} );
+    $target->{sha256}  = $json_data->{checksum_sha256};
   }
 
   if ( defined $url )
@@ -862,11 +863,14 @@ sub _get_targz
       my $package = $3;
       $target->{pathname}  = "$1/$2/$3";
       $target->{cpan_path} = "$1/$2";
+      $target->{filename}  = $package;
 
-      my $chk_url = $url;
-      $chk_url =~ s/$package$/CHECKSUMS/;
-      $target->{checksums_url} = $chk_url;
-      $target->{filename}      = $package;
+      if ( !$target->{sha256} )
+      {
+        my $chk_url = $url;
+        $chk_url =~ s/$package$/CHECKSUMS/;
+        $target->{checksums_url} = $chk_url;
+      }
 
       $package =~ s/ (.*) [.] ( tar[.](gz|z|bz2) | zip | tgz) $/$1/xmsi;
       $target->{distvname} = $package;
@@ -891,11 +895,16 @@ sub _get_targz
         croak "Mismatch 'size': $entry->{size} != -s $src_tgz"
           if $entry->{size} != -s $src_tgz;
 
-        $src_tgz = {
-          src    => $src_tgz,
-          sha256 => $entry->{sha256},
-        };
+        $target->{sha256} = $entry->{sha256};
       }
+    }
+
+    if ( $target->{sha256} )
+    {
+      $src_tgz = {
+        src    => $src_tgz,
+        sha256 => $target->{sha256},
+      };
     }
 
     return $src_tgz;
