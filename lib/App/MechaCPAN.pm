@@ -47,9 +47,13 @@ require App::MechaCPAN::Deploy;
 my $loaded_at_compile;
 my $restarted_key        = 'APP_MECHACPAN_RESTARTED';
 my $is_restarted_process = delete $ENV{$restarted_key};
-INIT
+
 {
-  $loaded_at_compile = 1;
+  no warnings 'void';
+  INIT
+  {
+    $loaded_at_compile = 1;
+  }
 }
 
 $loaded_at_compile //= 0;
@@ -689,8 +693,12 @@ sub status
 
   @last_key = ( $key // '_', $color, $line );
 }
-END  { print STDERR "\n" unless $QUIET; }
-INIT { print STDERR "\n" unless $QUIET; }
+
+{
+  no warnings 'void';
+  END  { print STDERR "\n" unless $QUIET; }
+  INIT { print STDERR "\n" unless $QUIET; }
+}
 
 sub _get_project_dir
 {
