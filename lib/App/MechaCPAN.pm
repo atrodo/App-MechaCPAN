@@ -980,6 +980,22 @@ sub _verify_checksums_body
         "CHECKSUMS file failed validation: Unexpected PGP header $linenum";
     }
 
+    # Ignore all of the PGP armor headers. They must be well-formed as much as
+    # they can be (includes a colon followed by a space as a separator)
+    while ( defined( my $pgp_line = shift @content ) )
+    {
+      push @result, $pgp_line;
+
+      last
+        if $pgp_line eq '';
+
+      next
+        if $pgp_line =~ m{: };
+
+      my $linenum = scalar @result;
+      croak "CHECKSUMS file failed validation: Unexpected pgp armor header line $linenum";
+    }
+
     while ( defined( my $pgp_line = shift @content ) )
     {
       push @result, $pgp_line;
