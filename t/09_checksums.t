@@ -429,6 +429,72 @@ EOF
       like( $error, qr/BAD SIGNATURE/, 'verifier failure propagates' );
     }
   }
+
+  # $CHKSIGS undef + missing module = returns nothing
+  {
+    local $App::MechaCPAN::CHKSIGS;
+    local $body     = clearsign($basic_dd);
+    local $verifier = sub
+    {
+      $verifier_called++;
+      return;
+    };
+
+    {
+      $verifier_searched = 0;
+      local $@;
+      my $ok    = eval { App::MechaCPAN::get_cpan_checksums( $url, 'NoDeps-1.0.tar.gz' ); };
+      my $error = $@;
+
+      isnt( $ok, undef, 'get_cpan_checksums with known module did completely run' );
+      is( ref $ok,            'HASH', 'get_cpan_checksums returns a hashref' );
+      is( $error,             '',     'get_cpan_checksums did not throw an error' );
+      is( $verifier_searched, 1,      'verifier search was called once' );
+    }
+    {
+      $verifier_searched = 0;
+      local $@;
+      my $ok    = eval { App::MechaCPAN::get_cpan_checksums( $url, 'NoDeps-X.0.tar.gz' ); };
+      my $error = $@;
+
+      is( $ok,                undef, 'get_cpan_checksums with unknown module did completely run' );
+      is( $error,             '',    'get_cpan_checksums did not throw an error' );
+      is( $verifier_searched, 1,     'verifier search was called once' );
+    }
+  }
+
+  # $CHKSIGS=1 + missing module = fatal
+  {
+    local $App::MechaCPAN::CHKSIGS = 1;
+    local $body                    = clearsign($basic_dd);
+    local $verifier                = sub
+    {
+      $verifier_called++;
+      return;
+    };
+
+    {
+      $verifier_searched = 0;
+      local $@;
+      my $ok    = eval { App::MechaCPAN::get_cpan_checksums( $url, 'NoDeps-1.0.tar.gz' ); };
+      my $error = $@;
+
+      isnt( $ok, undef, 'get_cpan_checksums with known module did completely run' );
+      is( ref $ok,            'HASH', 'get_cpan_checksums returns a hashref' );
+      is( $error,             '',     'get_cpan_checksums did not throw an error' );
+      is( $verifier_searched, 1,      'verifier search was called once' );
+    }
+    {
+      $verifier_searched = 0;
+      local $@;
+      my $ok    = eval { App::MechaCPAN::get_cpan_checksums( $url, 'NoDeps-X.0.tar.gz' ); };
+      my $error = $@;
+
+      is( $ok,                undef, 'get_cpan_checksums with unknown module did completely run' );
+      isnt( $error,           '', 'get_cpan_checksums throw an error' );
+      is( $verifier_searched, 1, 'verifier search was called once' );
+    }
+  }
 }
 
 done_testing;

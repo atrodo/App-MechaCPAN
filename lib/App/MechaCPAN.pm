@@ -1252,6 +1252,7 @@ sub _resolve_verifier
 sub get_cpan_checksums
 {
   my $url = shift;
+  my $key = shift;
 
   # If verify is off, don't check any part of the CHECKSUMS
   return
@@ -1308,6 +1309,20 @@ sub get_cpan_checksums
 
     $chksum;
   };
+
+  # If a module name is passed ($key), then we check if it is listed in the
+  # CHECKSUMS file. If it is missing, it depends on $CHKSIGS. If it is true
+  # (strict verify), an error will be produced. If it is undef (best-effort)
+  # then a log entry will be added, and nothing will be returned, whcih will
+  # match the no-verify path above.
+  if ( defined $key && !exists $result->{$key} )
+  {
+    die "Could not find module '$key' in CHECKSUMS"
+      if $CHKSIGS;
+
+    logmsg "Could not find '$key' in CHECKSUMS, not attempting to verify";
+    return;
+  }
 
   return $result;
 }
