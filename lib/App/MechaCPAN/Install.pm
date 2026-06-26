@@ -876,11 +876,11 @@ sub _get_targz
 
     if ( my $checksums_url = $target->{checksums_url} )
     {
-      my $checksums = get_cpan_checksums($checksums_url);
+      my $filename  = $target->{filename};
+      my $checksums = get_cpan_checksums( $checksums_url, $filename );
 
       if ( defined $checksums )
       {
-        my $filename  = $target->{filename};
         my $cpan_path = $target->{cpan_path};
         my $entry     = $checksums->{$filename};
 
