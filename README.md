@@ -99,6 +99,30 @@ Using quiet means that the normal information descriptions are hidden. Note that
 
 A log is normally outputted into the `local/logs` directory. This option will prevent a log from being created.
 
+## --verify
+
+When `--verify` is given, a verification of the CPAN `CHECKSUMS` file during module install is required. Note that packages from [BackPAN](https://backpan.perl.org/) will not verify when `--verify` is given. This process includes three steps after downloading the `CHECKSUMS` file from CPAN for the module.
+
+- 1. Confirm the shape of CHECKSUMS
+
+    `CHECKSUMS` files contain all the files and the file checksums for a CPAN author's uploads. This file is compared against a rigid definition to ensure that it does not appear to be doing anything malicious.
+
+- 2. Confirm the signature of CHECKSUMS
+
+    Once the `CHECKSUMS` structure has been examined, the embedded signature is verified. The `CHECKSUMS` file is signed using the PAUSE Batch Signing Key (`2E66 557A B97C 19C7 91AF  8E20 328D A867 450F 89EC`, accessible at [https://www.cpan.org/modules/04pause.html](https://www.cpan.org/modules/04pause.html)). This signature is checked with an external PGP signature verification program. See below for a list of usable external verification programs.
+
+- 3. Compare the sha256 of the downloaded module to CHECKSUMS
+
+    Once the CHECKSUMS file has been checked, the size, CPAN author path, and the `sha256` value of the downloaded module archive are compared against the values from the CHECKSUMS file. These values must match.
+
+You can also disable `CHECKSUMS` verification completely with `--no-verify`. That will prevent all of these steps from running at all.
+
+When neither option is provided then the signature checking step is attempted, but will not produce an error if the external verification program could not be found, or the file is from backpan and has no corrisponding `CHECKSUMS` entry. An error is still raised if any other parts of the process finds a problem.
+
+If [MetaCPAN](https://metacpan.org) was used to find a module, the search will include the SHA256 of the package, which will be checked against the downloaded archive. This check cannot be disabled currently.
+
+The verification programs that can be used are: [gpgv](https://www.gnupg.org/), [sqv](https://sequoia-pgp.org/), [gpg](https://www.gnupg.org/), [sq](https://sequoia-pgp.org/), and [rnp](https://www.rnpgp.org/).
+
 ## --directory=&lt;path>
 
 Changes to a specified directory before any processing is done. This allows you to specify what directory you want `local/` to be in. If this isn't provided, the current working directory is used instead.
