@@ -78,6 +78,7 @@ our @args = (
   'directory|d=s',
   'build-reusable-perl!',
   'verify!',
+  'help|h!',
 );
 
 # Timeout when there's no output in seconds
@@ -126,11 +127,50 @@ sub main
   );
   @args = keys %{ { map { $_ => 1 } @args } };
 
+  if ( !@argv )
+  {
+    my $prog = ( File::Spec->splitpath($0) )[2] || 'mechacpan';
+
+    my @options = map {
+      my ($names) = m/^([^=:!+]+)/;
+      join( ', ', map { length > 1 ? "--$_" : "-$_" } split /\|/, $names );
+    } @App::MechaCPAN::args;
+
+    my $orig_fh = select STDERR;
+
+    say "Usage: $prog [options] <command> [<args>]";
+    say "";
+    say "Commands:";
+    say "  $_"
+      foreach @commands;
+    say "";
+    say "Global Options:";
+    say "  $_"
+      foreach @options;
+    say "";
+    say "Run '$prog --help' for full documentation.";
+
+    select $orig_fh;
+    return -1;
+  }
+
   my $options = {};
   my $getopt_ret
     = Getopt::Long::GetOptionsFromArray( \@argv, $options, @args );
   return -1
     if !$getopt_ret;
+
+  if ( $options->{help} )
+  {
+    require Pod::Usage;
+    Pod::Usage::pod2usage(
+      -input   => $INC{ _inc_pkg(__PACKAGE__) },
+      -verbose => 2,
+      -exitval => 'NOEXIT',
+      -output  => \*STDOUT,
+    );
+    return 0;
+  }
 
   my $merge_options = sub
   {
