@@ -40,9 +40,21 @@ BEGIN
 
 our $VERSION = '0.31';
 
-require App::MechaCPAN::Perl;
-require App::MechaCPAN::Install;
-require App::MechaCPAN::Deploy;
+my @commands = qw/
+  perl
+  install
+  deploy
+  /;
+
+foreach my $cmd ( @commands )
+{
+  my $pkg = __PACKAGE__ . "::" . ucfirst($cmd);
+  local $@;
+  my ($file, $line) = ( __FILE__, __LINE__+1);
+  eval qq{#line $line "$file"\nrequire $pkg};
+  die $@
+    if $@;
+}
 
 my $loaded_at_compile;
 my $restarted_key        = 'APP_MECHACPAN_RESTARTED';
