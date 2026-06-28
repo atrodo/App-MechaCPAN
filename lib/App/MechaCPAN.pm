@@ -38,7 +38,7 @@ BEGIN
   our %EXPORT_TAGS = ( go => [@EXPORT_OK] );
 }
 
-our $VERSION = '0.31';
+our $VERSION = '0.32';
 
 my @commands = qw/
   perl
